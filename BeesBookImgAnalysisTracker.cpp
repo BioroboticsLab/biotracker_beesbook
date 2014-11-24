@@ -50,7 +50,7 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
 
 void BeesBookImgAnalysisTracker::track(ulong frameNumber, cv::Mat& frame) {
 	std::lock_guard<std::mutex> lock(_tagListLock);
-    CursorOverrideRAII(Qt::WaitCursor);
+    const CursorOverrideRAII cursorOverride(Qt::WaitCursor);
 
     _taglist.clear();
 
