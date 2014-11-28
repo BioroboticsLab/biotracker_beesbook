@@ -20,6 +20,29 @@ struct CursorOverrideRAII {
     CursorOverrideRAII(Qt::CursorShape shape) { QApplication::setOverrideCursor(shape); }
     ~CursorOverrideRAII() { QApplication::restoreOverrideCursor(); }
 };
+
+class MeasureTimeRAII {
+public:
+    MeasureTimeRAII(std::string const& what, std::function<void(std::string const&)> notify)
+        : _start(std::chrono::steady_clock::now())
+        , _what(what)
+        , _notify(notify)
+    {}
+    ~MeasureTimeRAII()
+    {
+        const auto end = std::chrono::steady_clock::now();
+        const std::string message { _what + " finished in " +
+                    std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count()) +
+                    + "ms.\n" };
+        _notify(message);
+        // display message right away
+        QApplication::processEvents();
+    }
+private:
+    const std::chrono::steady_clock::time_point _start;
+    const std::string _what;
+    const std::function<void(std::string const&)> _notify;
+};
 }
 
 BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
@@ -49,29 +72,44 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
 }
 
 void BeesBookImgAnalysisTracker::track(ulong frameNumber, cv::Mat& frame) {
-	std::lock_guard<std::mutex> lock(_tagListLock);
+    static const auto notify = [&](std::string const& message) { emit notifyGUI(message, MSGS::NOTIFICATION); };
+
+    std::lock_guard<std::mutex> lock(_tagListLock);
     const CursorOverrideRAII cursorOverride(Qt::WaitCursor);
 
     _taglist.clear();
 
     if (_stage < SelectedStage::Converter) return;
-    cv::Mat image = _converter.process(frame);
-    emit notifyGUI("Converter finished", MSGS::NOTIFICATION);
+    cv::Mat image;
+    {
+        MeasureTimeRAII measure("Converter", notify);
+        image = _converter.process(frame);
+    }
     if (_stage < SelectedStage::Localizer) return;
-    _taglist = _localizer.process(std::move(image));
-    emit notifyGUI("Localizer finished", MSGS::NOTIFICATION);
+    {
+        MeasureTimeRAII measure("Localizer", notify);
+        _taglist = _localizer.process(std::move(image));
+    }
     if (_stage < SelectedStage::Recognizer) return;
-    _recognizer.process(_taglist);
-    emit notifyGUI("Recognizer finished", MSGS::NOTIFICATION);
+    {
+        MeasureTimeRAII measure("Recognizer", notify);
+        _taglist = _recognizer.process(std::move(_taglist));
+    }
     if (_stage < SelectedStage::Transformer) return;
-    _transformer.process(_taglist);
-    emit notifyGUI("Transformer finished", MSGS::NOTIFICATION);
+    {
+        MeasureTimeRAII measure("Transformer", notify);
+        _taglist = _transformer.process(std::move(_taglist));
+    }
     if (_stage < SelectedStage::GridFitter) return;
-    _gridFitter.process(_taglist);
-    emit notifyGUI("GridFitter finished", MSGS::NOTIFICATION);
+    {
+        MeasureTimeRAII measure("GridFitter", notify);
+        _taglist = _gridFitter.process(std::move(_taglist));
+    }
     if (_stage < SelectedStage::Decoder) return;
-    _decoder.process(_taglist);
-    emit notifyGUI("Decoder finished", MSGS::NOTIFICATION);
+    {
+        MeasureTimeRAII measure("Decoder", notify);
+        _taglist = _decoder.process(std::move(_taglist));
+    }
 }
 
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const {
@@ -83,10 +121,6 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const 
 
 void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const {
     for (const decoder::Tag& tag : _taglist) {
-        for (const decoder::TagCandidate& candidate : tag.getCandidates()) {
-            const decoder::Ellipse& ell{candidate.getEllipse()};
-            //TODO
-        }
     }
 }
 
