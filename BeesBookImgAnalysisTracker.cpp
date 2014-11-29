@@ -5,20 +5,23 @@
 
 #include <opencv2/core/core.hpp>
 
-#include "source/tracking/algorithm/algorithms.h"
 #include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/datastructure/Tag.h"
+#include "source/tracking/algorithm/algorithms.h"
 
-#include "ui_ToolWidget.h"
 #include "ui_ParamsWidget.h"
+#include "ui_ToolWidget.h"
 
 namespace {
 auto _ = Algorithms::Registry::getInstance()
-             .register_tracker_type<BeesBookImgAnalysisTracker>(
-                 "BeesBook ImgAnalysis");
+  .register_tracker_type<BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
 
 struct CursorOverrideRAII {
-    CursorOverrideRAII(Qt::CursorShape shape) { QApplication::setOverrideCursor(shape); }
-    ~CursorOverrideRAII() { QApplication::restoreOverrideCursor(); }
+    CursorOverrideRAII(Qt::CursorShape shape) {
+        QApplication::setOverrideCursor(shape);
+    }
+    ~CursorOverrideRAII() {
+        QApplication::restoreOverrideCursor();
+    }
 };
 
 class MeasureTimeRAII {
@@ -27,13 +30,14 @@ public:
         : _start(std::chrono::steady_clock::now())
         , _what(what)
         , _notify(notify)
-    {}
+    {
+    }
     ~MeasureTimeRAII()
     {
         const auto end = std::chrono::steady_clock::now();
         const std::string message { _what + " finished in " +
-                    std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count()) +
-                    + "ms.\n" };
+                                    std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count()) +
+                                    +"ms.\n" };
         _notify(message);
         // display message right away
         QApplication::processEvents();
@@ -58,9 +62,9 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
     uiParams.setupUi(_paramsWidget.get());
 
     auto connectRadioButton = [&](QRadioButton* button, SelectedStage stage) {
-        QObject::connect(button, &QRadioButton::toggled,
-                         [=](bool checked) { stageSelectionToogled(stage, checked); });
-    };
+          QObject::connect(button, &QRadioButton::toggled,
+            [ = ](bool checked) { stageSelectionToogled(stage, checked); });
+      };
 
     connectRadioButton(uiTools.radioButtonNoProcessing, SelectedStage::NoProcessing);
     connectRadioButton(uiTools.radioButtonConverter, SelectedStage::Converter);
@@ -113,29 +117,69 @@ void BeesBookImgAnalysisTracker::track(ulong frameNumber, cv::Mat& frame) {
 }
 
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const {
-	for (const decoder::Tag& tag : _taglist) {
-		const cv::Rect& box = tag.getBox();
-        cv::rectangle(image, box, cv::Scalar(255, 0, 0), 2);
-	}
+    for (const decoder::Tag& tag : _taglist) {
+        const cv::Rect& box = tag.getBox();
+        cv::rectangle(image, box, cv::Scalar(0, 255, 0), 5);
+    }
 }
 
 void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const {
+    //TODO
+}
+
+void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const {
+    //TODO
+}
+
+void BeesBookImgAnalysisTracker::visualizeTransformerOutput(cv::Mat& image) const {
+    //TODO
+}
+
+void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
     for (const decoder::Tag& tag : _taglist) {
+        if (tag.getCandidatesConst().size()) {
+            const decoder::TagCandidate& candidate = tag.getCandidatesConst()[0];
+            if (candidate.getDecodings().size()) {
+                const decoder::Decoding& decoding = candidate.getDecodings()[0];
+                cv::putText(image, std::to_string(decoding.tagId),
+                            cv::Point(tag.getBox().x, tag.getBox(). y),
+                            FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+                            cv::Scalar(0, 255, 0), 3, CV_AA);
+            }
+        }
     }
 }
 
 void BeesBookImgAnalysisTracker::paint(cv::Mat& image) {
-	// don't try to visualize results while data processing is running
-	if (_tagListLock.try_lock()) {
-		visualizeLocalizerOutput(image);
-		visualizeRecognizerOutput(image);
-		_tagListLock.unlock();
-	} else {
-		return;
-	}
+    // don't try to visualize results while data processing is running
+    if (_tagListLock.try_lock()) {
+        switch (_stage) {
+        case SelectedStage::Localizer:
+            visualizeLocalizerOutput(image);
+            break;
+        case SelectedStage::Recognizer:
+            visualizeRecognizerOutput(image);
+            break;
+        case SelectedStage::Transformer:
+            visualizeTransformerOutput(image);
+            break;
+        case SelectedStage::GridFitter:
+            visualizeGridFitterOutput(image);
+            break;
+        case SelectedStage::Decoder:
+            visualizeDecoderOutput(image);
+            break;
+        default:
+            break;
+        }
+        _tagListLock.unlock();
+    } else {
+        return;
+    }
 }
 
-void BeesBookImgAnalysisTracker::reset() {}
+void BeesBookImgAnalysisTracker::reset() {
+}
 
 void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookImgAnalysisTracker::SelectedStage stage, bool checked)
 {
