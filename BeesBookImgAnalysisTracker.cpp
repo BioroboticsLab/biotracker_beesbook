@@ -78,7 +78,7 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
 void BeesBookImgAnalysisTracker::track(ulong frameNumber, cv::Mat& frame) {
     static const auto notify = [&](std::string const& message) { emit notifyGUI(message, MSGS::NOTIFICATION); };
 
-    std::lock_guard<std::mutex> lock(_tagListLock);
+    const std::lock_guard<std::mutex> lock(_tagListLock);
     const CursorOverrideRAII cursorOverride(Qt::WaitCursor);
 
     _taglist.clear();
