@@ -9,12 +9,12 @@
 
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
-#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Decoder.h"
-#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Recognizer.h"
-#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/GridFitter.h"
 #include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Converter.h"
-#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Transformer.h"
+#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Decoder.h"
+#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/GridFitter.h"
 #include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Localizer.h"
+#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Recognizer.h"
+#include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Transformer.h"
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
@@ -22,18 +22,26 @@ public:
 	BeesBookImgAnalysisTracker(Settings& settings, std::string& serializationPathName, QWidget* parent);
 
     void track(ulong frameNumber, cv::Mat& frame) override;
-	void paint(cv::Mat& image) override;
-	void reset() override;
+    void paint(cv::Mat& image) override;
+    void reset() override;
 
-	std::shared_ptr<QWidget> getParamsWidget() override { return _paramsWidget; }
-	std::shared_ptr<QWidget> getToolsWidget() override { return _toolsWidget; }
+    std::shared_ptr<QWidget> getParamsWidget() override {
+        return _paramsWidget;
+    }
+    std::shared_ptr<QWidget> getToolsWidget() override {
+        return _toolsWidget;
+    }
 
-  public slots:
-	//mouse click and move events
-	void mouseMoveEvent(QMouseEvent*) override {}
-	void mousePressEvent(QMouseEvent*) override {}
-	void mouseReleaseEvent(QMouseEvent*) override {}
-	void mouseWheelEvent(QWheelEvent*) override {}
+public slots:
+    //mouse click and move events
+    void mouseMoveEvent(QMouseEvent*) override {
+    }
+    void mousePressEvent(QMouseEvent*) override {
+    }
+    void mouseReleaseEvent(QMouseEvent*) override {
+    }
+    void mouseWheelEvent(QWheelEvent*) override {
+    }
 
 private:
     enum class SelectedStage : uint8_t {
@@ -59,11 +67,14 @@ private:
 	decoder::Transformer _transformer;
 	decoder::Localizer _localizer;
 
-	std::vector<decoder::Tag> _taglist;
-	std::mutex _tagListLock;
+    std::vector<decoder::Tag> _taglist;
+    std::mutex _tagListLock;
 
-	void visualizeLocalizerOutput(cv::Mat& image) const;
-	void visualizeRecognizerOutput(cv::Mat& image) const;
+    void visualizeLocalizerOutput(cv::Mat& image) const;
+    void visualizeRecognizerOutput(cv::Mat& image) const;
+    void visualizeGridFitterOutput(cv::Mat& image) const;
+    void visualizeTransformerOutput(cv::Mat& image) const;
+    void visualizeDecoderOutput(cv::Mat& image) const;
 
     template<typename UiWidget>
     void setParamsWidget() {
