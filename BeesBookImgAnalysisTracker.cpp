@@ -10,6 +10,11 @@
 
 #include "ui_ParamsWidget.h"
 #include "ui_ToolWidget.h"
+#include "ui_DecoderParamsWidget.h"
+#include "ui_GridFitterParamsWidget.h"
+#include "ui_LocalizerParamsWidget.h"
+#include "ui_RecognizerParamsWidget.h"
+#include "ui_TransformerParamsWidget.h"
 
 namespace {
 auto _ = Algorithms::Registry::getInstance()
@@ -185,6 +190,30 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookImgAnalysisTracke
 {
     if (checked) {
         _stage = stage;
+
+        _currentParamsWidget = std::make_unique<QWidget>();
+        switch (stage) {
+        case SelectedStage::Converter:
+            break;
+        case SelectedStage::Localizer:
+            setParamsWidget<Ui::LocalizerParamsWidget>();
+            break;
+        case SelectedStage::Recognizer:
+            setParamsWidget<Ui::RecognizerParamsWidget>();
+            break;
+        case SelectedStage::Transformer:
+            setParamsWidget<Ui::TransformerParamsWidget>();
+            break;
+        case SelectedStage::GridFitter:
+            setParamsWidget<Ui::GridFitterParamsWidget>();
+            break;
+        case SelectedStage::Decoder:
+            setParamsWidget<Ui::DecoderParamsWidget>();
+            break;
+        default:
+            break;
+        }
+
         emit forceTracking();
     }
 }

@@ -17,9 +17,9 @@
 #include "source/tracking/algorithm/BeesBookImgAnalysisTracker/pipeline/Transformer.h"
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
-    Q_OBJECT
+	Q_OBJECT
 public:
-    BeesBookImgAnalysisTracker(Settings& settings, std::string& serializationPathName, QWidget* parent);
+	BeesBookImgAnalysisTracker(Settings& settings, std::string& serializationPathName, QWidget* parent);
 
     void track(ulong frameNumber, cv::Mat& frame) override;
     void paint(cv::Mat& image) override;
@@ -58,12 +58,14 @@ private:
     const std::shared_ptr<QWidget> _paramsWidget;
     const std::shared_ptr<QWidget> _toolsWidget;
 
-    decoder::Converter _converter;
-    decoder::Decoder _decoder;
-    decoder::GridFitter _gridFitter;
-    decoder::Recognizer _recognizer;
-    decoder::Transformer _transformer;
-    decoder::Localizer _localizer;
+    std::unique_ptr<QWidget> _currentParamsWidget;
+
+	decoder::Converter _converter;
+	decoder::Decoder _decoder;
+	decoder::GridFitter _gridFitter;
+	decoder::Recognizer _recognizer;
+	decoder::Transformer _transformer;
+	decoder::Localizer _localizer;
 
     std::vector<decoder::Tag> _taglist;
     std::mutex _tagListLock;
@@ -73,6 +75,12 @@ private:
     void visualizeGridFitterOutput(cv::Mat& image) const;
     void visualizeTransformerOutput(cv::Mat& image) const;
     void visualizeDecoderOutput(cv::Mat& image) const;
+
+    template<typename UiWidget>
+    void setParamsWidget() {
+        UiWidget ui;
+        ui.setupUi(_currentParamsWidget.get());
+    }
 
 private slots:
     void stageSelectionToogled(SelectedStage stage, bool checked);

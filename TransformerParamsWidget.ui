@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ParamsWidget</class>
- <widget class="QWidget" name="ParamsWidget">
+ <class>TransformerParamsWidget</class>
+ <widget class="QWidget" name="TransformerParamsWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -13,11 +13,6 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
-   <item>
-    <widget class="QWidget" name="paramsSubWidget" native="true"/>
-   </item>
-  </layout>
  </widget>
  <resources/>
  <connections/>
