@@ -18,7 +18,7 @@
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
-  public:
+public:
 	BeesBookImgAnalysisTracker(Settings& settings, std::string& serializationPathName, QWidget* parent);
 
     void track(ulong frameNumber, cv::Mat& frame) override;
@@ -35,7 +35,7 @@ class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	void mouseReleaseEvent(QMouseEvent*) override {}
 	void mouseWheelEvent(QWheelEvent*) override {}
 
-  private:
+private:
     enum class SelectedStage : uint8_t {
         NoProcessing = 0,
         Converter,
@@ -50,6 +50,8 @@ class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
     const std::shared_ptr<QWidget> _paramsWidget;
     const std::shared_ptr<QWidget> _toolsWidget;
 
+    std::unique_ptr<QWidget> _currentParamsWidget;
+
 	decoder::Converter _converter;
 	decoder::Decoder _decoder;
 	decoder::GridFitter _gridFitter;
@@ -62,6 +64,12 @@ class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 
 	void visualizeLocalizerOutput(cv::Mat& image) const;
 	void visualizeRecognizerOutput(cv::Mat& image) const;
+
+    template<typename UiWidget>
+    void setParamsWidget() {
+        UiWidget ui;
+        ui.setupUi(_currentParamsWidget.get());
+    }
 
 private slots:
     void stageSelectionToogled(SelectedStage stage, bool checked);
