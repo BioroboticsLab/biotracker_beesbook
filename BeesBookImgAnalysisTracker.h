@@ -17,6 +17,7 @@
 #include "pipeline/Transformer.h"
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
+#include "utility/stdext.h"
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
@@ -68,7 +69,7 @@ private:
 
 	template<typename Widget>
 	void setParamsWidget() {
-		std::unique_ptr<Widget> widget { std::make_unique<Widget>(_settings) };
+		std::unique_ptr<Widget> widget(std::make_unique<Widget>(_settings));
 		QObject::connect(widget.get(), &Widget::settingsChanged,
 		  this, &BeesBookImgAnalysisTracker::settingsChanged);
 		_paramsWidget->setParamSubWidget(std::move(widget));

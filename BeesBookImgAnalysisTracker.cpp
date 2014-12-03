@@ -147,7 +147,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 				const decoder::Decoding& decoding = candidate.getDecodings()[0];
 				cv::putText(image, std::to_string(decoding.tagId),
 				  cv::Point(tag.getBox().x, tag.getBox().y),
-				  FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+				  cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
 				  cv::Scalar(0, 255, 0), 3, CV_AA);
 			}
 		}
