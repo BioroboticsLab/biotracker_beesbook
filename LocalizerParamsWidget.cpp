@@ -1,6 +1,8 @@
 #include "LocalizerParamsWidget.h"
 #include "source/settings/Settings.h"
 
+using namespace Localizer;
+
 LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings, QWidget *parent)
 	: ParamsSubWidgetBase(parent)
 	, _settings(settings)

@@ -127,8 +127,19 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const 
 	}
 }
 
-void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& /*image*/) const {
-	//TODO
+void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const {
+	for (const decoder::Tag& tag : _taglist) {
+		if (!tag.getCandidates().empty()) {
+			// get best candidate
+			const decoder::TagCandidate& candidate = tag.getCandidates()[0];
+			const decoder::Ellipse& ellipse = candidate.getEllipse();
+			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(), ellipse.getAxis(),
+						ellipse.getAngle(), 0, 360, cv::Scalar(0, 255, 0), 3);
+			cv::putText(image, "Score: " + std::to_string(ellipse.getVote()),
+						tag.getBox().tl() + cv::Point(80, 80), cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+						cv::Scalar(0, 255, 0), 2, CV_AA);
+		}
+	}
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& /*image*/) const {
@@ -141,14 +152,14 @@ void BeesBookImgAnalysisTracker::visualizeTransformerOutput(cv::Mat& /*image*/) 
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	for (const decoder::Tag& tag : _taglist) {
-		if (tag.getCandidatesConst().size()) {
-			const decoder::TagCandidate& candidate = tag.getCandidatesConst()[0];
+		if (tag.getCandidates().size()) {
+			const decoder::TagCandidate& candidate = tag.getCandidates()[0];
 			if (candidate.getDecodings().size()) {
 				const decoder::Decoding& decoding = candidate.getDecodings()[0];
 				cv::putText(image, std::to_string(decoding.tagId),
 				  cv::Point(tag.getBox().x, tag.getBox().y),
 				  cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-				  cv::Scalar(0, 255, 0), 3, CV_AA);
+				  cv::Scalar(0, 255, 0), 2, CV_AA);
 			}
 		}
 	}
@@ -192,7 +203,7 @@ void BeesBookImgAnalysisTracker::settingsChanged(const BeesBookCommon::Stage sta
 		_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Recognizer:
-		// TODO
+		_recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
 		// TODO
