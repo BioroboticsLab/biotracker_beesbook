@@ -77,6 +77,10 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
 
 	QObject::connect(uiTools.processButton, &QPushButton::pressed,
 	  [&]() { emit forceTracking(); });
+
+	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
+	_recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
+	//TODO
 }
 
 void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
@@ -238,6 +242,8 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage sta
 			_paramsWidget->setParamSubWidget(std::make_unique<QWidget>());
 			break;
 		}
+
+		emit update();
 	}
 }
 
