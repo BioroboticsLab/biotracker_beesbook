@@ -53,8 +53,8 @@ private:
 }
 
 BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
-    Settings& settings, std::string& serializationPathName, QWidget* parent)
-	: TrackingAlgorithm(settings, serializationPathName, parent)
+    Settings& settings, QWidget* parent)
+	: TrackingAlgorithm(settings, parent)
 	, _selectedStage(BeesBookCommon::Stage::NoProcessing)
 	, _paramsWidget(std::make_shared<ParamsWidget>())
 	, _toolsWidget(std::make_shared<QWidget>())

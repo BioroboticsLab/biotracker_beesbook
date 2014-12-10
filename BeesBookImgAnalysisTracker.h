@@ -22,7 +22,7 @@
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
 public:
-	BeesBookImgAnalysisTracker(Settings& settings, std::string& serializationPathName, QWidget* parent);
+	BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent);
 
 	void track(ulong frameNumber, cv::Mat& frame) override;
 	void paint(cv::Mat& image) override;
