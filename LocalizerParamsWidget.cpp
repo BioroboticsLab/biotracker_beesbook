@@ -3,8 +3,8 @@
 
 using namespace Localizer;
 
-LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings, QWidget *parent)
-	: ParamsSubWidgetBase(parent)
+LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings)
+	: ParamsSubWidgetBase()
 	, _settings(settings)
 	, _layout(this)
 	, _binaryThresholdSlider(this, &_layout, "Binary Threshold", 1, 100,

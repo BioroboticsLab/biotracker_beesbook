@@ -5,8 +5,8 @@
 
 using namespace Recognizer;
 
-RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings, QWidget *parent)
-	: ParamsSubWidgetBase(parent)
+RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
+	: ParamsSubWidgetBase()
 	, _settings(settings)
 	, _layout(this)
 	, _cannyThresholdLowSlider(this, &_layout, "Canny Threshold Low", 0, 200,

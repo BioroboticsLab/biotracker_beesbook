@@ -1,7 +1,7 @@
 #include "DecoderParamsWidget.h"
 
-DecoderParamsWidget::DecoderParamsWidget(Settings &settings, QWidget *parent)
-	: ParamsSubWidgetBase(parent)
+DecoderParamsWidget::DecoderParamsWidget(Settings &settings)
+	: ParamsSubWidgetBase()
     , _settings(settings)
 {
 }

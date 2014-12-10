@@ -13,7 +13,7 @@ class GridFitterParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	GridFitterParamsWidget(Settings& settings, QWidget* parent = nullptr);
+	GridFitterParamsWidget(Settings& settings);
 
 private:
 	Settings& _settings;

@@ -14,7 +14,7 @@ class LocalizerParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	LocalizerParamsWidget(Settings& settings, QWidget* parent = nullptr);
+	LocalizerParamsWidget(Settings& settings);
 
 private:
 	Settings& _settings;

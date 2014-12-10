@@ -8,7 +8,8 @@ class ParamsSubWidgetBase : public QWidget
 {
 	Q_OBJECT
 public:
-	ParamsSubWidgetBase(QWidget* parent = nullptr) : QWidget(parent) {}
+	// memory is managed by ParamsWidget, therefore initialize QWidget with nullptr
+	ParamsSubWidgetBase() : QWidget(nullptr) {}
 	virtual ~ParamsSubWidgetBase() {}
 signals:
 	void settingsChanged(const BeesBookCommon::Stage stage);

@@ -13,7 +13,7 @@ class DecoderParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	DecoderParamsWidget(Settings& settings, QWidget* parent = nullptr);
+	DecoderParamsWidget(Settings& settings);
 
 private:
 	Settings& _settings;

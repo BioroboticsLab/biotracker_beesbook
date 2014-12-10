@@ -35,16 +35,6 @@ public:
 		return _toolsWidget;
 	}
 
-public slots:
-	void mouseMoveEvent(QMouseEvent*) override {
-	}
-	void mousePressEvent(QMouseEvent*) override {
-	}
-	void mouseReleaseEvent(QMouseEvent*) override {
-	}
-	void mouseWheelEvent(QWheelEvent*) override {
-	}
-
 private:
 	BeesBookCommon::Stage _selectedStage;
 

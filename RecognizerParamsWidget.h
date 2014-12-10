@@ -14,7 +14,7 @@ class RecognizerParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	RecognizerParamsWidget(Settings& settings, QWidget* parent = nullptr);
+	RecognizerParamsWidget(Settings& settings);
 
 private:
 	Settings& _settings;

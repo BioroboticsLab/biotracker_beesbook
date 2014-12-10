@@ -1,7 +1,7 @@
 #include "GridFitterParamsWidget.h"
 
-GridFitterParamsWidget::GridFitterParamsWidget(Settings &settings, QWidget *parent)
-	: ParamsSubWidgetBase(parent)
+GridFitterParamsWidget::GridFitterParamsWidget(Settings &settings)
+	: ParamsSubWidgetBase()
     , _settings(settings)
 {
 }
