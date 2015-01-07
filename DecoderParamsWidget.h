@@ -17,5 +17,4 @@ public:
 
 private:
 	Settings& _settings;
-	QFormLayout _layout;
 };

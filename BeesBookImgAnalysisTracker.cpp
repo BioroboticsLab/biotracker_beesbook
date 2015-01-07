@@ -14,6 +14,7 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
 
+#include "Common.h"
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
 #include "LocalizerParamsWidget.h"
@@ -39,7 +40,8 @@ struct CursorOverrideRAII {
 
 static const cv::Scalar COLOR_ORANGE = cv::Scalar(0, 102, 255);
 static const cv::Scalar COLOR_GREEN  = cv::Scalar(0, 255, 0);
-static const cv::Scalar COLOR_RED  = cv::Scalar(0, 0, 255);
+static const cv::Scalar COLOR_RED    = cv::Scalar(0, 0, 255);
+static const cv::Scalar COLOR_BLUE   = cv::Scalar(255, 0, 0);
 
 class MeasureTimeRAII {
 public:
@@ -155,12 +157,12 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 }
 
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const {
-	static const int thickness = 5;
+	const int thickness = calculateVisualizationThickness();
 
 	if (!_groundTruth.available) {
 		for (const decoder::Tag& tag : _taglist) {
 			const cv::Rect& box = tag.getBox();
-			cv::rectangle(image, box, cv::Scalar(0, 255, 0), thickness, CV_AA);
+			cv::rectangle(image, box, COLOR_BLUE, thickness, CV_AA);
 		}
 		return;
 	}
@@ -279,6 +281,19 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 
 	_groundTruth.evaluationResults = std::move(results);
+}
+
+int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
+{
+	const int radius = _settings.getValueOfParam<int>(Localizer::Params::MIN_BOUNDING_BOX_SIZE) / 2;
+	// calculate actual pixel size of grid based on current zoom level
+	double displayTagSize = radius / getCurrentZoomLevel();
+	displayTagSize = displayTagSize > 50. ? 50 : displayTagSize;
+	// thickness of rectangle of grid is based on actual pixel size
+	// of the grid. if the radius is 50px or more, the rectangle has
+	// a thickness of 1px.
+	const int thickness = static_cast<int>(1. / (displayTagSize / 50.));
+	return thickness;
 }
 
 void BeesBookImgAnalysisTracker::paint(cv::Mat& image) {

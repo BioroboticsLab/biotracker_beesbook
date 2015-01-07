@@ -93,6 +93,8 @@ private:
 
 	void evaluateLocalizer();
 
+	int calculateVisualizationThickness() const;
+
 	template<typename Widget>
 	void setParamsWidget() {
 		std::unique_ptr<Widget> widget(std::make_unique<Widget>(_settings));

@@ -8,7 +8,6 @@ using namespace Recognizer;
 RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 	: ParamsSubWidgetBase()
 	, _settings(settings)
-	, _layout(this)
 	, _cannyThresholdLowSlider(this, &_layout, "Canny Threshold Low", 0, 200,
 		settings.getValueOrDefault<int>(Params::CANNY_THRESHOLD_LOW, Defaults::CANNY_THRESHOLD_LOW), 1)
 	, _cannyThresholdHighSlider(this, &_layout, "Canny Threshold High", 0, 200,
@@ -28,9 +27,6 @@ RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 	, _thresholdVoteSlider(this, &_layout, "Threshold Best Vote", 0, 5000,
 		settings.getValueOrDefault<int>(Params::THRESHOLD_VOTE, Defaults::THRESHOLD_VOTE), 1)
 {
-	_layout.setSpacing(3);
-	_layout.setMargin(3);
-
 	auto connectSlider = [ & ](SpinBoxWithSlider* slider, const std::string& paramName) {
 		QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
 			_settings.setParam(paramName, value);

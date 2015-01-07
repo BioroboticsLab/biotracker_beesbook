@@ -18,7 +18,6 @@ public:
 
 private:
 	Settings& _settings;
-	QFormLayout _layout;
 
 	SpinBoxWithSlider _cannyThresholdLowSlider;
 	SpinBoxWithSlider _cannyThresholdHighSlider;
