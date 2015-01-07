@@ -1,9 +1,18 @@
 #include "BeesBookImgAnalysisTracker.h"
 
+#include <array>
 #include <chrono>
+#include <functional>
+#include <set>
 #include <vector>
 
+#include <QFileDialog>
+
 #include <opencv2/core/core.hpp>
+
+#include <cereal/types/polymorphic.hpp>
+#include <cereal/archives/json.hpp>
+#include <cereal/types/vector.hpp>
 
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
@@ -11,6 +20,7 @@
 #include "RecognizerParamsWidget.h"
 #include "pipeline/datastructure/Tag.h"
 #include "source/tracking/algorithm/algorithms.h"
+#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/resources/Grid3D.h"
 
 #include "ui_ToolWidget.h"
 
@@ -26,6 +36,10 @@ struct CursorOverrideRAII {
 		QApplication::restoreOverrideCursor();
 	}
 };
+
+static const cv::Scalar COLOR_ORANGE = cv::Scalar(0, 102, 255);
+static const cv::Scalar COLOR_GREEN  = cv::Scalar(0, 255, 0);
+static const cv::Scalar COLOR_RED  = cv::Scalar(0, 0, 255);
 
 class MeasureTimeRAII {
 public:
@@ -62,6 +76,18 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
 	Ui::ToolWidget uiTools;
 	uiTools.setupUi(_toolsWidget.get());
 
+	_groundTruth.labelNumFalsePositives = uiTools.labelNumFalsePositives;
+	_groundTruth.labelNumFalseNegatives = uiTools.labelNumFalseNegatives;
+	_groundTruth.labelNumTruePositives  = uiTools.labelNumTruePositives;
+	_groundTruth.labelNumRecall         = uiTools.labelNumRecall;
+	_groundTruth.labelNumPrecision      = uiTools.labelNumPrecision;
+
+	_groundTruth.labelFalsePositives = uiTools.labelFalsePositives;
+	_groundTruth.labelFalseNegatives = uiTools.labelFalseNegatives;
+	_groundTruth.labelTruePositives  = uiTools.labelTruePositives;
+	_groundTruth.labelRecall         = uiTools.labelRecall;
+	_groundTruth.labelPrecision      = uiTools.labelPrecision;
+
 	auto connectRadioButton = [&](QRadioButton* button, BeesBookCommon::Stage stage) {
 		  QObject::connect(button, &QRadioButton::toggled,
 		    [ = ](bool checked) { stageSelectionToogled(stage, checked); });
@@ -77,6 +103,9 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(
 
 	QObject::connect(uiTools.processButton, &QPushButton::pressed,
 	  [&]() { emit forceTracking(); });
+
+	QObject::connect(uiTools.pushButtonLoadGroundTruth, &QPushButton::pressed,
+	  this, &BeesBookImgAnalysisTracker::loadGroundTruthData);
 
 	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
 	_recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
@@ -101,6 +130,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 	{
 		MeasureTimeRAII measure("Localizer", notify);
 		_taglist = _localizer.process(std::move(image));
+		if (_groundTruth.available) evaluateLocalizer();
 	}
 	if (_selectedStage < BeesBookCommon::Stage::Recognizer) return;
 	{
@@ -125,9 +155,28 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 }
 
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const {
-	for (const decoder::Tag& tag : _taglist) {
-		const cv::Rect& box = tag.getBox();
-		cv::rectangle(image, box, cv::Scalar(0, 255, 0), 5);
+	static const int thickness = 5;
+
+	if (!_groundTruth.available) {
+		for (const decoder::Tag& tag : _taglist) {
+			const cv::Rect& box = tag.getBox();
+			cv::rectangle(image, box, cv::Scalar(0, 255, 0), thickness, CV_AA);
+		}
+		return;
+	}
+
+	const LocalizerEvaluationResults& results = boost::get<LocalizerEvaluationResults>(_groundTruth.evaluationResults);
+
+	for (const decoder::Tag& tag : results.truePositives) {
+		cv::rectangle(image, tag.getBox(), COLOR_GREEN, thickness, CV_AA);
+	}
+
+	for (const decoder::Tag& tag : results.falsePositives) {
+		cv::rectangle(image, tag.getBox(), COLOR_RED, thickness, CV_AA);
+	}
+
+	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
+		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 	}
 }
 
@@ -167,6 +216,69 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 			}
 		}
 	}
+}
+
+void BeesBookImgAnalysisTracker::evaluateLocalizer()
+{
+	assert(_groundTruth.available);
+	LocalizerEvaluationResults results;
+
+	{
+		const int currentFrameNumber = getCurrentFrameNumber();
+		for (TrackedObject const& object : _groundTruth.data.getTrackedObjects()) {
+			const std::shared_ptr<Grid3D> grid = object.maybeGet<Grid3D>(currentFrameNumber);
+			if (grid) results.taggedGridsOnFrame.insert(grid);
+		}
+	}
+
+	// detect false negatives
+	for (const std::shared_ptr<Grid3D>& grid : results.taggedGridsOnFrame) {
+		const cv::Rect gridBox = grid->getBoundingBox();
+
+		bool inGroundTruth = false;
+		for (const decoder::Tag& tag : _taglist) {
+			const cv::Rect& tagBox = tag.getBox();
+			if (tagBox.contains(gridBox.tl()) && tagBox.contains(gridBox.br())) {
+				inGroundTruth = true;
+				break;
+			}
+		}
+
+		if (!inGroundTruth) results.falseNegatives.insert(grid);
+	}
+
+	// detect false positives
+	std::set<std::shared_ptr<Grid3D>> notYetDetectedGrids = results.taggedGridsOnFrame;
+	for (const decoder::Tag& tag : _taglist) {
+		const cv::Rect& tagBox = tag.getBox();
+
+		bool inGroundTruth = false;
+		for (const std::shared_ptr<Grid3D>& grid : notYetDetectedGrids) {
+			const cv::Rect gridBox = grid->getBoundingBox();
+			if (tagBox.contains(gridBox.tl()) && tagBox.contains(gridBox.br())) {
+				inGroundTruth = true;
+				results.truePositives.insert(tag);
+				// this modifies the container in a range based for loop, which may invalidate
+				// the iterators. This is not problem in this specific case because we exit the loop
+				// right away.
+				notYetDetectedGrids.erase(grid);
+				break;
+			}
+		}
+
+		if (!inGroundTruth) results.falsePositives.insert(tag);
+	}
+
+	const float recall    = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	const float precision = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.truePositives.size() + results.falsePositives.size()) * 100.f;
+
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
+	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
+	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
+	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+
+	_groundTruth.evaluationResults = std::move(results);
 }
 
 void BeesBookImgAnalysisTracker::paint(cv::Mat& image) {
@@ -218,6 +330,30 @@ void BeesBookImgAnalysisTracker::settingsChanged(const BeesBookCommon::Stage sta
 	default:
 		break;
 	}
+}
+
+void BeesBookImgAnalysisTracker::loadGroundTruthData()
+{
+	QString filename = QFileDialog::getOpenFileName(nullptr, tr("Load tracking data"), "", tr("Data Files (*.tdat)"));
+	if (filename.isEmpty()) return;
+
+	std::ifstream is(filename.toStdString());
+	cereal::JSONInputArchive ar(is);
+
+	ar(_groundTruth.data);
+	_groundTruth.available = true;
+
+	const std::array<QLabel*, 10> labels
+		{ _groundTruth.labelFalsePositives, _groundTruth.labelFalseNegatives, _groundTruth.labelTruePositives, _groundTruth.labelRecall, _groundTruth.labelPrecision,
+		  _groundTruth.labelNumFalsePositives, _groundTruth.labelNumFalseNegatives, _groundTruth.labelNumTruePositives, _groundTruth.labelNumRecall, _groundTruth.labelNumPrecision };
+
+	for (QLabel* label : labels) {
+		label->setEnabled(true);
+	}
+
+	//TODO: maybe check filehash here
+
+
 }
 
 void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage stage, bool checked)

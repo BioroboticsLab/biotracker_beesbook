@@ -6,6 +6,10 @@
 #include <opencv2/opencv.hpp>
 
 #include <QApplication>
+#include <QtWidgets/QLabel>
+
+#include <boost/optional.hpp>
+#include <boost/variant.hpp>
 
 #include "Common.h"
 #include "ParamsWidget.h"
@@ -18,6 +22,10 @@
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
 #include "utility/stdext.h"
+
+#include "source/tracking/serialization/SerializationData.h"
+
+class Grid3D;
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
@@ -51,11 +59,39 @@ private:
 	std::vector<decoder::Tag> _taglist;
 	std::mutex _tagListLock;
 
+	struct LocalizerEvaluationResults {
+		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
+		std::set<std::reference_wrapper<const decoder::Tag>> falsePositives;
+		std::set<std::reference_wrapper<const decoder::Tag>> truePositives;
+		std::set<std::shared_ptr<Grid3D>> falseNegatives;
+	};
+
+	struct {
+		bool available = false;
+		Serialization::Data data;
+
+		QLabel* labelFalsePositives = nullptr;
+		QLabel* labelFalseNegatives = nullptr;
+		QLabel* labelTruePositives  = nullptr;
+		QLabel* labelRecall         = nullptr;
+		QLabel* labelPrecision      = nullptr;
+
+		QLabel* labelNumFalsePositives = nullptr;
+		QLabel* labelNumFalseNegatives = nullptr;
+		QLabel* labelNumTruePositives  = nullptr;
+		QLabel* labelNumRecall         = nullptr;
+		QLabel* labelNumPrecision      = nullptr;
+
+		boost::variant<LocalizerEvaluationResults> evaluationResults;
+	} _groundTruth;
+
 	void visualizeLocalizerOutput(cv::Mat& image) const;
 	void visualizeRecognizerOutput(cv::Mat& image) const;
 	void visualizeGridFitterOutput(cv::Mat& image) const;
 	void visualizeTransformerOutput(cv::Mat& image) const;
 	void visualizeDecoderOutput(cv::Mat& image) const;
+
+	void evaluateLocalizer();
 
 	template<typename Widget>
 	void setParamsWidget() {
@@ -68,6 +104,7 @@ private:
 private slots:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
 	void settingsChanged(const BeesBookCommon::Stage stage);
+	void loadGroundTruthData();
 };
 
 #endif
