@@ -64,6 +64,14 @@ private:
 		std::set<std::reference_wrapper<const decoder::Tag>> falsePositives;
 		std::set<std::reference_wrapper<const decoder::Tag>> truePositives;
 		std::set<std::shared_ptr<Grid3D>> falseNegatives;
+		std::map<std::reference_wrapper<const decoder::Tag>, std::shared_ptr<Grid3D>> gridByTag;
+	};
+
+	struct RecognizerEvaluationResults {
+		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
+		std::set<std::reference_wrapper<const decoder::Tag>> falsePositives;
+		std::set<std::reference_wrapper<const decoder::Tag>> truePositives;
+		std::set<std::shared_ptr<Grid3D>> falseNegatives;
 	};
 
 	struct {
@@ -82,7 +90,8 @@ private:
 		QLabel* labelNumRecall         = nullptr;
 		QLabel* labelNumPrecision      = nullptr;
 
-		boost::variant<LocalizerEvaluationResults> evaluationResults;
+		LocalizerEvaluationResults localizerResults;
+		RecognizerEvaluationResults recognizerResults;
 	} _groundTruth;
 
 	void visualizeLocalizerOutput(cv::Mat& image) const;
@@ -92,8 +101,11 @@ private:
 	void visualizeDecoderOutput(cv::Mat& image) const;
 
 	void evaluateLocalizer();
+	void evaluateRecognizer();
 
 	int calculateVisualizationThickness() const;
+
+	double compareGrids(const decoder::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
 
 	template<typename Widget>
 	void setParamsWidget() {

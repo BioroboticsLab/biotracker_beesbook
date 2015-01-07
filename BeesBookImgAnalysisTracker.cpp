@@ -138,6 +138,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 	{
 		MeasureTimeRAII measure("Recognizer", notify);
 		_taglist = _recognizer.process(std::move(_taglist));
+		if (_groundTruth.available) evaluateRecognizer();
 	}
 	if (_selectedStage < BeesBookCommon::Stage::Transformer) return;
 	{
@@ -167,7 +168,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const 
 		return;
 	}
 
-	const LocalizerEvaluationResults& results = boost::get<LocalizerEvaluationResults>(_groundTruth.evaluationResults);
+	const LocalizerEvaluationResults& results = _groundTruth.localizerResults;
 
 	for (const decoder::Tag& tag : results.truePositives) {
 		cv::rectangle(image, tag.getBox(), COLOR_GREEN, thickness, CV_AA);
@@ -180,21 +181,67 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const 
 	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 	}
+
+	const float recall    = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	const float precision = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.truePositives.size() + results.falsePositives.size()) * 100.f;
+
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
+	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
+	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
+	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
 void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const {
-	for (const decoder::Tag& tag : _taglist) {
-		if (!tag.getCandidates().empty()) {
-			// get best candidate
-			const decoder::TagCandidate& candidate = tag.getCandidates()[0];
-			const decoder::Ellipse& ellipse = candidate.getEllipse();
+	const int thickness = calculateVisualizationThickness();
+
+	if (!_groundTruth.available) {
+		for (const decoder::Tag& tag : _taglist) {
+			if (!tag.getCandidates().empty()) {
+				// get best candidate
+				const decoder::TagCandidate& candidate = tag.getCandidates()[0];
+				const decoder::Ellipse& ellipse = candidate.getEllipse();
+				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(), ellipse.getAxis(),
+							ellipse.getAngle(), 0, 360, cv::Scalar(0, 255, 0), 3);
+				cv::putText(image, "Score: " + std::to_string(ellipse.getVote()),
+							tag.getBox().tl() + cv::Point(80, 80), cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+							cv::Scalar(0, 255, 0), 2, CV_AA);
+			}
+		}
+		return;
+	}
+
+	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
+
+	for (const decoder::Tag& tag : results.truePositives) {
+		//TODO: should use ellipse with best score
+		const decoder::Ellipse& ellipse = tag.getCandidates().at(0).getEllipse();
+		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(), ellipse.getAxis(),
+					ellipse.getAngle(), 0, 360, COLOR_GREEN, thickness);
+	}
+
+	for (const decoder::Tag& tag : results.falsePositives) {
+		//TODO: should use ellipse with best score
+		if (tag.getCandidates().size()) {
+			const decoder::Ellipse& ellipse = tag.getCandidates().at(0).getEllipse();
 			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(), ellipse.getAxis(),
-						ellipse.getAngle(), 0, 360, cv::Scalar(0, 255, 0), 3);
-			cv::putText(image, "Score: " + std::to_string(ellipse.getVote()),
-						tag.getBox().tl() + cv::Point(80, 80), cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-						cv::Scalar(0, 255, 0), 2, CV_AA);
+						ellipse.getAngle(), 0, 360, COLOR_RED, thickness);
 		}
 	}
+
+	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
+		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
+		grid->draw(image, false);
+	}
+
+	const float recall    = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	const float precision = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.truePositives.size() + results.falsePositives.size()) * 100.f;
+
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
+	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
+	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
+	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& /*image*/) const {
@@ -260,6 +307,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 			if (tagBox.contains(gridBox.tl()) && tagBox.contains(gridBox.br())) {
 				inGroundTruth = true;
 				results.truePositives.insert(tag);
+				results.gridByTag[tag] = grid;
 				// this modifies the container in a range based for loop, which may invalidate
 				// the iterators. This is not problem in this specific case because we exit the loop
 				// right away.
@@ -271,16 +319,33 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 		if (!inGroundTruth) results.falsePositives.insert(tag);
 	}
 
-	const float recall    = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
-	const float precision = static_cast<float>(results.truePositives.size()) / static_cast<float>(results.truePositives.size() + results.falsePositives.size()) * 100.f;
+	_groundTruth.localizerResults = std::move(results);
+}
 
-	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
-	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
-	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
-	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+void BeesBookImgAnalysisTracker::evaluateRecognizer()
+{
+	static const double threshold = 200.;
 
-	_groundTruth.evaluationResults = std::move(results);
+	assert(_groundTruth.available);
+	RecognizerEvaluationResults results;
+	results.taggedGridsOnFrame = _groundTruth.localizerResults.taggedGridsOnFrame;
+
+	for (const decoder::Tag& tag : _taglist) {
+		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
+		if (it != _groundTruth.localizerResults.gridByTag.end()) {
+			const std::shared_ptr<Grid3D>& grid = (*it).second;
+			double score = compareGrids(tag, grid);
+
+			if (score <= threshold) results.truePositives.insert(tag);
+			else results.falseNegatives.insert(grid);
+
+			std::cout << std::to_string(score) << std::endl;
+		} else if (tag.getCandidates().size()) {
+			results.falsePositives.insert(tag);
+		}
+	}
+
+	_groundTruth.recognizerResults = std::move(results);
 }
 
 int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
@@ -294,6 +359,33 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 	// a thickness of 1px.
 	const int thickness = static_cast<int>(1. / (displayTagSize / 50.));
 	return thickness;
+}
+
+double BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag, const std::shared_ptr<Grid3D> &grid) const
+{
+	auto deviation = [](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
+	{
+		const double sina = std::sin(angle);
+		const double cosa = std::cos(angle);
+		const int x = point.x;
+		const int y = point.y;
+		const int a = axis.width;
+		const int b = axis.height;
+		return std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
+	};
+
+	const std::vector<cv::Point>& outerPoints = grid->getOuterRingPoints();
+	double bestDeviation = std::numeric_limits<double>::max();
+	for (decoder::TagCandidate const& candidate : detectedTag.getCandidates()) {
+		double sumDeviation = 0.;
+		const decoder::Ellipse& ellipse = candidate.getEllipse();
+		for (cv::Point const& point : outerPoints) {
+			sumDeviation += deviation(ellipse.getCen(), ellipse.getAxis(), ellipse.getAngle(), point);
+		}
+		bestDeviation = std::min(bestDeviation, (sumDeviation / outerPoints.size()));
+	}
+
+	return bestDeviation;
 }
 
 void BeesBookImgAnalysisTracker::paint(cv::Mat& image) {
