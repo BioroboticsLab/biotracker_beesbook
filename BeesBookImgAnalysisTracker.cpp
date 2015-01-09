@@ -120,6 +120,11 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 	const std::lock_guard<std::mutex> lock(_tagListLock);
 	const CursorOverrideRAII cursorOverride(Qt::WaitCursor);
 
+	// invalidate previous visualizations
+	for (boost::optional<cv::Mat>& visualization : _visualizationData.visualizations) {
+		visualization.reset();
+	}
+
 	_taglist.clear();
 
 	if (_selectedStage < BeesBookCommon::Stage::Converter) return;
@@ -132,6 +137,8 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 	{
 		MeasureTimeRAII measure("Localizer", notify);
 		_taglist = _localizer.process(std::move(image));
+		_visualizationData.localizerSobelImage = _localizer.getSobel().clone();
+		_visualizationData.localizerBlobImage  = _localizer.getBlob().clone();
 		if (_groundTruth.available) evaluateLocalizer();
 	}
 	if (_selectedStage < BeesBookCommon::Stage::Recognizer) return;
@@ -388,11 +395,27 @@ double BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag,
 	return bestDeviation;
 }
 
-void BeesBookImgAnalysisTracker::paint(cv::Mat& image) {
+cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat, const int type) const
+{
+	// TODO: convert B&W to RGB
+	// this could probably be implemented more efficiently
+	cv::Mat image;
+	cv::Mat channels[3] = { mat.clone(), mat.clone(), mat.clone() };
+	cv::merge(channels, 3, image);
+	image.convertTo(image, type);
+	return image;
+}
+
+void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 	// don't try to visualize results while data processing is running
 	if (_tagListLock.try_lock()) {
 		switch (_selectedStage) {
 		case BeesBookCommon::Stage::Localizer:
+			if ((view.name == "Sobel Edge") && (_visualizationData.localizerSobelImage)) {
+				image = rgbMatFromBwMat(_visualizationData.localizerSobelImage.get(), image.type());
+			} else if ((view.name == "Blobs") && (_visualizationData.localizerBlobImage)) {
+				image = rgbMatFromBwMat(_visualizationData.localizerBlobImage.get(), image.type());
+			}
 			visualizeLocalizerOutput(image);
 			break;
 		case BeesBookCommon::Stage::Recognizer:
@@ -467,6 +490,12 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage sta
 {
 	if (checked) {
 		_selectedStage = stage;
+
+		if (stage == BeesBookCommon::Stage::Localizer) {
+			emit registerViews({{"Sobel Edge"}, {"Blobs"}});
+		} else {
+			emit registerViews({});
+		}
 
 		switch (stage) {
 		case BeesBookCommon::Stage::Localizer:

@@ -1,6 +1,7 @@
 #ifndef BeesBookImgAnalysisTracker_H
 #define BeesBookImgAnalysisTracker_H
 
+#include <array>
 #include <mutex>
 
 #include <opencv2/opencv.hpp>
@@ -33,7 +34,7 @@ public:
 	BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent);
 
 	void track(ulong frameNumber, cv::Mat& frame) override;
-	void paint(cv::Mat& image) override;
+	void paint(cv::Mat& image, View const& view = OriginalView) override;
 	void reset() override;
 
 	std::shared_ptr<QWidget> getParamsWidget() override {
@@ -58,6 +59,16 @@ private:
 
 	std::vector<decoder::Tag> _taglist;
 	std::mutex _tagListLock;
+
+	struct {
+		boost::optional<cv::Mat> localizerSobelImage;
+		boost::optional<cv::Mat> localizerBlobImage;
+
+		// these references are just stored for convenience in order to invalidate all
+		// visualizations in a loop
+		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 2> reference_array_t;
+		reference_array_t visualizations = reference_array_t{ localizerSobelImage, localizerBlobImage };
+	} _visualizationData;
 
 	struct LocalizerEvaluationResults {
 		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
@@ -106,6 +117,8 @@ private:
 	int calculateVisualizationThickness() const;
 
 	double compareGrids(const decoder::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
+
+	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
 
 	template<typename Widget>
 	void setParamsWidget() {
