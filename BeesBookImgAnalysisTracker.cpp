@@ -251,8 +251,23 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const
 	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& /*image*/) const {
+void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const {
 	//TODO
+
+	if (!_groundTruth.available) {
+		for (const decoder::Tag& tag : _taglist) {
+			if (!tag.getCandidates().empty()) {
+				// get best candidate
+				const decoder::TagCandidate& candidate = tag.getCandidates()[0];
+				const decoder::Grid& grid = candidate.getGrids()[0];
+				const decoder::Ellipse& ellipse = candidate.getEllipse();
+				const Grid3D grid3d = grid.grid2Grid3D(tag.getBox().tl() + ellipse.getCen());
+				grid3d.draw(image, true);
+
+			}
+		}
+		return;
+	}
 }
 
 void BeesBookImgAnalysisTracker::visualizeTransformerOutput(cv::Mat& /*image*/) const {
