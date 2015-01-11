@@ -6,6 +6,7 @@
 #include <QWidget>
 
 #include "ParamsSubWidgetBase.h"
+#include "source/utility/SpinBoxWithSlider.h"
 
 class Settings;
 
@@ -17,4 +18,9 @@ public:
 
 private:
 	Settings& _settings;
+
+	SpinBoxWithSlider _initialStepSizeSlider;
+	SpinBoxWithSlider _finalStepSizeSlider;
+	SpinBoxWithSlider _upSpeedSlider;
+	SpinBoxWithSlider _downSpeedSlider;
 };

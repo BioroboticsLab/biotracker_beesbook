@@ -50,3 +50,18 @@ decoder::recognizer_settings_t BeesBookCommon::getRecognizerSettings(const Setti
 
 	return recognizerSettings;
 }
+
+
+decoder::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(const Settings &settings)
+{
+	using namespace GridFitter;
+
+	decoder::gridfitter_settings_t gridfitterSettings;
+
+	maybeSetParam<int>(settings, gridfitterSettings.initial_step_size, Params::INITIAL_STEP_SIZE);
+	maybeSetParam<int>(settings, gridfitterSettings.final_step_size, Params::FINAL_STEP_SIZE);
+	maybeSetParam<float>(settings, gridfitterSettings.up_speed, Params::UP_SPEED);
+	maybeSetParam<float>(settings, gridfitterSettings.down_speed, Params::DOWN_SPEED);
+
+	return gridfitterSettings;
+}

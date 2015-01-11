@@ -2,6 +2,7 @@
 
 #include "pipeline/Localizer.h"
 #include "pipeline/Recognizer.h"
+#include "pipeline/GridFitter.h"
 
 class Settings;
 
@@ -54,6 +55,22 @@ static const int THRESHOLD_BEST_VOTE = 3000;
 }
 }
 
+namespace GridFitter {
+namespace Params {
+static const std::string BASE = "BEESBOOKPIPELINE.GRIDFITTER.";
+static const std::string INITIAL_STEP_SIZE = BASE + "INITIAL_STEP_SIZE";
+static const std::string FINAL_STEP_SIZE = BASE + "FINAL_STEP_SIZE";
+static const std::string UP_SPEED = BASE + "UP_SPEED";
+static const std::string DOWN_SPEED = BASE + "DOWN_SPEED";
+}
+namespace Defaults {
+static const int INITIAL_STEP_SIZE = 20;
+static const int FINAL_STEP_SIZE = 0;
+static const int UP_SPEED = 3;
+static const int DOWN_SPEED = 1; // TODO: should be 0.5 
+}
+}
+
 namespace BeesBookCommon {
 enum class Stage : uint8_t {
 	NoProcessing = 0,
@@ -67,4 +84,5 @@ enum class Stage : uint8_t {
 
 decoder::localizer_settings_t getLocalizerSettings(Settings const& settings);
 decoder::recognizer_settings_t getRecognizerSettings(Settings const& settings);
+decoder::gridfitter_settings_t getGridfitterSettings(Settings const& settings);
 }
