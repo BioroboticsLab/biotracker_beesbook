@@ -63,11 +63,13 @@ private:
 	struct {
 		boost::optional<cv::Mat> localizerSobelImage;
 		boost::optional<cv::Mat> localizerBlobImage;
+		boost::optional<cv::Mat> recognizerCannyEdge;
 
 		// these references are just stored for convenience in order to invalidate all
 		// visualizations in a loop
-		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 2> reference_array_t;
-		reference_array_t visualizations = reference_array_t{ localizerSobelImage, localizerBlobImage };
+		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 3> reference_array_t;
+		reference_array_t visualizations = reference_array_t{
+				localizerSobelImage, localizerBlobImage, recognizerCannyEdge };
 	} _visualizationData;
 
 	struct LocalizerEvaluationResults {
@@ -81,7 +83,7 @@ private:
 	struct RecognizerEvaluationResults {
 		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const decoder::Tag>> falsePositives;
-		std::set<std::reference_wrapper<const decoder::Tag>> truePositives;
+		std::vector<std::pair<std::reference_wrapper<const decoder::Tag>, std::reference_wrapper<const decoder::TagCandidate>>> truePositives;
 		std::set<std::shared_ptr<Grid3D>> falseNegatives;
 	};
 
@@ -116,7 +118,7 @@ private:
 
 	int calculateVisualizationThickness() const;
 
-	double compareGrids(const decoder::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
+	std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> compareGrids(const decoder::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
 
 	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
 

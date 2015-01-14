@@ -145,6 +145,8 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 	{
 		MeasureTimeRAII measure("Recognizer", notify);
 		_taglist = _recognizer.process(std::move(_taglist));
+		// TODO: maybe only visualize areas with ROIs
+		_visualizationData.recognizerCannyEdge = _recognizer.computeCannyEdgeMap(frame);
 		if (_groundTruth.available) evaluateRecognizer();
 	}
 	if (_selectedStage < BeesBookCommon::Stage::Transformer) return;
@@ -220,9 +222,10 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const
 
 	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
 
-	for (const decoder::Tag& tag : results.truePositives) {
-		//TODO: should use ellipse with best score
-		const decoder::Ellipse& ellipse = tag.getCandidates().at(0).getEllipse();
+	for (const auto& tagCandidatePair : results.truePositives) {
+		const decoder::Tag& tag = tagCandidatePair.first;
+		const decoder::TagCandidate& candidate = tagCandidatePair.second;
+		const decoder::Ellipse& ellipse = candidate.getEllipse();
 		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(), ellipse.getAxis(),
 					ellipse.getAngle(), 0, 360, COLOR_GREEN, thickness);
 	}
@@ -331,7 +334,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 
 void BeesBookImgAnalysisTracker::evaluateRecognizer()
 {
-	static const double threshold = 200.;
+	static const double threshold = 100.;
 
 	assert(_groundTruth.available);
 	RecognizerEvaluationResults results;
@@ -341,15 +344,19 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
 			const std::shared_ptr<Grid3D>& grid = (*it).second;
-			double score = compareGrids(tag, grid);
+			auto scoreCandidatePair = compareGrids(tag, grid);
+			const double score = scoreCandidatePair.first;
+			const decoder::TagCandidate& candidate = scoreCandidatePair.second;
 
-			if (score <= threshold) results.truePositives.insert(tag);
-			else results.falseNegatives.insert(grid);
-
-			std::cout << std::to_string(score) << std::endl;
+			if (score <= threshold) results.truePositives.push_back({tag, candidate});
+			else results.falsePositives.insert(tag);
 		} else if (tag.getCandidates().size()) {
 			results.falsePositives.insert(tag);
 		}
+	}
+
+	for (const std::shared_ptr<Grid3D>& grid : _groundTruth.localizerResults.falseNegatives) {
+		results.falseNegatives.insert(grid);
 	}
 
 	_groundTruth.recognizerResults = std::move(results);
@@ -368,7 +375,7 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 	return thickness;
 }
 
-double BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag, const std::shared_ptr<Grid3D> &grid) const
+std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag, const std::shared_ptr<Grid3D> &grid) const
 {
 	auto deviation = [](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
 	{
@@ -381,6 +388,7 @@ double BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag,
 		return std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
 	};
 
+	decoder::TagCandidate const* bestCandidate = nullptr;
 	const std::vector<cv::Point>& outerPoints = grid->getOuterRingPoints();
 	double bestDeviation = std::numeric_limits<double>::max();
 	for (decoder::TagCandidate const& candidate : detectedTag.getCandidates()) {
@@ -389,10 +397,14 @@ double BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag,
 		for (cv::Point const& point : outerPoints) {
 			sumDeviation += deviation(ellipse.getCen(), ellipse.getAxis(), ellipse.getAngle(), point);
 		}
-		bestDeviation = std::min(bestDeviation, (sumDeviation / outerPoints.size()));
+		const double deviation = sumDeviation / outerPoints.size();
+		if (deviation < bestDeviation) {
+			bestDeviation = deviation;
+			bestCandidate = &candidate;
+		}
 	}
-
-	return bestDeviation;
+	assert(bestCandidate);
+	return {bestDeviation, *bestCandidate};
 }
 
 cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat, const int type) const
@@ -419,6 +431,9 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 			visualizeLocalizerOutput(image);
 			break;
 		case BeesBookCommon::Stage::Recognizer:
+			if ((view.name == "Canny Edge") && (_visualizationData.recognizerCannyEdge)) {
+				image = rgbMatFromBwMat(_visualizationData.recognizerCannyEdge.get(), image.type());
+			}
 			visualizeRecognizerOutput(image);
 			break;
 		case BeesBookCommon::Stage::Transformer:
@@ -481,9 +496,8 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData()
 		label->setEnabled(true);
 	}
 
+	emit forceTracking();
 	//TODO: maybe check filehash here
-
-
 }
 
 void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage stage, bool checked)
@@ -491,18 +505,15 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage sta
 	if (checked) {
 		_selectedStage = stage;
 
-		if (stage == BeesBookCommon::Stage::Localizer) {
-			emit registerViews({{"Sobel Edge"}, {"Blobs"}});
-		} else {
-			emit registerViews({});
-		}
-
+		emit registerViews({});
 		switch (stage) {
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
+			emit registerViews({{"Sobel Edge"}, {"Blobs"}});
 			break;
 		case BeesBookCommon::Stage::Recognizer:
 			setParamsWidget<RecognizerParamsWidget>();
+			emit registerViews({{"Canny Edge"}});
 			break;
 		case BeesBookCommon::Stage::GridFitter:
 			setParamsWidget<GridFitterParamsWidget>();
