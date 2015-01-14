@@ -254,8 +254,23 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const
 	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& /*image*/) const {
+void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const {
 	//TODO
+
+	if (!_groundTruth.available) {
+		for (const decoder::Tag& tag : _taglist) {
+			if (!tag.getCandidates().empty()) {
+				// get best candidate
+				const decoder::TagCandidate& candidate = tag.getCandidates()[0];
+				const decoder::Grid& grid = candidate.getGrids()[0];
+				const decoder::Ellipse& ellipse = candidate.getEllipse();
+				const Grid3D grid3d = grid.grid2Grid3D(tag.getBox().tl() + ellipse.getCen());
+				grid3d.draw(image, true);
+
+			}
+		}
+		return;
+	}
 }
 
 void BeesBookImgAnalysisTracker::visualizeTransformerOutput(cv::Mat& /*image*/) const {
@@ -344,12 +359,14 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
 			const std::shared_ptr<Grid3D>& grid = (*it).second;
-			auto scoreCandidatePair = compareGrids(tag, grid);
-			const double score = scoreCandidatePair.first;
-			const decoder::TagCandidate& candidate = scoreCandidatePair.second;
+			if (!tag.getCandidates().empty()) {
+				auto scoreCandidatePair = compareGrids(tag, grid);
+				const double score = scoreCandidatePair.first;
+				const decoder::TagCandidate& candidate = scoreCandidatePair.second;
 
-			if (score <= threshold) results.truePositives.push_back({tag, candidate});
-			else results.falsePositives.insert(tag);
+				if (score <= threshold) results.truePositives.push_back({tag, candidate});
+				else results.falsePositives.insert(tag);
+			} else results.falsePositives.insert(tag);
 		} else if (tag.getCandidates().size()) {
 			results.falsePositives.insert(tag);
 		}
@@ -377,6 +394,7 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 
 std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag, const std::shared_ptr<Grid3D> &grid) const
 {
+	assert(!detectedTag.getCandidates().empty());
 	auto deviation = [](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
 	{
 		const double sina = std::sin(angle);
