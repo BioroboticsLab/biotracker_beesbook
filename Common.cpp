@@ -65,3 +65,23 @@ decoder::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(const Setti
 
 	return gridfitterSettings;
 }
+
+
+decoder::preprocessor_settings_t BeesBookCommon::getPreprocessorSettings(const Settings &settings)
+{
+	using namespace Preprocessor;
+
+	decoder::preprocessor_settings_t preprocessorSettings;
+
+	maybeSetParam<double>(settings, preprocessorSettings.comb_threshold, Params::BASE+Params::COMB_THRESHOLD);
+	maybeSetParam<unsigned int>(settings, preprocessorSettings.min_size_comb, Params::BASE+Params::MIN_COMB_SIZE);
+	maybeSetParam<unsigned int>(settings, preprocessorSettings.max_size_comb, Params::BASE+Params::MAX_COMB_SIZE);
+	maybeSetParam<double>(settings, preprocessorSettings.diff_size_combs, Params::BASE+Params::DIFF_COMB_SIZE);
+	maybeSetParam<unsigned int>(settings, preprocessorSettings.line_color_combs, Params::BASE+Params::COMB_LINE_COLOR);
+	maybeSetParam<unsigned int>(settings, preprocessorSettings.use_comb_detection,Params::BASE+ Params::USE_COMB_DETECTION);
+	maybeSetParam<int>(settings, preprocessorSettings.line_width_combs, Params::BASE+Params::COMB_LINE_WIDTH);
+	maybeSetParam<unsigned int>(settings, preprocessorSettings.use_equalize_histogram, Params::BASE+Params::USE_EQUALIZE_HISTOGRAM);
+
+	return preprocessorSettings;
+}
+

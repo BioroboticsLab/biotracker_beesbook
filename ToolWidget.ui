@@ -17,16 +17,7 @@
    <property name="spacing">
     <number>3</number>
    </property>
-   <property name="leftMargin">
-    <number>3</number>
-   </property>
-   <property name="topMargin">
-    <number>3</number>
-   </property>
-   <property name="rightMargin">
-    <number>3</number>
-   </property>
-   <property name="bottomMargin">
+   <property name="margin">
     <number>3</number>
    </property>
    <item>
@@ -38,16 +29,7 @@
       <property name="spacing">
        <number>1</number>
       </property>
-      <property name="leftMargin">
-       <number>3</number>
-      </property>
-      <property name="topMargin">
-       <number>3</number>
-      </property>
-      <property name="rightMargin">
-       <number>3</number>
-      </property>
-      <property name="bottomMargin">
+      <property name="margin">
        <number>3</number>
       </property>
       <item>
@@ -61,9 +43,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="radioButtonConverter">
+       <widget class="QRadioButton" name="radioButtonPreprocessor">
         <property name="text">
-         <string>Converter</string>
+         <string>Preprocessor</string>
         </property>
        </widget>
       </item>
@@ -147,16 +129,7 @@
       <property name="verticalSpacing">
        <number>3</number>
       </property>
-      <property name="leftMargin">
-       <number>3</number>
-      </property>
-      <property name="topMargin">
-       <number>3</number>
-      </property>
-      <property name="rightMargin">
-       <number>3</number>
-      </property>
-      <property name="bottomMargin">
+      <property name="margin">
        <number>3</number>
       </property>
       <item row="0" column="0">

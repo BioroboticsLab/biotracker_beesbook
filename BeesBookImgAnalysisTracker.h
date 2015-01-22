@@ -50,25 +50,32 @@ private:
 	const std::shared_ptr<ParamsWidget> _paramsWidget;
 	const std::shared_ptr<QWidget> _toolsWidget;
 
-	decoder::Converter _converter;
+	decoder::Preprocessor _preprocessor;
 	decoder::Decoder _decoder;
 	decoder::GridFitter _gridFitter;
 	decoder::Recognizer _recognizer;
 	decoder::Transformer _transformer;
 	decoder::Localizer _localizer;
 
+	cv::Mat _image;
 	std::vector<decoder::Tag> _taglist;
 	std::mutex _tagListLock;
 
 	struct {
+		boost::optional<cv::Mat> preprocessorImage;
+		boost::optional<cv::Mat> preprocessorThresholdImage;
+		boost::optional<cv::Mat> localizerInputImage;
+		boost::optional<cv::Mat> localizerThresholdImage;
 		boost::optional<cv::Mat> localizerSobelImage;
 		boost::optional<cv::Mat> localizerBlobImage;
 		boost::optional<cv::Mat> recognizerCannyEdge;
 
+
 		// these references are just stored for convenience in order to invalidate all
 		// visualizations in a loop
-		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 3> reference_array_t;
-		reference_array_t visualizations = reference_array_t{
+		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
+		reference_array_t visualizations = reference_array_t{preprocessorImage,
+			preprocessorThresholdImage, localizerInputImage, localizerThresholdImage,
 				localizerSobelImage, localizerBlobImage, recognizerCannyEdge };
 	} _visualizationData;
 
@@ -106,6 +113,7 @@ private:
 		LocalizerEvaluationResults localizerResults;
 		RecognizerEvaluationResults recognizerResults;
 	} _groundTruth;
+
 
 	void visualizeLocalizerOutput(cv::Mat& image) const;
 	void visualizeRecognizerOutput(cv::Mat& image) const;

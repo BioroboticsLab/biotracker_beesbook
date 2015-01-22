@@ -3,6 +3,8 @@
 #include "pipeline/Localizer.h"
 #include "pipeline/Recognizer.h"
 #include "pipeline/GridFitter.h"
+#include "pipeline/Preprocessor.h"
+#include "pipeline/datastructure/settings.h"
 
 class Settings;
 
@@ -71,10 +73,13 @@ static const int DOWN_SPEED = 1; // TODO: should be 0.5
 }
 }
 
+
+
+
 namespace BeesBookCommon {
 enum class Stage : uint8_t {
 	NoProcessing = 0,
-	Converter,
+	Preprocessor,
 	Localizer,
 	Recognizer,
 	Transformer,
@@ -85,4 +90,5 @@ enum class Stage : uint8_t {
 decoder::localizer_settings_t getLocalizerSettings(Settings const& settings);
 decoder::recognizer_settings_t getRecognizerSettings(Settings const& settings);
 decoder::gridfitter_settings_t getGridfitterSettings(Settings const& settings);
+decoder::preprocessor_settings_t getPreprocessorSettings(Settings const& settings);
 }
