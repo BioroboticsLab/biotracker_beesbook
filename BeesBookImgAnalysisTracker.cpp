@@ -22,7 +22,7 @@
 #include "PreprocessorParamsWidget.h"
 #include "pipeline/datastructure/Tag.h"
 #include "source/tracking/algorithm/algorithms.h"
-#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/resources/Grid3D.h"
+#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/InteractiveGrid.h"
 
 #include "ui_ToolWidget.h"
 
@@ -215,9 +215,8 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(
 		cv::rectangle(image, tag.getBox(), COLOR_RED, thickness, CV_AA);
 	}
 
-	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
-		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
-		CV_AA);
+	for (const std::shared_ptr<InteractiveGrid>& grid : results.falseNegatives) {
+		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 	}
 
 	const float recall = static_cast<float>(results.truePositives.size())
@@ -242,73 +241,73 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat &image) const
 
 }
 
-//void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
-//		cv::Mat& image) const {
-//	const int thickness = calculateVisualizationThickness();
+void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
+		cv::Mat& image) const {
+	const int thickness = calculateVisualizationThickness();
 
-//	if (!_groundTruth.available) {
-//		for (const pipeline::Tag& tag : _taglist) {
-//			if (!tag.getCandidates().empty()) {
-//				// get best candidate
-//				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
-//				const pipeline::Ellipse& ellipse = candidate.getEllipse();
-//				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-//						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
-//						cv::Scalar(0, 255, 0), 3);
-//				cv::putText(image,
-//						"Score: " + std::to_string(ellipse.getVote()),
-//						tag.getBox().tl() + cv::Point(80, 80),
-//						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-//						cv::Scalar(0, 255, 0), 2, CV_AA);
-//			}
-//		}
-//		return;
-//	}
+	if (!_groundTruth.available) {
+		for (const pipeline::Tag& tag : _taglist) {
+			if (!tag.getCandidates().empty()) {
+				// get best candidate
+				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+				const pipeline::Ellipse& ellipse = candidate.getEllipse();
+				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
+						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
+						cv::Scalar(0, 255, 0), 3);
+				cv::putText(image,
+						"Score: " + std::to_string(ellipse.getVote()),
+						tag.getBox().tl() + cv::Point(80, 80),
+						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+						cv::Scalar(0, 255, 0), 2, CV_AA);
+			}
+		}
+		return;
+	}
 
-//	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
+	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
 
-//	for (const auto& tagCandidatePair : results.truePositives) {
-//		const pipeline::Tag& tag = tagCandidatePair.first;
-//		const pipeline::TagCandidate& candidate = tagCandidatePair.second;
-//		const pipeline::Ellipse& ellipse = candidate.getEllipse();
-//		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-//				ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_GREEN,
-//				thickness);
-//	}
+	for (const auto& tagCandidatePair : results.truePositives) {
+		const pipeline::Tag& tag = tagCandidatePair.first;
+		const pipeline::TagCandidate& candidate = tagCandidatePair.second;
+		const pipeline::Ellipse& ellipse = candidate.getEllipse();
+		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
+				ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_GREEN,
+				thickness);
+	}
 
-//	for (const pipeline::Tag& tag : results.falsePositives) {
-//		//TODO: should use ellipse with best score
-//		if (tag.getCandidates().size()) {
-//			const pipeline::Ellipse& ellipse =
-//					tag.getCandidates().at(0).getEllipse();
-//			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-//					ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
-//					thickness);
-//		}
-//	}
+	for (const pipeline::Tag& tag : results.falsePositives) {
+		//TODO: should use ellipse with best score
+		if (tag.getCandidates().size()) {
+			const pipeline::Ellipse& ellipse =
+					tag.getCandidates().at(0).getEllipse();
+			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
+					ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
+					thickness);
+		}
+	}
 
-//	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
-//		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
-//		CV_AA);
-//		grid->draw(image, false);
-//	}
+	for (const std::shared_ptr<InteractiveGrid>& grid : results.falseNegatives) {
+		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
+		CV_AA);
+		grid->draw(image, false);
+	}
 
-//	const float recall = static_cast<float>(results.truePositives.size())
-//			/ static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
-//	const float precision = static_cast<float>(results.truePositives.size())
-//			/ static_cast<float>(results.truePositives.size()
-//					+ results.falsePositives.size()) * 100.f;
+	const float recall = static_cast<float>(results.truePositives.size())
+			/ static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	const float precision = static_cast<float>(results.truePositives.size())
+			/ static_cast<float>(results.truePositives.size()
+					+ results.falsePositives.size()) * 100.f;
 
-//	_groundTruth.labelNumFalseNegatives->setText(
-//			QString::number(results.falseNegatives.size()));
-//	_groundTruth.labelNumFalsePositives->setText(
-//			QString::number(results.falsePositives.size()));
-//	_groundTruth.labelNumTruePositives->setText(
-//			QString::number(results.truePositives.size()));
-//	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-//	_groundTruth.labelNumPrecision->setText(
-//			QString::number(precision, 'f', 2) + "%");
-//}
+	_groundTruth.labelNumFalseNegatives->setText(
+			QString::number(results.falseNegatives.size()));
+	_groundTruth.labelNumFalsePositives->setText(
+			QString::number(results.falsePositives.size()));
+	_groundTruth.labelNumTruePositives->setText(
+			QString::number(results.truePositives.size()));
+	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(
+			QString::number(precision, 'f', 2) + "%");
+}
 
 //void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(
 //		cv::Mat& image) const {
@@ -321,9 +320,9 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat &image) const
 //				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 //				const pipeline::Grid& grid = candidate.getGrids()[0];
 //				const pipeline::Ellipse& ellipse = candidate.getEllipse();
-//				const Grid3D grid3d = grid.grid2Grid3D(
+//				const InteractiveGrid InteractiveGrid = grid.grid2InteractiveGrid(
 //						tag.getBox().tl() + ellipse.getCen());
-//				grid3d.draw(image, true);
+//				InteractiveGrid.draw(image, true);
 
 //			}
 //		}
@@ -358,15 +357,13 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 	{
 		const int currentFrameNumber = getCurrentFrameNumber();
 		for (TrackedObject const& object : _groundTruth.data.getTrackedObjects()) {
-			const std::shared_ptr<Grid3D> grid = object.maybeGet<Grid3D>(
-					currentFrameNumber);
-			if (grid)
-				results.taggedGridsOnFrame.insert(grid);
+			const std::shared_ptr<InteractiveGrid> grid = object.maybeGet<InteractiveGrid>(currentFrameNumber);
+			if (grid) results.taggedGridsOnFrame.insert(grid);
 		}
 	}
 
 	// detect false negatives
-	for (const std::shared_ptr<Grid3D>& grid : results.taggedGridsOnFrame) {
+	for (const std::shared_ptr<InteractiveGrid>& grid : results.taggedGridsOnFrame) {
 		const cv::Rect gridBox = grid->getBoundingBox();
 
 		bool inGroundTruth = false;
@@ -384,13 +381,12 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 	}
 
 	// detect false positives
-	std::set<std::shared_ptr<Grid3D>> notYetDetectedGrids =
-			results.taggedGridsOnFrame;
+	std::set<std::shared_ptr<InteractiveGrid>> notYetDetectedGrids = results.taggedGridsOnFrame;
 	for (const pipeline::Tag& tag : _taglist) {
 		const cv::Rect& tagBox = tag.getBox();
 
 		bool inGroundTruth = false;
-		for (const std::shared_ptr<Grid3D>& grid : notYetDetectedGrids) {
+		for (const std::shared_ptr<InteractiveGrid>& grid : notYetDetectedGrids) {
 			const cv::Rect gridBox = grid->getBoundingBox();
 			if (tagBox.contains(gridBox.tl())
 					&& tagBox.contains(gridBox.br())) {
@@ -423,7 +419,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer() {
 	for (const pipeline::Tag& tag : _taglist) {
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
-			const std::shared_ptr<Grid3D>& grid = (*it).second;
+			const std::shared_ptr<InteractiveGrid>& grid = (*it).second;
 			if (!tag.getCandidates().empty()) {
 				auto scoreCandidatePair = compareGrids(tag, grid);
 				const double score = scoreCandidatePair.first;
@@ -441,7 +437,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer() {
 		}
 	}
 
-	for (const std::shared_ptr<Grid3D>& grid : _groundTruth.localizerResults.falseNegatives) {
+	for (const std::shared_ptr<InteractiveGrid>& grid : _groundTruth.localizerResults.falseNegatives) {
 		results.falseNegatives.insert(grid);
 	}
 
@@ -463,7 +459,8 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const {
 
 std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(
 		const pipeline::Tag &detectedTag,
-		const std::shared_ptr<Grid3D> &grid) const {
+		const std::shared_ptr<InteractiveGrid> &grid) const
+{
 	assert(!detectedTag.getCandidates().empty());
 	auto deviation =
 			[](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
@@ -549,6 +546,9 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 						image.type());
 			}
 			visualizeLocalizerOutput(image);
+			break;
+		case BeesBookCommon::Stage::Recognizer:
+			visualizeRecognizerOutput(image);
 			break;
 		case BeesBookCommon::Stage::GridFitter:
 			visualizeGridFitterOutput(image);

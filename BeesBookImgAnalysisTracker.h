@@ -24,7 +24,7 @@
 
 #include "source/tracking/serialization/SerializationData.h"
 
-class Grid3D;
+class InteractiveGrid;
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
@@ -76,18 +76,18 @@ private:
 	} _visualizationData;
 
 	struct LocalizerEvaluationResults {
-		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
+		std::set<std::shared_ptr<InteractiveGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
-		std::set<std::shared_ptr<Grid3D>> falseNegatives;
-		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<Grid3D>> gridByTag;
+		std::set<std::shared_ptr<InteractiveGrid>> falseNegatives;
+		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<InteractiveGrid>> gridByTag;
 	};
 
 	struct RecognizerEvaluationResults {
-		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
+		std::set<std::shared_ptr<InteractiveGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
-		std::set<std::shared_ptr<Grid3D>> falseNegatives;
+		std::set<std::shared_ptr<InteractiveGrid>> falseNegatives;
 	};
 
 	struct {
@@ -121,7 +121,7 @@ private:
 
 	int calculateVisualizationThickness() const;
 
-	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
+	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<InteractiveGrid> const& grid) const;
 
 	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
 
