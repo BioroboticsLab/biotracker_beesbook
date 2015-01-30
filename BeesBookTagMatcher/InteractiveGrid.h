@@ -6,9 +6,8 @@
 #include <opencv2/opencv.hpp>      // cv::Mat, cv::Point3_
 #include <boost/logic/tribool.hpp> // boost::tribool
 
-#include "Grid.h"
-
-#include <source/tracking/serialization/ObjectModel.h>
+#include "source/tracking/algorithm/BeesBook/Common/Grid.h"
+#include "source/tracking/serialization/ObjectModel.h"
 
 class InteractiveGrid : public Grid, public ObjectModel
 {
