@@ -32,6 +32,12 @@ BeesBookTagMatcher::BeesBookTagMatcher(Settings & settings, QWidget *parent)
 {
 	_UiToolWidget.setupUi(_toolWidget.get());
 	setNumTags();
+
+	for (;;) {
+		Grid debugGrid(cv::Point2i(0, 0), 100, 0.5, 0.5, 0.5);
+		debugGrid.debugDraw();
+		cv::waitKey();
+	}
 }
 
 BeesBookTagMatcher::~BeesBookTagMatcher()
@@ -289,7 +295,7 @@ void BeesBookTagMatcher::mouseReleaseEvent(QMouseEvent * e)
 			_trackedObjects.emplace_back(newID);
 
 			// make pointer to the new tag
-            _activeGrid = std::make_shared<Grid3D>(_orient.from, static_cast<double>(GRID_RADIUS_PIXELS), _orient.alpha(), 0., 0.);
+            _activeGrid = std::make_shared<InteractiveGrid>(_orient.from, static_cast<double>(GRID_RADIUS_PIXELS), _orient.alpha(), 0., 0.);
             
             // associate new (active) grid to frame number
             _trackedObjects.back().add(getCurrentFrameNumber(), _activeGrid);
@@ -460,13 +466,13 @@ void BeesBookTagMatcher::pasteTrackedObjects() {
 			if (_idCopyBuffer.count(object.getId()))
 			{
 				// check if grid from copy-from framenumber still exists
-				const auto maybeGrid = object.maybeGet<Grid3D>(_copyFromFrame.get());
+				const auto maybeGrid = object.maybeGet<InteractiveGrid>(_copyFromFrame.get());
 				// and create a copy if a grid with the same id does not
 				// already exist on the current frame
-				if (maybeGrid && !object.maybeGet<Grid3D>(getCurrentFrameNumber()))
+				if (maybeGrid && !object.maybeGet<InteractiveGrid>(getCurrentFrameNumber()))
 				{
 					// set toogled state to indeterminate if the grid has been set before
-					const auto newGrid = std::make_shared<Grid3D>(*maybeGrid);
+					const auto newGrid = std::make_shared<InteractiveGrid>(*maybeGrid);
 					if (newGrid->hasBeenBitToggled().value == boost::logic::tribool::value_t::true_value) {
 						newGrid->setBeenBitToggled(boost::logic::tribool::value_t::indeterminate_value);
 					}
@@ -489,7 +495,7 @@ void BeesBookTagMatcher::drawTags(cv::Mat& image) const
 		if ( trackedObject.count( getCurrentFrameNumber() ) )
 		{
 			// get grid
-			const std::shared_ptr<Grid3D> grid = trackedObject.get<Grid3D>(getCurrentFrameNumber());
+			const std::shared_ptr<InteractiveGrid> grid = trackedObject.get<InteractiveGrid>(getCurrentFrameNumber());
 			const bool isActive = grid == _activeGrid;
 
 			grid->draw(image, isActive);
@@ -548,7 +554,7 @@ void BeesBookTagMatcher::selectTag(const cv::Point& location)
 	for (size_t i = 0; i < _trackedObjects.size(); i++)
 	{
 		// get pointer to i-th object
-		std::shared_ptr<Grid3D> grid = _trackedObjects[i].maybeGet<Grid3D>(getCurrentFrameNumber());
+		std::shared_ptr<InteractiveGrid> grid = _trackedObjects[i].maybeGet<InteractiveGrid>(getCurrentFrameNumber());
 
 		// check if grid is valid
 		if (grid && dist(location, grid->getCenter()) < grid->getPixelRadius())
@@ -618,7 +624,7 @@ void BeesBookTagMatcher::setNumTags()
 	size_t cnt = 0;
 	for (size_t i = 0; i < _trackedObjects.size(); i++)
 	{
-		if (_trackedObjects[i].maybeGet<Grid3D>(getCurrentFrameNumber())) {
+		if (_trackedObjects[i].maybeGet<InteractiveGrid>(getCurrentFrameNumber())) {
 			++cnt;
 		}
 	}
@@ -692,7 +698,7 @@ void BeesBookTagMatcher::updateValidRect()
 	}
 }
 
-cv::Scalar BeesBookTagMatcher::getGridColor(const std::shared_ptr<Grid3D> &grid) const
+cv::Scalar BeesBookTagMatcher::getGridColor(const std::shared_ptr<InteractiveGrid> &grid) const
 {
 	if (grid->isSettable()) {
 		switch (grid->hasBeenBitToggled().value) {
