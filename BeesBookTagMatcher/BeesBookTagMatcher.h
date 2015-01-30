@@ -10,7 +10,7 @@
 #include <boost/optional.hpp>
 
 #include "source/tracking/TrackingAlgorithm.h"
-#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/resources/Grid3D.h"
+#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/InteractiveGrid.h"
 
 #include "ui_BeesBookTagMatcherToolWidget.h"
 
@@ -21,7 +21,7 @@ private:
 
 	static const size_t GRID_RADIUS_PIXELS;
 
-	std::shared_ptr<Grid3D>	_activeGrid; // points to active grid (grid must be active to be altered)
+	std::shared_ptr<InteractiveGrid>	_activeGrid; // points to active grid (grid must be active to be altered)
 	boost::optional<ulong>	_activeFrameNumber;
 	boost::optional<size_t> _activeGridObjectId;
 
@@ -107,7 +107,7 @@ private:
 
 	void updateValidRect();
 
-	cv::Scalar getGridColor(std::shared_ptr<Grid3D> const& grid) const;
+	cv::Scalar getGridColor(std::shared_ptr<InteractiveGrid> const& grid) const;
 
 	void mouseMoveEvent    (QMouseEvent * e) override;
 	void mousePressEvent   (QMouseEvent * e) override;
