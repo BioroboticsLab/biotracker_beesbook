@@ -21,7 +21,7 @@
 #include "RecognizerParamsWidget.h"
 #include "pipeline/datastructure/Tag.h"
 #include "source/tracking/algorithm/algorithms.h"
-#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/resources/Grid3D.h"
+#include "source/tracking/algorithm/BeesBook/BeesBookTagMatcher/InteractiveGrid.h"
 
 #include "ui_ToolWidget.h"
 
@@ -187,7 +187,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const 
 		cv::rectangle(image, tag.getBox(), COLOR_RED, thickness, CV_AA);
 	}
 
-	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
+	for (const std::shared_ptr<InteractiveGrid>& grid : results.falseNegatives) {
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 	}
 
@@ -239,7 +239,7 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(cv::Mat& image) const
 		}
 	}
 
-	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
+	for (const std::shared_ptr<InteractiveGrid>& grid : results.falseNegatives) {
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 		grid->draw(image, false);
 	}
@@ -264,8 +264,8 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 				const decoder::TagCandidate& candidate = tag.getCandidates()[0];
 				const decoder::Grid& grid = candidate.getGrids()[0];
 				const decoder::Ellipse& ellipse = candidate.getEllipse();
-				const Grid3D grid3d = grid.grid2Grid3D(tag.getBox().tl() + ellipse.getCen());
-				grid3d.draw(image, true);
+				const InteractiveGrid InteractiveGrid = grid.grid2InteractiveGrid(tag.getBox().tl() + ellipse.getCen());
+				InteractiveGrid.draw(image, true);
 
 			}
 		}
@@ -300,13 +300,13 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 	{
 		const int currentFrameNumber = getCurrentFrameNumber();
 		for (TrackedObject const& object : _groundTruth.data.getTrackedObjects()) {
-			const std::shared_ptr<Grid3D> grid = object.maybeGet<Grid3D>(currentFrameNumber);
+			const std::shared_ptr<InteractiveGrid> grid = object.maybeGet<InteractiveGrid>(currentFrameNumber);
 			if (grid) results.taggedGridsOnFrame.insert(grid);
 		}
 	}
 
 	// detect false negatives
-	for (const std::shared_ptr<Grid3D>& grid : results.taggedGridsOnFrame) {
+	for (const std::shared_ptr<InteractiveGrid>& grid : results.taggedGridsOnFrame) {
 		const cv::Rect gridBox = grid->getBoundingBox();
 
 		bool inGroundTruth = false;
@@ -322,12 +322,12 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 	}
 
 	// detect false positives
-	std::set<std::shared_ptr<Grid3D>> notYetDetectedGrids = results.taggedGridsOnFrame;
+	std::set<std::shared_ptr<InteractiveGrid>> notYetDetectedGrids = results.taggedGridsOnFrame;
 	for (const decoder::Tag& tag : _taglist) {
 		const cv::Rect& tagBox = tag.getBox();
 
 		bool inGroundTruth = false;
-		for (const std::shared_ptr<Grid3D>& grid : notYetDetectedGrids) {
+		for (const std::shared_ptr<InteractiveGrid>& grid : notYetDetectedGrids) {
 			const cv::Rect gridBox = grid->getBoundingBox();
 			if (tagBox.contains(gridBox.tl()) && tagBox.contains(gridBox.br())) {
 				inGroundTruth = true;
@@ -358,7 +358,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 	for (const decoder::Tag& tag : _taglist) {
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
-			const std::shared_ptr<Grid3D>& grid = (*it).second;
+			const std::shared_ptr<InteractiveGrid>& grid = (*it).second;
 			if (!tag.getCandidates().empty()) {
 				auto scoreCandidatePair = compareGrids(tag, grid);
 				const double score = scoreCandidatePair.first;
@@ -372,7 +372,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 		}
 	}
 
-	for (const std::shared_ptr<Grid3D>& grid : _groundTruth.localizerResults.falseNegatives) {
+	for (const std::shared_ptr<InteractiveGrid>& grid : _groundTruth.localizerResults.falseNegatives) {
 		results.falseNegatives.insert(grid);
 	}
 
@@ -392,7 +392,7 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 	return thickness;
 }
 
-std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag, const std::shared_ptr<Grid3D> &grid) const
+std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(const decoder::Tag &detectedTag, const std::shared_ptr<InteractiveGrid> &grid) const
 {
 	assert(!detectedTag.getCandidates().empty());
 	auto deviation = [](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
