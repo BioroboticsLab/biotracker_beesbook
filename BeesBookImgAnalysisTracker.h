@@ -14,12 +14,10 @@
 
 #include "Common.h"
 #include "ParamsWidget.h"
-#include "pipeline/Converter.h"
-#include "pipeline/Decoder.h"
-#include "pipeline/GridFitter.h"
+#include "pipeline/Preprocessor.h"
 #include "pipeline/Localizer.h"
 #include "pipeline/Recognizer.h"
-#include "pipeline/Transformer.h"
+#include "pipeline/GridFitter.h"
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
 #include "utility/stdext.h"
@@ -50,15 +48,13 @@ private:
 	const std::shared_ptr<ParamsWidget> _paramsWidget;
 	const std::shared_ptr<QWidget> _toolsWidget;
 
-	decoder::Preprocessor _preprocessor;
-	decoder::Decoder _decoder;
-	decoder::GridFitter _gridFitter;
-	decoder::Recognizer _recognizer;
-	decoder::Transformer _transformer;
-	decoder::Localizer _localizer;
+	pipeline::Preprocessor _preprocessor;
+	pipeline::Localizer _localizer;
+	pipeline::Recognizer _recognizer;
+	pipeline::GridFitter _gridFitter;
 
 	cv::Mat _image;
-	std::vector<decoder::Tag> _taglist;
+	std::vector<pipeline::Tag> _taglist;
 	std::mutex _tagListLock;
 
 	struct {
@@ -81,16 +77,16 @@ private:
 
 	struct LocalizerEvaluationResults {
 		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
-		std::set<std::reference_wrapper<const decoder::Tag>> falsePositives;
-		std::set<std::reference_wrapper<const decoder::Tag>> truePositives;
+		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
+		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
 		std::set<std::shared_ptr<Grid3D>> falseNegatives;
-		std::map<std::reference_wrapper<const decoder::Tag>, std::shared_ptr<Grid3D>> gridByTag;
+		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<Grid3D>> gridByTag;
 	};
 
 	struct RecognizerEvaluationResults {
 		std::set<std::shared_ptr<Grid3D>> taggedGridsOnFrame;
-		std::set<std::reference_wrapper<const decoder::Tag>> falsePositives;
-		std::vector<std::pair<std::reference_wrapper<const decoder::Tag>, std::reference_wrapper<const decoder::TagCandidate>>> truePositives;
+		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
+		std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
 		std::set<std::shared_ptr<Grid3D>> falseNegatives;
 	};
 
@@ -115,18 +111,17 @@ private:
 	} _groundTruth;
 
 
+	void visualizePreprocessorOutput(cv::Mat& image) const;
 	void visualizeLocalizerOutput(cv::Mat& image) const;
 	void visualizeRecognizerOutput(cv::Mat& image) const;
 	void visualizeGridFitterOutput(cv::Mat& image) const;
-	void visualizeTransformerOutput(cv::Mat& image) const;
-	void visualizeDecoderOutput(cv::Mat& image) const;
 
 	void evaluateLocalizer();
 	void evaluateRecognizer();
 
 	int calculateVisualizationThickness() const;
 
-	std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> compareGrids(const decoder::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
+	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<Grid3D> const& grid) const;
 
 	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
 

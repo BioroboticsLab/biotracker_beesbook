@@ -68,12 +68,12 @@ private:
 };
 }
 
-BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings,
-		QWidget* parent) :
-		TrackingAlgorithm(settings, parent), _selectedStage(
-				BeesBookCommon::Stage::NoProcessing), _paramsWidget(
-				std::make_shared<ParamsWidget>()), _toolsWidget(
-				std::make_shared<QWidget>()) {
+BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent)
+    : TrackingAlgorithm(settings, parent)
+    , _selectedStage(BeesBookCommon::Stage::NoProcessing)
+    , _paramsWidget(std::make_shared<ParamsWidget>())
+    , _toolsWidget(std::make_shared<QWidget>())
+{
 	Ui::ToolWidget uiTools;
 	uiTools.setupUi(_toolsWidget.get());
 
@@ -173,24 +173,24 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 		if (_groundTruth.available)
 			evaluateRecognizer();
 	}
-	if (_selectedStage < BeesBookCommon::Stage::Transformer)
-		return;
-	{
-		MeasureTimeRAII measure("Transformer", notify);
-		_taglist = _transformer.process(std::move(_taglist));
-	}
+//	if (_selectedStage < BeesBookCommon::Stage::Transformer)
+//		return;
+//	{
+//		MeasureTimeRAII measure("Transformer", notify);
+//		_taglist = _transformer.process(std::move(_taglist));
+//	}
 	if (_selectedStage < BeesBookCommon::Stage::GridFitter)
 		return;
 	{
 		MeasureTimeRAII measure("GridFitter", notify);
 		_taglist = _gridFitter.process(std::move(_taglist));
 	}
-	if (_selectedStage < BeesBookCommon::Stage::Decoder)
-		return;
-	{
-		MeasureTimeRAII measure("Decoder", notify);
-		_taglist = _decoder.process(std::move(_taglist));
-	}
+//	if (_selectedStage < BeesBookCommon::Stage::Decoder)
+//		return;
+//	{
+//		MeasureTimeRAII measure("Decoder", notify);
+//		_taglist = _decoder.process(std::move(_taglist));
+//	}
 }
 
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(
@@ -198,7 +198,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(
 	const int thickness = calculateVisualizationThickness();
 
 	if (!_groundTruth.available) {
-		for (const decoder::Tag& tag : _taglist) {
+		for (const pipeline::Tag& tag : _taglist) {
 			const cv::Rect& box = tag.getBox();
 			cv::rectangle(image, box, COLOR_BLUE, thickness, CV_AA);
 		}
@@ -207,11 +207,11 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(
 
 	const LocalizerEvaluationResults& results = _groundTruth.localizerResults;
 
-	for (const decoder::Tag& tag : results.truePositives) {
+	for (const pipeline::Tag& tag : results.truePositives) {
 		cv::rectangle(image, tag.getBox(), COLOR_GREEN, thickness, CV_AA);
 	}
 
-	for (const decoder::Tag& tag : results.falsePositives) {
+	for (const pipeline::Tag& tag : results.falsePositives) {
 		cv::rectangle(image, tag.getBox(), COLOR_RED, thickness, CV_AA);
 	}
 
@@ -234,117 +234,122 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(
 			QString::number(results.truePositives.size()));
 	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
 	_groundTruth.labelNumPrecision->setText(
-			QString::number(precision, 'f', 2) + "%");
+	            QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
-		cv::Mat& image) const {
-	const int thickness = calculateVisualizationThickness();
+void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat &image) const
+{
 
-	if (!_groundTruth.available) {
-		for (const decoder::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
-				// get best candidate
-				const decoder::TagCandidate& candidate = tag.getCandidates()[0];
-				const decoder::Ellipse& ellipse = candidate.getEllipse();
-				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
-						cv::Scalar(0, 255, 0), 3);
-				cv::putText(image,
-						"Score: " + std::to_string(ellipse.getVote()),
-						tag.getBox().tl() + cv::Point(80, 80),
-						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-						cv::Scalar(0, 255, 0), 2, CV_AA);
-			}
-		}
-		return;
-	}
-
-	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
-
-	for (const auto& tagCandidatePair : results.truePositives) {
-		const decoder::Tag& tag = tagCandidatePair.first;
-		const decoder::TagCandidate& candidate = tagCandidatePair.second;
-		const decoder::Ellipse& ellipse = candidate.getEllipse();
-		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-				ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_GREEN,
-				thickness);
-	}
-
-	for (const decoder::Tag& tag : results.falsePositives) {
-		//TODO: should use ellipse with best score
-		if (tag.getCandidates().size()) {
-			const decoder::Ellipse& ellipse =
-					tag.getCandidates().at(0).getEllipse();
-			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-					ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
-					thickness);
-		}
-	}
-
-	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
-		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
-		CV_AA);
-		grid->draw(image, false);
-	}
-
-	const float recall = static_cast<float>(results.truePositives.size())
-			/ static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
-	const float precision = static_cast<float>(results.truePositives.size())
-			/ static_cast<float>(results.truePositives.size()
-					+ results.falsePositives.size()) * 100.f;
-
-	_groundTruth.labelNumFalseNegatives->setText(
-			QString::number(results.falseNegatives.size()));
-	_groundTruth.labelNumFalsePositives->setText(
-			QString::number(results.falsePositives.size()));
-	_groundTruth.labelNumTruePositives->setText(
-			QString::number(results.truePositives.size()));
-	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-	_groundTruth.labelNumPrecision->setText(
-			QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(
-		cv::Mat& image) const {
-	//TODO
+//void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
+//		cv::Mat& image) const {
+//	const int thickness = calculateVisualizationThickness();
 
-	if (!_groundTruth.available) {
-		for (const decoder::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
-				// get best candidate
-				const decoder::TagCandidate& candidate = tag.getCandidates()[0];
-				const decoder::Grid& grid = candidate.getGrids()[0];
-				const decoder::Ellipse& ellipse = candidate.getEllipse();
-				const Grid3D grid3d = grid.grid2Grid3D(
-						tag.getBox().tl() + ellipse.getCen());
-				grid3d.draw(image, true);
+//	if (!_groundTruth.available) {
+//		for (const pipeline::Tag& tag : _taglist) {
+//			if (!tag.getCandidates().empty()) {
+//				// get best candidate
+//				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+//				const pipeline::Ellipse& ellipse = candidate.getEllipse();
+//				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
+//						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
+//						cv::Scalar(0, 255, 0), 3);
+//				cv::putText(image,
+//						"Score: " + std::to_string(ellipse.getVote()),
+//						tag.getBox().tl() + cv::Point(80, 80),
+//						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+//						cv::Scalar(0, 255, 0), 2, CV_AA);
+//			}
+//		}
+//		return;
+//	}
 
-			}
-		}
-		return;
-	}
-}
+//	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
 
-void BeesBookImgAnalysisTracker::visualizeTransformerOutput(
-		cv::Mat& /*image*/) const {
-	//TODO
-}
+//	for (const auto& tagCandidatePair : results.truePositives) {
+//		const pipeline::Tag& tag = tagCandidatePair.first;
+//		const pipeline::TagCandidate& candidate = tagCandidatePair.second;
+//		const pipeline::Ellipse& ellipse = candidate.getEllipse();
+//		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
+//				ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_GREEN,
+//				thickness);
+//	}
 
-void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
-	for (const decoder::Tag& tag : _taglist) {
-		if (tag.getCandidates().size()) {
-			const decoder::TagCandidate& candidate = tag.getCandidates()[0];
-			if (candidate.getDecodings().size()) {
-				const decoder::Decoding& decoding = candidate.getDecodings()[0];
-				cv::putText(image, std::to_string(decoding.tagId),
-						cv::Point(tag.getBox().x, tag.getBox().y),
-						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-						cv::Scalar(0, 255, 0), 2, CV_AA);
-			}
-		}
-	}
-}
+//	for (const pipeline::Tag& tag : results.falsePositives) {
+//		//TODO: should use ellipse with best score
+//		if (tag.getCandidates().size()) {
+//			const pipeline::Ellipse& ellipse =
+//					tag.getCandidates().at(0).getEllipse();
+//			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
+//					ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
+//					thickness);
+//		}
+//	}
+
+//	for (const std::shared_ptr<Grid3D>& grid : results.falseNegatives) {
+//		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
+//		CV_AA);
+//		grid->draw(image, false);
+//	}
+
+//	const float recall = static_cast<float>(results.truePositives.size())
+//			/ static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+//	const float precision = static_cast<float>(results.truePositives.size())
+//			/ static_cast<float>(results.truePositives.size()
+//					+ results.falsePositives.size()) * 100.f;
+
+//	_groundTruth.labelNumFalseNegatives->setText(
+//			QString::number(results.falseNegatives.size()));
+//	_groundTruth.labelNumFalsePositives->setText(
+//			QString::number(results.falsePositives.size()));
+//	_groundTruth.labelNumTruePositives->setText(
+//			QString::number(results.truePositives.size()));
+//	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+//	_groundTruth.labelNumPrecision->setText(
+//			QString::number(precision, 'f', 2) + "%");
+//}
+
+//void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(
+//		cv::Mat& image) const {
+//	//TODO
+
+//	if (!_groundTruth.available) {
+//		for (const pipeline::Tag& tag : _taglist) {
+//			if (!tag.getCandidates().empty()) {
+//				// get best candidate
+//				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+//				const pipeline::Grid& grid = candidate.getGrids()[0];
+//				const pipeline::Ellipse& ellipse = candidate.getEllipse();
+//				const Grid3D grid3d = grid.grid2Grid3D(
+//						tag.getBox().tl() + ellipse.getCen());
+//				grid3d.draw(image, true);
+
+//			}
+//		}
+//		return;
+//	}
+//}
+
+//void BeesBookImgAnalysisTracker::visualizeTransformerOutput(
+//		cv::Mat& /*image*/) const {
+//	//TODO
+//}
+
+//void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
+//	for (const pipeline::Tag& tag : _taglist) {
+//		if (tag.getCandidates().size()) {
+//			const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+//			if (candidate.getDecodings().size()) {
+//				const pipeline::Decoding& decoding = candidate.getDecodings()[0];
+//				cv::putText(image, std::to_string(decoding.tagId),
+//						cv::Point(tag.getBox().x, tag.getBox().y),
+//						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+//						cv::Scalar(0, 255, 0), 2, CV_AA);
+//			}
+//		}
+//	}
+//}
 
 void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 	assert(_groundTruth.available);
@@ -365,7 +370,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 		const cv::Rect gridBox = grid->getBoundingBox();
 
 		bool inGroundTruth = false;
-		for (const decoder::Tag& tag : _taglist) {
+		for (const pipeline::Tag& tag : _taglist) {
 			const cv::Rect& tagBox = tag.getBox();
 			if (tagBox.contains(gridBox.tl())
 					&& tagBox.contains(gridBox.br())) {
@@ -381,7 +386,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 	// detect false positives
 	std::set<std::shared_ptr<Grid3D>> notYetDetectedGrids =
 			results.taggedGridsOnFrame;
-	for (const decoder::Tag& tag : _taglist) {
+	for (const pipeline::Tag& tag : _taglist) {
 		const cv::Rect& tagBox = tag.getBox();
 
 		bool inGroundTruth = false;
@@ -415,14 +420,14 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer() {
 	results.taggedGridsOnFrame =
 			_groundTruth.localizerResults.taggedGridsOnFrame;
 
-	for (const decoder::Tag& tag : _taglist) {
+	for (const pipeline::Tag& tag : _taglist) {
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
 			const std::shared_ptr<Grid3D>& grid = (*it).second;
 			if (!tag.getCandidates().empty()) {
 				auto scoreCandidatePair = compareGrids(tag, grid);
 				const double score = scoreCandidatePair.first;
-				const decoder::TagCandidate& candidate =
+				const pipeline::TagCandidate& candidate =
 						scoreCandidatePair.second;
 
 				if (score <= threshold)
@@ -456,8 +461,8 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const {
 	return thickness;
 }
 
-std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(
-		const decoder::Tag &detectedTag,
+std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> BeesBookImgAnalysisTracker::compareGrids(
+		const pipeline::Tag &detectedTag,
 		const std::shared_ptr<Grid3D> &grid) const {
 	assert(!detectedTag.getCandidates().empty());
 	auto deviation =
@@ -472,12 +477,12 @@ std::pair<double, std::reference_wrapper<const decoder::TagCandidate>> BeesBookI
 				return std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
 			};
 
-	decoder::TagCandidate const* bestCandidate = nullptr;
+	pipeline::TagCandidate const* bestCandidate = nullptr;
 	const std::vector<cv::Point>& outerPoints = grid->getOuterRingPoints();
 	double bestDeviation = std::numeric_limits<double>::max();
-	for (decoder::TagCandidate const& candidate : detectedTag.getCandidates()) {
+	for (pipeline::TagCandidate const& candidate : detectedTag.getCandidates()) {
 		double sumDeviation = 0.;
-		const decoder::Ellipse& ellipse = candidate.getEllipse();
+		const pipeline::Ellipse& ellipse = candidate.getEllipse();
 		for (cv::Point const& point : outerPoints) {
 			sumDeviation += deviation(ellipse.getCen(), ellipse.getAxis(),
 					ellipse.getAngle(), point);
@@ -545,23 +550,8 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 			}
 			visualizeLocalizerOutput(image);
 			break;
-		case BeesBookCommon::Stage::Recognizer:
-			if ((view.name == "Canny Edge")
-					&& (_visualizationData.recognizerCannyEdge)) {
-				image = rgbMatFromBwMat(
-						_visualizationData.recognizerCannyEdge.get(),
-						image.type());
-			}
-			visualizeRecognizerOutput(image);
-			break;
-		case BeesBookCommon::Stage::Transformer:
-			visualizeTransformerOutput(image);
-			break;
 		case BeesBookCommon::Stage::GridFitter:
 			visualizeGridFitterOutput(image);
-			break;
-		case BeesBookCommon::Stage::Decoder:
-			visualizeDecoderOutput(image);
 			break;
 		default:
 			break;
@@ -573,6 +563,11 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 }
 
 void BeesBookImgAnalysisTracker::reset() {
+}
+
+void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &image) const
+{
+
 }
 
 void BeesBookImgAnalysisTracker::settingsChanged(

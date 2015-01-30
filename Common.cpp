@@ -14,11 +14,11 @@ void maybeSetParam(const Settings& settings, ParamType& paramLoc, const std::str
 }
 }
 
-decoder::localizer_settings_t BeesBookCommon::getLocalizerSettings(const Settings &settings)
+pipeline::localizer_settings_t BeesBookCommon::getLocalizerSettings(const Settings &settings)
 {
 	using namespace Localizer;
 
-	decoder::localizer_settings_t localizerSettings;
+	pipeline::localizer_settings_t localizerSettings;
 
 	maybeSetParam<int>(settings, localizerSettings.binary_threshold, Params::BINARY_THRESHOLD);
 	maybeSetParam<int>(settings, localizerSettings.dilation_1_iteration_number, Params::FIRST_DILATION_NUM_ITERATIONS);
@@ -32,11 +32,11 @@ decoder::localizer_settings_t BeesBookCommon::getLocalizerSettings(const Setting
 }
 
 
-decoder::recognizer_settings_t BeesBookCommon::getRecognizerSettings(const Settings &settings)
+pipeline::recognizer_settings_t BeesBookCommon::getRecognizerSettings(const Settings &settings)
 {
 	using namespace Recognizer;
 
-	decoder::recognizer_settings_t recognizerSettings;
+	pipeline::recognizer_settings_t recognizerSettings;
 
 	maybeSetParam<int>(settings, recognizerSettings.canny_threshold_high, Params::CANNY_THRESHOLD_HIGH);
 	maybeSetParam<int>(settings, recognizerSettings.canny_threshold_low, Params::CANNY_THRESHOLD_LOW);
@@ -52,26 +52,26 @@ decoder::recognizer_settings_t BeesBookCommon::getRecognizerSettings(const Setti
 }
 
 
-decoder::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(const Settings &settings)
+pipeline::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(const Settings &settings)
 {
 	using namespace GridFitter;
 
-	decoder::gridfitter_settings_t gridfitterSettings;
+	pipeline::gridfitter_settings_t gridfitterSettings;
 
-	maybeSetParam<int>(settings, gridfitterSettings.initial_step_size, Params::INITIAL_STEP_SIZE);
-	maybeSetParam<int>(settings, gridfitterSettings.final_step_size, Params::FINAL_STEP_SIZE);
-	maybeSetParam<float>(settings, gridfitterSettings.up_speed, Params::UP_SPEED);
-	maybeSetParam<float>(settings, gridfitterSettings.down_speed, Params::DOWN_SPEED);
+//	maybeSetParam<int>(settings, gridfitterSettings.initial_step_size, Params::INITIAL_STEP_SIZE);
+//	maybeSetParam<int>(settings, gridfitterSettings.final_step_size, Params::FINAL_STEP_SIZE);
+//	maybeSetParam<float>(settings, gridfitterSettings.up_speed, Params::UP_SPEED);
+//	maybeSetParam<float>(settings, gridfitterSettings.down_speed, Params::DOWN_SPEED);
 
 	return gridfitterSettings;
 }
 
 
-decoder::preprocessor_settings_t BeesBookCommon::getPreprocessorSettings(const Settings &settings)
+pipeline::preprocessor_settings_t BeesBookCommon::getPreprocessorSettings(const Settings &settings)
 {
 	using namespace Preprocessor;
 
-	decoder::preprocessor_settings_t preprocessorSettings;
+	pipeline::preprocessor_settings_t preprocessorSettings;
 
 	maybeSetParam<double>(settings, preprocessorSettings.comb_threshold, Params::BASE+Params::COMB_THRESHOLD);
 	maybeSetParam<unsigned int>(settings, preprocessorSettings.min_size_comb, Params::BASE+Params::MIN_COMB_SIZE);

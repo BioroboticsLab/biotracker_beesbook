@@ -19,8 +19,8 @@ public:
 private:
 	Settings& _settings;
 
-	SpinBoxWithSlider _initialStepSizeSlider;
-	SpinBoxWithSlider _finalStepSizeSlider;
-	SpinBoxWithSlider _upSpeedSlider;
-	SpinBoxWithSlider _downSpeedSlider;
+//	SpinBoxWithSlider _initialStepSizeSlider;
+//	SpinBoxWithSlider _finalStepSizeSlider;
+//	SpinBoxWithSlider _upSpeedSlider;
+//	SpinBoxWithSlider _downSpeedSlider;
 };
