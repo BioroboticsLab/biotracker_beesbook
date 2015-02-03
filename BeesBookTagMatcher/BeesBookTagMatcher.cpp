@@ -34,7 +34,7 @@ BeesBookTagMatcher::BeesBookTagMatcher(Settings & settings, QWidget *parent)
 	setNumTags();
 
 	const cv::Point2i cen(125, 125);
-	const cv::Size2i axes(125, 30);
+	cv::Size2i axes(125, 30);
 	// theta is rotation of major axis of ellipse -> angle between major axis
 	// and x axis
 	double theta = 0;
@@ -89,6 +89,12 @@ BeesBookTagMatcher::BeesBookTagMatcher(Settings & settings, QWidget *parent)
 			break;
 		case 1113940: // down
 			theta -= 0.3;
+			break;
+		case 1048695: // w
+			if (++axes.height < axes.width) axes.height += 1;
+			break;
+		case 1048691: // s
+			if (axes.height > 0) axes.height -= 1;
 			break;
 		default:
 			break;
