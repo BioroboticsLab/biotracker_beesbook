@@ -45,7 +45,7 @@ void Grid::setCenter(cv::Point c)
 }
 
 #include <random>
-void Grid::debugDraw() const
+void Grid::debugDraw(std::string test) const
 {
 	static const cv::Scalar white(255, 255, 255);
 	static const cv::Scalar black(0, 0, 0);
@@ -71,8 +71,8 @@ void Grid::debugDraw() const
 		cv::fillPoly(img, points, col, 8, 0, center);
 	}
 
-	cv::namedWindow("debug");
-	cv::imshow("debug", img);
+	cv::namedWindow("debug" + test);
+	cv::imshow("debug" + test, img);
 }
 
 Grid::coordinates3D_t Grid::generate_3D_base_coordinates() {
@@ -148,6 +148,7 @@ Grid::coordinates2D_t Grid::generate_3D_coordinates_from_parameters_and_project_
 	coordinates2D_t result;
 
 	const auto rotationMatrix = CvHelper::rotationMatrix(_angle_z, _angle_y, _angle_x);
+	//const auto rotationMatrix = CvHelper::rotationMatrix_y(_angle_y) * CvHelper::rotationMatrix_x(_angle_x) * CvHelper::rotationMatrix_z(_angle_z);
 
 	int minx = INT_MAX, miny = INT_MAX;
 	int maxx = INT_MIN, maxy = INT_MIN;

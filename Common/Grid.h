@@ -53,7 +53,7 @@ public:
 
 	idarray_t const& getIdArray() const { return _ID; }
 
-	void debugDraw() const;
+	void debugDraw(std::string test) const;
 
 protected:
 	enum RingIndex {

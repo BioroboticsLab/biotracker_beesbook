@@ -35,88 +35,65 @@ BeesBookTagMatcher::BeesBookTagMatcher(Settings & settings, QWidget *parent)
 
 	const cv::Point2i cen(125, 125);
 	const cv::Size2i axes(125, 30);
-	const double angle = 125;
-	const double angle_rad = angle * CV_PI / 180;
-	const double major = axes.width;
-	const double minor = axes.height;
+	// theta is rotation of major axis of ellipse -> angle between major axis
+	// and x axis
+	double theta = 0;
+	// rotation is the rotation of the grid cells
+	double rotation = 0;
 
-	const double y1 = major * std::sin(angle_rad);
-	const double x1 = major * std::cos(angle_rad);
+    for (;;) {
+        const double theta_rad    = theta * CV_PI / 180.;
+        const double minor        = axes.height;
+        const double major        = axes.width;
+        const double ellipse_roll = std::acos(minor / major);
 
-	const double angle_minor = CV_PI - (angle_rad + (CV_PI / 2));
+        std::cout << "minor: " << minor << std::endl;
+        std::cout << "major: " << major << std::endl;
+        std::cout << "theta_rad: " << theta_rad << std::endl;
 
-	const double y2 = minor * std::sin(angle_minor);
-	const double x2 = - minor * std::cos(angle_minor);
+        // TODO: optimize for speed
+        // TODO: +/- ellipse_roll
+        const auto rotationMatrix = CvHelper::rotationMatrix_z(theta_rad) * CvHelper::rotationMatrix_x(-ellipse_roll) * CvHelper::rotationMatrix_z(rotation);
 
-	std::cout << "minor: " << minor << std::endl;
-	std::cout << "major: " << major << std::endl;
-	std::cout << "angle_rad: " << angle_rad << std::endl;
-	std::cout << "angle_minor: " << angle_minor << std::endl;
-	std::cout << "x1: " << x1 << std::endl;
-	std::cout << "y1: " << y1 << std::endl;
-	std::cout << "x2: " << x2 << std::endl;
-	std::cout << "y2: " << y2 << std::endl;
+        const double angle_z = atan2(rotationMatrix(1, 0), rotationMatrix(0, 0));
+        const double angle_y = atan2(-rotationMatrix(2, 0), sqrt(rotationMatrix(2, 1) * rotationMatrix(2, 1) + rotationMatrix(2, 2) * rotationMatrix(2, 2)) );
+        const double angle_x = atan2(rotationMatrix(2, 1), rotationMatrix(2, 2));
 
-	cv::namedWindow("ellipse");
-	cv::Mat image(250, 250, CV_8UC1);
-	image = cv::Scalar(128);
-	cv::ellipse(image, cen, axes, angle, 0, 360, cv::Scalar(255), -1);
-	cv::circle(image, cen, 2, cv::Scalar(0), 1);
-	cv::line(image, cen, cen + cv::Point2i(static_cast<int>(x1), static_cast<int>(y1)), cv::Scalar(0));
-	cv::line(image, cen, cen + cv::Point2i(static_cast<int>(x2), static_cast<int>(y2)), cv::Scalar(0));
-	cv::imshow("ellipse", image);
+        /* debug */
+        cv::namedWindow("ellipse");
+        cv::Mat image(250, 250, CV_8UC1);
+        image = cv::Scalar(128);
+        cv::ellipse(image, cen, axes, theta, 0, 360, cv::Scalar(255), -1);
+        cv::circle(image, cen, 2, cv::Scalar(0), 1);
+        const double y1 = major * std::sin(theta_rad);
+        const double x1 = major * std::cos(theta_rad);
+        const double angle_minor = CV_PI - (theta_rad + (CV_PI / 2));
+        const double y2 = minor * std::sin(angle_minor);
+        const double x2 = - minor * std::cos(angle_minor);
+        cv::line(image, cen, cen + cv::Point2i(static_cast<int>(x1), static_cast<int>(y1)), cv::Scalar(0));
+        cv::line(image, cen, cen + cv::Point2i(static_cast<int>(x2), static_cast<int>(y2)), cv::Scalar(0));
+        cv::imshow("ellipse", image);
 
-	// has to be major axis
-	cv::Vec3d u1(x1, y1, 0.f);
+		Grid debugGrid(cv::Point2i(0, 0), major, angle_z, angle_y, angle_x);
+		debugGrid.debugDraw("1");
 
-//	// if not - then angle_z has to be -, why?
-	double z2_tmp = x1 * x1 - x2 * x2 + y1 * y1 - y2 * y2;
-//	z1_tmp = z1_tmp < 0 ? - z1_tmp : z1_tmp;//std::abs(z1_tmp);
-	double z2 = std::sqrt(z2_tmp);
-//	//z1 = 0;
-	cv::Vec3d u2(x2, y2, z2);
-
-//	std::cout << "z1_tmp: " << z1_tmp << std::endl;
-	std::cout << "u1: " << u1 << std::endl;
-	std::cout << "u2: " << u2 << std::endl;
-
-	//u1 = u1 / cv::norm(u1);
-	//u2 = u2 / cv::norm(u2);
-
-	cv::Vec3d X(1, 0, 0);
-	cv::Vec3d Y(0, 1, 0);
-	cv::Vec3d Z(0, 0, 1);
-
-	cv::Vec3d W = u1.cross(u2);
-	W[2] = std::abs(W[2]);
-	W /= cv::norm(W);
-
-//	cv::Vec3d W_X(0, W[1], W[2]);
-//	cv::Vec3d W_Y(W[0], 0, W[2]);
-
-//	W_X /= cv::norm(W_X);
-//	W_Y /= cv::norm(W_Y);
-
-	std::cout << "W: " << W << std::endl;
-//	std::cout << "W_X: " << W_X << std::endl;
-//	std::cout << "W_Y: " << W_Y << std::endl;
-
-	// +/-
-	const double angle_x = std::asin(cv::norm(W.cross(Y))) + (CV_PI / 2);
-	const double angle_y = std::asin(cv::norm(W.cross(X))) + (CV_PI / 2);
-
-//	double angle_z = std::acos(W.dot(Z) / (cv::norm(W) * cv::norm(Z)));
-//	cv::Vec3d Wproj(W[0], W[1], 0);
-//	double angle_x = cv::norm(Wproj * cv::norm(X)) == 0.f ? 0 :
-//	          std::acos(Wproj.dot(X) / (cv::norm(Wproj) * cv::norm(X)));
-
-	std::cout << "angle_x: " << angle_x << std::endl;
-	std::cout << "angle_y: " << angle_y << std::endl;
-
-	for (;;) {
-		Grid debugGrid(cv::Point2i(0, 0), major, 0., angle_y, angle_x);
-		debugGrid.debugDraw();
-		cv::waitKey();
+		switch (cv::waitKey()) {
+		case 1113937: // left
+			rotation -= 0.3;
+			break;
+		case 1113939: // right
+			rotation += 0.3;
+			break;
+		case 1113938: // up
+			theta += 0.3;
+			break;
+		case 1113940: // down
+			theta -= 0.3;
+			break;
+		default:
+			break;
+		}
+		/* debug end */
 	}
 }
 
