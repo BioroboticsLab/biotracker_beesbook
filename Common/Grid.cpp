@@ -44,37 +44,6 @@ void Grid::setCenter(cv::Point c)
 	_center = c;
 }
 
-#include <random>
-void Grid::debugDraw(std::string test) const
-{
-	static const cv::Scalar white(255, 255, 255);
-	static const cv::Scalar black(0, 0, 0);
-	static const cv::Scalar red(0, 0, 255);
-	static const cv::Scalar yellow(0, 255, 255);
-
-	static std::default_random_engine generator;
-	static std::uniform_int_distribution<int> distribution(0, 1);
-
-	cv::Mat img(static_cast<int>(_radius * 1.5), static_cast<int>(_radius * 1.5), CV_8UC3);
-	img = black;
-	cv::Point2i center(static_cast<int>(img.size().width / 2), static_cast<int>(img.size().height / 2));
-
-	typedef std::vector<std::vector<cv::Point>> pointvecvec_t;
-
-	cv::fillPoly(img, pointvecvec_t{_coordinates2D[INDEX_OUTER_WHITE_RING]}, white, 8, 0, center);
-	cv::fillPoly(img, pointvecvec_t{_coordinates2D[INDEX_INNER_WHITE_SEMICIRCLE]}, white, 8, 0, center);
-	cv::fillPoly(img, pointvecvec_t{_coordinates2D[INDEX_INNER_BLACK_SEMICIRCLE]}, black, 8, 0, center);
-	for (size_t i = INDEX_MIDDLE_CELLS_BEGIN; i < INDEX_MIDDLE_CELLS_BEGIN + NUM_MIDDLE_CELLS; ++i)
-	{
-		cv::Scalar col = distribution(generator) ? black : white;
-		std::vector<std::vector<cv::Point>> points { _coordinates2D[i] };
-		cv::fillPoly(img, points, col, 8, 0, center);
-	}
-
-	cv::namedWindow("debug" + test);
-	cv::imshow("debug" + test, img);
-}
-
 Grid::coordinates3D_t Grid::generate_3D_base_coordinates() {
 
 	typedef coordinates3D_t::value_type value_type;
@@ -129,13 +98,15 @@ Grid::coordinates3D_t Grid::generate_3D_base_coordinates() {
 		// subtract mean, otherwise rotation will be eccentric
 		for(size_t i = 0; i < POINTS_PER_RING; ++i)
 		{
-			result._inner_ring[i].z  = z_inner_ring  - mean;
-			result._middle_ring[i].z = z_middle_ring - mean;
-			result._outer_ring[i].z  = z_outer_ring  - mean;
+			result._inner_ring[i].z  = z_inner_ring  - z_outer_ring;
+			result._middle_ring[i].z = z_middle_ring - z_outer_ring;
+			result._outer_ring[i].z  = z_outer_ring  - z_outer_ring;
+
+			std::cout << result._outer_ring[i].z << std::endl;
 		}
 		for (size_t i = 0; i < POINTS_PER_LINE; ++i)
 		{
-			result._inner_line[i].z -= mean;
+			result._inner_line[i].z -= z_outer_ring;
 		}
 	}
 
@@ -148,7 +119,6 @@ Grid::coordinates2D_t Grid::generate_3D_coordinates_from_parameters_and_project_
 	coordinates2D_t result;
 
 	const auto rotationMatrix = CvHelper::rotationMatrix(_angle_z, _angle_y, _angle_x);
-	//const auto rotationMatrix = CvHelper::rotationMatrix_y(_angle_y) * CvHelper::rotationMatrix_x(_angle_x) * CvHelper::rotationMatrix_z(_angle_z);
 
 	int minx = INT_MAX, miny = INT_MAX;
 	int maxx = INT_MIN, maxy = INT_MIN;
@@ -159,7 +129,7 @@ Grid::coordinates2D_t Grid::generate_3D_coordinates_from_parameters_and_project_
 		// iterate over all points in ring
 		for (size_t i = 0; i < _coordinates3D._rings[r].size(); ++i)
 		{
-			// rotate and scale point (aka vector)
+			// rotate point (aka vector)
 			const cv::Point3d p = rotationMatrix * _coordinates3D._rings[r][i];
 
 			// project onto image plane
@@ -184,11 +154,11 @@ Grid::coordinates2D_t Grid::generate_3D_coordinates_from_parameters_and_project_
 	for (size_t i = 0; i < POINTS_PER_LINE; ++i)
 	{
 		// rotate point (aka vector)
-		const cv::Point3d p = rotationMatrix * _coordinates3D._inner_line[i];
+		const cv::Point3d p = rotationMatrix * (_radius * _coordinates3D._inner_line[i]);
 
 		// project onto image plane
-		const cv::Point   p2(static_cast<int>(round((p.x / (p.z + FOCAL_LENGTH))  * _radius)),
-							 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
+		const cv::Point   p2(static_cast<int>(round((p.x / (p.z + FOCAL_LENGTH)))),
+							 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)))));
 
 		result._inner_line[i] = p2;
 	}

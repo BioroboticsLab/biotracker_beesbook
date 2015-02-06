@@ -20,7 +20,7 @@ public:
 	// total number of cells (non-coding and coding)
 	static const size_t NUM_CELLS = INDEX_MIDDLE_CELLS_END;
 
-	static const size_t POINTS_PER_MIDDLE_CELL = 20;
+	static const size_t POINTS_PER_MIDDLE_CELL = 3;
 	static const size_t POINTS_PER_LINE = 3;
 	static_assert(POINTS_PER_LINE % 2 != 0, "POINTS_PER_LINE must be odd");
 	static const size_t POINTS_PER_RING = NUM_MIDDLE_CELLS * POINTS_PER_MIDDLE_CELL;
@@ -52,8 +52,6 @@ public:
 	cv::Point getCenter() const { return _center; }
 
 	idarray_t const& getIdArray() const { return _ID; }
-
-	void debugDraw(std::string test) const;
 
 protected:
 	enum RingIndex {
