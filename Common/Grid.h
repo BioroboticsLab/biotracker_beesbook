@@ -51,6 +51,9 @@ public:
 	void setCenter(cv::Point c);
 	cv::Point getCenter() const { return _center; }
 
+	void setRadius(double radius);
+	double getRadius() const { return _radius; }
+
 	idarray_t const& getIdArray() const { return _ID; }
 
 	/**

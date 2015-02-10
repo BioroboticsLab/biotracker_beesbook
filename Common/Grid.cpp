@@ -44,6 +44,12 @@ void Grid::setCenter(cv::Point c)
 	_center = c;
 }
 
+void Grid::setRadius(double radius)
+{
+	_radius = radius;
+	prepare_visualization_data();
+}
+
 cv::Rect Grid::getBoundingBox() const
 {
 	return cv::Rect(_boundingBox.tl() + _center,
