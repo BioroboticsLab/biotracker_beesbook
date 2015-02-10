@@ -181,12 +181,6 @@ void InteractiveGrid::setWorldRadius(const double radius)
 	prepare_visualization_data();
 }
 
-cv::Rect InteractiveGrid::getBoundingBox() const
-{
-	return cv::Rect(_boundingBox.tl() + _center,
-					_boundingBox.size());
-}
-
 Grid::coordinates2D_t InteractiveGrid::generate_3D_coordinates_from_parameters_and_project_to_2D()
 {
 	coordinates2D_t result = Grid::generate_3D_coordinates_from_parameters_and_project_to_2D();

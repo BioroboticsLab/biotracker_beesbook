@@ -53,6 +53,16 @@ public:
 
 	idarray_t const& getIdArray() const { return _ID; }
 
+	/**
+	 * Axis-aligned minimum bounding box of the grid
+	 */
+	cv::Rect getBoundingBox() const;
+
+	/**
+	 * Axis-aligned minimum bounding box of the grid centered at (0, 0)
+	 */
+	cv::Rect getOriginBoundingBox() const {	return _boundingBox; }
+
 protected:
 	enum RingIndex {
 		INNER_RING = 0,

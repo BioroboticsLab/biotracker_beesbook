@@ -44,6 +44,12 @@ void Grid::setCenter(cv::Point c)
 	_center = c;
 }
 
+cv::Rect Grid::getBoundingBox() const
+{
+	return cv::Rect(_boundingBox.tl() + _center,
+					_boundingBox.size());
+}
+
 Grid::coordinates3D_t Grid::generate_3D_base_coordinates() {
 
 	typedef coordinates3D_t::value_type value_type;
