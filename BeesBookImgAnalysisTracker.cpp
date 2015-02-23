@@ -308,7 +308,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 			if (!tag.getCandidates().empty()) {
 				// get best candidate
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
-				const PipelineGrid& grid = candidate.getGrids()[0];
+				const PipelineGrid& grid = candidate.getGridsConst()[0];
 				cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
 				grid.draw(image, 0.5);
 			}
@@ -318,18 +318,22 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
-//	for (const pipeline::Tag& tag : _taglist) {
-//		if (tag.getCandidates().size()) {
-//			const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
-//			if (candidate.getDecodings().size()) {
-//				const pipeline::Decoding& decoding = candidate.getDecodings()[0];
-//				cv::putText(image, std::to_string(decoding.tagId),
-//						cv::Point(tag.getBox().x, tag.getBox().y),
-//						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-//						cv::Scalar(0, 255, 0), 2, CV_AA);
-//			}
-//		}
-//	}
+	//TODO
+	if (!_groundTruth.available) {
+		for (const pipeline::Tag& tag : _taglist) {
+			if (tag.getCandidates().size()) {
+				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+				if (candidate.getDecodings().size()) {
+					const pipeline::decoding_t decoding = candidate.getDecodings()[0];
+					cv::putText(image, std::to_string(decoding.to_ulong()),
+							cv::Point(tag.getBox().x, tag.getBox().y),
+							cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+							cv::Scalar(0, 255, 0), 2, CV_AA);
+				}
+			}
+		}
+		return;
+	}
 }
 
 void BeesBookImgAnalysisTracker::evaluateLocalizer() {
@@ -542,6 +546,9 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 			break;
 		case BeesBookCommon::Stage::GridFitter:
 			visualizeGridFitterOutput(image);
+			break;
+		case BeesBookCommon::Stage::Decoder:
+			visualizeDecoderOutput(image);
 			break;
 		default:
 			break;
