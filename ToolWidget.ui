@@ -17,7 +17,16 @@
    <property name="spacing">
     <number>3</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>3</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="rightMargin">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
     <number>3</number>
    </property>
    <item>
@@ -29,13 +38,22 @@
       <property name="spacing">
        <number>1</number>
       </property>
-      <property name="margin">
+      <property name="leftMargin">
+       <number>3</number>
+      </property>
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="rightMargin">
+       <number>3</number>
+      </property>
+      <property name="bottomMargin">
        <number>3</number>
       </property>
       <item>
        <widget class="QRadioButton" name="radioButtonNoProcessing">
         <property name="text">
-         <string>None</string>
+         <string>&amp;None</string>
         </property>
         <property name="checked">
          <bool>true</bool>
@@ -52,28 +70,21 @@
       <item>
        <widget class="QRadioButton" name="radioButtonLocalizer">
         <property name="text">
-         <string>Localizer</string>
+         <string>&amp;Localizer</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QRadioButton" name="radioButtonRecognizer">
         <property name="text">
-         <string>Recognizer</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="radioButtonTransformer">
-        <property name="text">
-         <string>Transformer</string>
+         <string>Recogni&amp;zer</string>
         </property>
        </widget>
       </item>
       <item>
        <widget class="QRadioButton" name="radioButtonGridFitter">
         <property name="text">
-         <string>GridFitter</string>
+         <string>&amp;GridFitter</string>
         </property>
        </widget>
       </item>
@@ -129,7 +140,16 @@
       <property name="verticalSpacing">
        <number>3</number>
       </property>
-      <property name="margin">
+      <property name="leftMargin">
+       <number>3</number>
+      </property>
+      <property name="topMargin">
+       <number>3</number>
+      </property>
+      <property name="rightMargin">
+       <number>3</number>
+      </property>
+      <property name="bottomMargin">
        <number>3</number>
       </property>
       <item row="0" column="0">

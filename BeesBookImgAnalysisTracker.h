@@ -18,13 +18,14 @@
 #include "pipeline/Localizer.h"
 #include "pipeline/Recognizer.h"
 #include "pipeline/GridFitter.h"
+#include "pipeline/Decoder.h"
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
 #include "utility/stdext.h"
 
 #include "source/tracking/serialization/SerializationData.h"
 
-class InteractiveGrid;
+class PipelineGrid;
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
@@ -52,6 +53,7 @@ private:
 	pipeline::Localizer _localizer;
 	pipeline::Recognizer _recognizer;
 	pipeline::GridFitter _gridFitter;
+	pipeline::Decoder _decoder;
 
 	cv::Mat _image;
 	std::vector<pipeline::Tag> _taglist;
@@ -66,7 +68,6 @@ private:
 		boost::optional<cv::Mat> localizerBlobImage;
 		boost::optional<cv::Mat> recognizerCannyEdge;
 
-
 		// these references are just stored for convenience in order to invalidate all
 		// visualizations in a loop
 		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
@@ -76,18 +77,18 @@ private:
 	} _visualizationData;
 
 	struct LocalizerEvaluationResults {
-		std::set<std::shared_ptr<InteractiveGrid>> taggedGridsOnFrame;
+		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
-		std::set<std::shared_ptr<InteractiveGrid>> falseNegatives;
-		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<InteractiveGrid>> gridByTag;
+		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
+		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<PipelineGrid>> gridByTag;
 	};
 
 	struct RecognizerEvaluationResults {
-		std::set<std::shared_ptr<InteractiveGrid>> taggedGridsOnFrame;
+		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
-		std::set<std::shared_ptr<InteractiveGrid>> falseNegatives;
+		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
 	};
 
 	struct {
@@ -110,18 +111,20 @@ private:
 		RecognizerEvaluationResults recognizerResults;
 	} _groundTruth;
 
-
 	void visualizePreprocessorOutput(cv::Mat& image) const;
 	void visualizeLocalizerOutput(cv::Mat& image) const;
 	void visualizeRecognizerOutput(cv::Mat& image) const;
 	void visualizeGridFitterOutput(cv::Mat& image) const;
+	void visualizeDecoderOutput(cv::Mat& image) const;
 
 	void evaluateLocalizer();
 	void evaluateRecognizer();
+	void evaluateGridfitter();
+	void evaluateDecoder();
 
 	int calculateVisualizationThickness() const;
 
-	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<InteractiveGrid> const& grid) const;
+	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<PipelineGrid> const& grid) const;
 
 	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
 
