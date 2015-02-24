@@ -15,6 +15,4 @@ class DecoderParamsWidget : public ParamsSubWidgetBase
 public:
 	DecoderParamsWidget(Settings& settings);
 
-private:
-	Settings& _settings;
 };

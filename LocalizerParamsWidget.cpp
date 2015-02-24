@@ -4,8 +4,7 @@
 using namespace Localizer;
 
 LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings)
-	: ParamsSubWidgetBase()
-	, _settings(settings)
+: ParamsSubWidgetBase(settings)
 	, _binaryThresholdSlider(this, &_layout, "Binary Threshold", 1, 100,
 	settings.getValueOrDefault(Params::BINARY_THRESHOLD, Defaults::BINARY_THRESHOLD), 1)
 	, _firstDilationNumIterationsSlider(this, &_layout, "First Dilation Iterations", 1, 20,

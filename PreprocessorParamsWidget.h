@@ -18,15 +18,6 @@ public:
 	PreprocessorParamsWidget(Settings& settings);
 
 private:
-	Settings& _settings;
-	SpinBoxWithSlider _useEqualizeHistogram;
-	SpinBoxWithSlider _useCombDetection;
-	SpinBoxWithSlider _binaryThresholdSlider;
-	SpinBoxWithSlider _minCombSizeSlider;
-	SpinBoxWithSlider _maxCombSizeSlider;
-	SpinBoxWithSlider _diffCombSizeSlider;
-	SpinBoxWithSlider _lineWidthSlider;
-	SpinBoxWithSlider _lineColorSlider;
 
 
 

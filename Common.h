@@ -8,6 +8,8 @@
 
 class Settings;
 
+
+
 namespace Localizer {
 namespace Params {
 static const std::string BASE = "BEESBOOKPIPELINE.LOCALIZER.";
@@ -82,5 +84,5 @@ enum class Stage : uint8_t {
 pipeline::localizer_settings_t getLocalizerSettings(Settings const& settings);
 pipeline::recognizer_settings_t getRecognizerSettings(Settings const& settings);
 pipeline::gridfitter_settings_t getGridfitterSettings(Settings const& settings);
-pipeline::preprocessor_settings_t getPreprocessorSettings(Settings const& settings);
+pipeline::settings::preprocessor_settings_t getPreprocessorSettings(Settings& settings);
 }

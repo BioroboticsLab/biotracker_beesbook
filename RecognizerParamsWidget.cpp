@@ -6,8 +6,7 @@
 using namespace Recognizer;
 
 RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
-	: ParamsSubWidgetBase()
-	, _settings(settings)
+: ParamsSubWidgetBase(settings)
 	, _cannyThresholdLowSlider(this, &_layout, "Canny Threshold Low", 0, 200,
 		settings.getValueOrDefault<int>(Params::CANNY_THRESHOLD_LOW, Defaults::CANNY_THRESHOLD_LOW), 1)
 	, _cannyThresholdHighSlider(this, &_layout, "Canny Threshold High", 0, 200,

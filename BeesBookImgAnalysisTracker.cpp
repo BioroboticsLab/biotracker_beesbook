@@ -141,7 +141,10 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 		MeasureTimeRAII measure("Preprocessor", notify);
 		_image = _preprocessor.process(frame);
 		_visualizationData.preprocessorImage = _image.clone();
-
+		_visualizationData.preprocessorOptImage =
+						_preprocessor.getOptsImage();
+		_visualizationData.preprocessorHoneyImage =
+						_preprocessor.getHoneyImage();
 		_visualizationData.preprocessorThresholdImage =
 				_preprocessor.getThresholdImage();
 
@@ -509,7 +512,17 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 				image = rgbMatFromBwMat(
 						_visualizationData.preprocessorImage.get(),
 						image.type());
-			} else if ((view.name == "Threshold")
+			} else if ((view.name == "Opts")&& (_visualizationData.preprocessorOptImage)) {
+				image = rgbMatFromBwMat(
+						_visualizationData.preprocessorOptImage.get(),
+						image.type());
+
+		} else if ((view.name == "Honeyfilter")&& (_visualizationData.preprocessorHoneyImage)) {
+			image = rgbMatFromBwMat(
+					_visualizationData.preprocessorHoneyImage.get(),
+					image.type());
+
+			} else if ((view.name == "Threshold-Comb")
 					&& (_visualizationData.preprocessorThresholdImage)) {
 				image = rgbMatFromBwMat(
 						_visualizationData.preprocessorThresholdImage.get(),
@@ -630,7 +643,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-			emit registerViews( { { "Preprocessor Output" }, { "Threshold" } });
+			emit registerViews( { { "Preprocessor Output" },{"Opts"}, {"Honeyfilter"}, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
