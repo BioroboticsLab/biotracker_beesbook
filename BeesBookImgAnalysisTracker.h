@@ -59,6 +59,8 @@ private:
 
 	struct {
 		boost::optional<cv::Mat> preprocessorImage;
+		boost::optional<cv::Mat> preprocessorOptImage;
+		boost::optional<cv::Mat> preprocessorHoneyImage;
 		boost::optional<cv::Mat> preprocessorThresholdImage;
 		boost::optional<cv::Mat> localizerInputImage;
 		boost::optional<cv::Mat> localizerThresholdImage;
@@ -69,8 +71,9 @@ private:
 
 		// these references are just stored for convenience in order to invalidate all
 		// visualizations in a loop
-		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
-		reference_array_t visualizations = reference_array_t{preprocessorImage,
+		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 9> reference_array_t;
+		reference_array_t visualizations = reference_array_t{preprocessorImage, preprocessorOptImage,
+			preprocessorHoneyImage,
 			preprocessorThresholdImage, localizerInputImage, localizerThresholdImage,
 				localizerSobelImage, localizerBlobImage, recognizerCannyEdge };
 	} _visualizationData;

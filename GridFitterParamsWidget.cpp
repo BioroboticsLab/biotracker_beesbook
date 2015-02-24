@@ -4,8 +4,7 @@
 using namespace GridFitter;
 
 GridFitterParamsWidget::GridFitterParamsWidget(Settings &settings)
-	: ParamsSubWidgetBase()
-    , _settings(settings)
+: ParamsSubWidgetBase(settings)
 //    , _initialStepSizeSlider(this, &_layout, "Initial Step Size", 0, 100,
 //	settings.getValueOrDefault(Params::INITIAL_STEP_SIZE, Defaults::INITIAL_STEP_SIZE), 1)
 //	, _finalStepSizeSlider(this, &_layout, "Final Step Size", 0, 100,

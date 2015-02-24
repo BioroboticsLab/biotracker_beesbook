@@ -1,47 +1,78 @@
 #include "PreprocessorParamsWidget.h"
 #include "source/settings/Settings.h"
 
-using namespace Preprocessor;
+#include "ui_PreprocessorParamsWidget.h"
 
-
-PreprocessorParamsWidget::PreprocessorParamsWidget(Settings &settings)
-	: ParamsSubWidgetBase()
-	, _settings(settings)
-,_useEqualizeHistogram(this, &_layout, "use histogramEqualization", 0, 1,
-	settings.getValueOrDefault(Params::BASE+Params::USE_EQUALIZE_HISTOGRAM, Defaults::USE_EQUALIZE_HISTOGRAM), 1)
-, _useCombDetection(this, &_layout, "use comb detection", 0, 1,
-	settings.getValueOrDefault(Params::BASE+Params::USE_COMB_DETECTION, Defaults::USE_COMB_DETECTION), 1)
-	, _binaryThresholdSlider(this, &_layout, "comb threshold", 1, 255,
-	settings.getValueOrDefault(Params::BASE+Params::COMB_THRESHOLD, Defaults::COMB_THRESHOLD), 1)
-	, _minCombSizeSlider(this, &_layout, "min comb size", 1, 200,
-	settings.getValueOrDefault(Params::BASE+Params::MIN_COMB_SIZE, Defaults::MIN_COMB_SIZE), 1)
-, _maxCombSizeSlider(this, &_layout, "max comb size", 1, 200,
-settings.getValueOrDefault(Params::BASE+Params::MIN_COMB_SIZE, Defaults::MAX_COMB_SIZE), 1)
-	, _diffCombSizeSlider(this, &_layout, "diff W/H combs", 1, 100,
-	settings.getValueOrDefault(Params::BASE+Params::DIFF_COMB_SIZE, Defaults::DIFF_COMB_SIZE), 1)
-	, _lineWidthSlider(this, &_layout, "line Width", 1, 50,
-	settings.getValueOrDefault(Params::BASE+Params::COMB_LINE_WIDTH, Defaults::COMB_LINE_WIDTH), 1)
-	, _lineColorSlider(this, &_layout, "line Color", 0, 255,
-	settings.getValueOrDefault(Params::BASE+Params::COMB_LINE_COLOR, Defaults::COMB_LINE_COLOR), 1)
-
-
+PreprocessorParamsWidget::PreprocessorParamsWidget(Settings &settings) :
+		ParamsSubWidgetBase(settings)
 
 {
-	auto connectSlider = [ & ](SpinBoxWithSlider* slider, const std::string& paramName) {
-		  QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
-		        _settings.setParam(paramName, value);
-		        emit settingsChanged(BeesBookCommon::Stage::Preprocessor);
-			});
-	  };
-	connectSlider(&_useEqualizeHistogram, Params::BASE+Params::USE_EQUALIZE_HISTOGRAM);
-	connectSlider(&_useCombDetection, Params::BASE+Params::USE_COMB_DETECTION);
-	connectSlider(&_binaryThresholdSlider,Params::BASE+ Params::COMB_THRESHOLD);
-	connectSlider(&_minCombSizeSlider, Params::BASE+Params::MIN_COMB_SIZE);
-	connectSlider(&_maxCombSizeSlider, Params::BASE+Params::MAX_COMB_SIZE);
-	connectSlider(&_diffCombSizeSlider, Params::BASE+Params::DIFF_COMB_SIZE);
-	connectSlider(&_lineWidthSlider, Params::BASE+Params::COMB_LINE_WIDTH);
-	connectSlider(&_lineColorSlider, Params::BASE+Params::COMB_LINE_COLOR);
 
+	using namespace pipeline::settings::Preprocessor;
+	Ui::PreprocessorParamsWidget paramsWidget;
+	paramsWidget.setupUi(this);
+
+	/*
+	 * general
+	 */
+	connectSettingsWidget(paramsWidget.opt_use_contrast_stretching,
+			Params::BASE + Params::OPT_USE_CONTRAST_STRETCHING,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.opt_use_equalize_histogram,
+			Params::BASE + Params::OPT_USE_EQUALIZE_HISTOGRAM,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.opt_frame_size,
+			Params::BASE + Params::OPT_FRAME_SIZE,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.opt_average_contrast_value,
+				Params::BASE + Params::OPT_AVERAGE_CONTRAST_VALUE,
+				BeesBookCommon::Stage::Preprocessor);
+
+	/*
+	 * combs
+	 */
+
+	connectSettingsWidget(paramsWidget.comb_enabled,
+			Params::BASE + Params::COMB_ENABLED,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.comb_threshold,
+			Params::BASE + Params::COMB_THRESHOLD,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.comb_min_size,
+			Params::BASE + Params::COMB_MIN_SIZE,
+			BeesBookCommon::Stage::Preprocessor);
+	connectSettingsWidget(paramsWidget.comb_max_size,
+			Params::BASE + Params::COMB_MAX_SIZE,
+			BeesBookCommon::Stage::Preprocessor);
+	connectSettingsWidget(paramsWidget.comb_line_width,
+			Params::BASE + Params::COMB_LINE_WIDTH,
+			BeesBookCommon::Stage::Preprocessor);
+	connectSettingsWidget(paramsWidget.comb_line_color,
+			Params::BASE + Params::COMB_LINE_COLOR,
+			BeesBookCommon::Stage::Preprocessor);
+
+	/*
+	 * honey
+	 */
+	connectSettingsWidget(paramsWidget.honey_enabled,
+			Params::BASE + Params::HONEY_ENABLED,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.honey_std_dev,
+			Params::BASE + Params::HONEY_STD_DEV,
+			BeesBookCommon::Stage::Preprocessor);
+
+	connectSettingsWidget(paramsWidget.honey_frame_size,
+			Params::BASE + Params::HONEY_FRAME_SIZE,
+			BeesBookCommon::Stage::Preprocessor);
+	connectSettingsWidget(paramsWidget.honey_average_value,
+			Params::BASE + Params::HONEY_AVERAGE_VALUE,
+			BeesBookCommon::Stage::Preprocessor);
 
 
 }
