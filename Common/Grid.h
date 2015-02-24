@@ -4,6 +4,8 @@
 #include <opencv2/core/core.hpp>
 
 #include <cstddef>
+#include <array>
+#include <numeric>
 
 class Grid {
 public:
