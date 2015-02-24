@@ -643,7 +643,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-			emit registerViews( { { "Preprocessor Output" },{"Opts"}, {"Honeyfilter"}, { "Threshold-Comb" } });
+			emit registerViews( { { "Preprocessor Output" },{"Honeyfilter"}, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
