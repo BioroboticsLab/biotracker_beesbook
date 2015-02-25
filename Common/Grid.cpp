@@ -237,3 +237,21 @@ void Grid::prepare_visualization_data()
 		}
 	}
 }
+
+double Grid::compare(Grid & to) const
+{
+    // distance of centers, inversed
+    // max score is 1, min 0
+    double d1 = 1 / ( 1 + norm( _center - to.getCenter() ));
+
+    // get rotation matrices of both grids
+    const auto R = CvHelper::rotationMatrix(_angle_z, _angle_y, _angle_x);
+    const auto R2 = CvHelper::rotationMatrix(to.getZRotation(), to.getYRotation(), to.getXRotation());
+
+    // multiply element-wise (dot-product) and sum up all elements
+    // max should be 3 when all three base vectors point in the same directions
+    // divide by 3, thus max is 1, min is -1
+    double d2 = sum( R.mul(R2) ) / 3;
+
+    return d1 + d2;
+}
