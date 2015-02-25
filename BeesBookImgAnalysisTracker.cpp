@@ -313,7 +313,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				const PipelineGrid& grid = candidate.getGridsConst()[0];
 				cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
-				grid.draw(image, 0.5);
+				grid.drawContours(image, 0.5);
 			}
 		}
 		return;
