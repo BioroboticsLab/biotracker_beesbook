@@ -291,7 +291,7 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
 	for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives) {
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
 		CV_AA);
-		grid->draw(image, 1.0);
+		grid->drawContours(image, 1.0);
 	}
 
 	const float recall = static_cast<float>(results.truePositives.size())
@@ -329,6 +329,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 				grid.drawContours(image, 0.5);
 			}
 		}
+		return;
 	}
 
     //precision = TP / Positives
