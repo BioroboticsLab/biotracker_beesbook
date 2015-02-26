@@ -68,8 +68,6 @@ public:
 	 */
 	cv::Rect getOriginBoundingBox() const {	return _boundingBox; }
 
-    virtual double compare(Grid & to) const;
-
 protected:
 	enum RingIndex {
 		INNER_RING = 0,
