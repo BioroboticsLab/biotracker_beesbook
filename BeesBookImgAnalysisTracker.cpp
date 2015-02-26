@@ -576,10 +576,7 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat, const in
 void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) 
 {
 	// don't try to visualize results while data processing is running
-<<<<<<< HEAD
-=======
 
->>>>>>> 5a936fcb049f2d517abd200c84a29a8eb33dc4fb
 	if (_tagListLock.try_lock()) {
 		switch (_selectedStage) {
 		case BeesBookCommon::Stage::Preprocessor:
@@ -605,10 +602,7 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view)
 						image.type());
 			}
 			break;
-<<<<<<< HEAD
-=======
 
->>>>>>> 5a936fcb049f2d517abd200c84a29a8eb33dc4fb
 		case BeesBookCommon::Stage::Localizer:
 			/*if ((view.name == "Sobel Edge")
 			 && (_visualizationData.localizerSobelImage)) {
