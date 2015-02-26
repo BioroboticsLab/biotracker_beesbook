@@ -148,31 +148,34 @@ Grid::coordinates2D_t Grid::generate_3D_coordinates_from_parameters_and_project_
 											 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
 
 			// determine outer points of bounding box
-			if (r == OUTER_RING) {
-				minx = std::min(minx, projectedPoint.x);
-				miny = std::min(miny, projectedPoint.y);
-				maxx = std::max(maxx, projectedPoint.x);
-				maxy = std::max(maxy, projectedPoint.y);
-			}
+			minx = std::min(minx, projectedPoint.x);
+			miny = std::min(miny, projectedPoint.y);
+			maxx = std::max(maxx, projectedPoint.x);
+			maxy = std::max(maxy, projectedPoint.y);
 
 			result._rings[r][i] = std::move(projectedPoint);
 		}
 	}
 
-	_boundingBox = cv::Rect(minx, miny, maxx - minx, maxy - miny);
-
 	// iterate over points of inner ring
 	for (size_t i = 0; i < POINTS_PER_LINE; ++i)
 	{
 		// rotate point (aka vector)
-		const cv::Point3d p = rotationMatrix * (_radius * _coordinates3D._inner_line[i]);
+		const cv::Point3d p = rotationMatrix * (_coordinates3D._inner_line[i]);
 
 		// project onto image plane
-		const cv::Point   p2(static_cast<int>(round((p.x / (p.z + FOCAL_LENGTH)))),
-							 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)))));
+		const cv::Point   p2(static_cast<int>(round((p.x / (p.z + FOCAL_LENGTH)) * _radius)),
+							 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
+
+        minx = std::min(minx, p2.x);
+        miny = std::min(miny, p2.y);
+        maxx = std::max(maxx, p2.x);
+        maxy = std::max(maxy, p2.y);
 
 		result._inner_line[i] = p2;
 	}
+
+	_boundingBox = cv::Rect(minx, miny, maxx - minx, maxy - miny);
 
 	return result;
 }
