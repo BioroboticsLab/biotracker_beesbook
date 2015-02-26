@@ -7,6 +7,7 @@
 
 #include "Common.h"
 #include "source/settings/Settings.h"
+#include "source/utility/SpinBoxWithSlider.h"
 class ParamsSubWidgetBase: public QWidget {
 Q_OBJECT
 public:
@@ -30,6 +31,13 @@ protected:
 	 std::cout<< "signal setting changes value" <<  value << std::endl;
 	 });
 	 }*/
+
+	void connectSlider(SpinBoxWithSlider* slider, const std::string& paramName) {
+			  QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
+			        _settings.setParam(paramName, value);
+			        emit settingsChanged(BeesBookCommon::Stage::Localizer);
+				});
+		  };
 
 	void connectSettingsWidget(QCheckBox* check, const std::string& paramName,
 			const BeesBookCommon::Stage &stage) {

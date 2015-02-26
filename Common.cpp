@@ -75,27 +75,9 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
 	}
 }
 
-pipeline::localizer_settings_t BeesBookCommon::getLocalizerSettings(
-		const Settings &settings) {
-	using namespace Localizer;
-
-	pipeline::localizer_settings_t localizerSettings;
-
-	maybeSetParam<int>(settings, localizerSettings.binary_threshold,
-			Params::BINARY_THRESHOLD);
-	maybeSetParam<int>(settings, localizerSettings.dilation_1_iteration_number,
-			Params::FIRST_DILATION_NUM_ITERATIONS);
-	maybeSetParam<int>(settings, localizerSettings.dilation_1_size,
-			Params::FIRST_DILATION_SIZE);
-	maybeSetParam<int>(settings, localizerSettings.dilation_2_size,
-			Params::SECOND_DILATION_SIZE);
-	maybeSetParam<int>(settings, localizerSettings.erosion_size,
-			Params::EROSION_SIZE);
-	maybeSetParam<unsigned int>(settings, localizerSettings.max_tag_size,
-			Params::MAX_TAG_SIZE);
-	maybeSetParam<int>(settings, localizerSettings.min_tag_size,
-			Params::MIN_BOUNDING_BOX_SIZE);
-
+pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(Settings &settings) {
+	pipeline::settings::localizer_settings_t localizerSettings;
+	localizerSettings.loadValues(settings, pipeline::settings::Localizer::Params::BASE);
 	return localizerSettings;
 }
 
@@ -146,15 +128,6 @@ pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSetti
 	pipeline::settings::preprocessor_settings_t preprocessorSettings;
 
 	preprocessorSettings.loadValues(settings, pipeline::settings::Preprocessor::Params::BASE);
-
-	//maybeSetParam<double>(settings, preprocessorSettings.comb_threshold, Params::BASE+Params::COMB_THRESHOLD);
-	/*maybeSetParam<unsigned int>(settings, preprocessorSettings.min_size_comb, Params::BASE+Params::MIN_COMB_SIZE);
-	 maybeSetParam<unsigned int>(settings, preprocessorSettings.max_size_comb, Params::BASE+Params::MAX_COMB_SIZE);
-	 maybeSetParam<double>(settings, preprocessorSettings.diff_size_combs, Params::BASE+Params::DIFF_COMB_SIZE);
-	 maybeSetParam<unsigned int>(settings, preprocessorSettings.line_color_combs, Params::BASE+Params::COMB_LINE_COLOR);
-	 maybeSetParam<unsigned int>(settings, preprocessorSettings.use_comb_detection,Params::BASE+ Params::USE_COMB_DETECTION);
-	 maybeSetParam<int>(settings, preprocessorSettings.line_width_combs, Params::BASE+Params::COMB_LINE_WIDTH);
-	 maybeSetParam<unsigned int>(settings, preprocessorSettings.use_equalize_histogram, Params::BASE+Params::USE_EQUALIZE_HISTOGRAM);*/
 
 	return preprocessorSettings;
 }
