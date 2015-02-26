@@ -15,6 +15,9 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
 
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 #include "Common.h"
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
@@ -334,8 +337,12 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
     unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
 
     _groundTruth.labelNumTruePositives->setText( QString::number(matches) );
-    _groundTruth.labelNumRecall->setText(QString::number(100* matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
-    _groundTruth.labelNumPrecision->setText( QString::number(matches / ( matches + mismatches ), 'f', 2) + "%");
+
+    if (_groundTruth.recognizerResults.taggedGridsOnFrame.size() != 0)
+        _groundTruth.labelNumRecall->setText(QString::number(100* matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+
+    if ( (matches + mismatches) != 0)
+        _groundTruth.labelNumPrecision->setText( QString::number(matches / ( matches + mismatches ), 'f', 2) + "%");
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
@@ -365,6 +372,8 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 		const int currentFrameNumber = getCurrentFrameNumber();
 		for (TrackedObject const& object : _groundTruth.data.getTrackedObjects()) {
             const std::shared_ptr<Grid3D> grid3d = object.maybeGet<Grid3D>(currentFrameNumber);
+            if (!grid3d)
+                continue;
             const auto grid = std::make_shared<PipelineGrid>(grid3d->getCenter(), grid3d->getPixelRadius(), grid3d->getZRotation(),
                                                              grid3d->getYRotation(), grid3d->getXRotation());
 			if (grid) results.taggedGridsOnFrame.insert(grid);
@@ -726,14 +735,16 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 		return;
 	 }
 
+	 boost::property_tree::ptree pt = BeesBookCommon::getPreprocessorSettings(_settings).getPTree();
+	 BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
+	 BeesBookCommon::getRecognizerSettings(_settings).addToPTree(pt);
 
-
-	 pipeline::settings::preprocessor_settings_t ps= BeesBookCommon::getPreprocessorSettings(_settings);
-	if(ps.writeToJson(dir.toStdString() + "/" +filename.toStdString()+ ".json")){
-		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
-	}else{
+	 try{
+		 boost::property_tree::write_json(dir.toStdString() + "/" +filename.toStdString()+ ".json", pt);
+			emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
+	 }catch(std::exception &e){
 		 emit notifyGUI("config export failed", MSGS::FAIL);
-	}
+	 }
 
     return;
 }
