@@ -15,6 +15,9 @@
 #include <cereal/archives/json.hpp>
 #include <cereal/types/vector.hpp>
 
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 #include "Common.h"
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
@@ -732,14 +735,16 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 		return;
 	 }
 
+	 boost::property_tree::ptree pt = BeesBookCommon::getPreprocessorSettings(_settings).getPTree();
+	 BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
+	 BeesBookCommon::getRecognizerSettings(_settings).addToPTree(pt);
 
-
-	 pipeline::settings::preprocessor_settings_t ps= BeesBookCommon::getPreprocessorSettings(_settings);
-	if(ps.writeToJson(dir.toStdString() + "/" +filename.toStdString()+ ".json")){
-		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
-	}else{
+	 try{
+		 boost::property_tree::write_json(dir.toStdString() + "/" +filename.toStdString()+ ".json", pt);
+			emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
+	 }catch(std::exception &e){
 		 emit notifyGUI("config export failed", MSGS::FAIL);
-	}
+	 }
 
     return;
 }
