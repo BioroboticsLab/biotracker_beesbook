@@ -16,8 +16,6 @@ class GridFitterParamsWidget : public ParamsSubWidgetBase
 public:
 	GridFitterParamsWidget(Settings& settings);
 
-private:
-	Settings& _settings;
 
 //	SpinBoxWithSlider _initialStepSizeSlider;
 //	SpinBoxWithSlider _finalStepSizeSlider;

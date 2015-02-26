@@ -65,6 +65,8 @@ private:
 	struct 
     {
 		boost::optional<cv::Mat> preprocessorImage;
+		boost::optional<cv::Mat> preprocessorOptImage;
+		boost::optional<cv::Mat> preprocessorHoneyImage;
 		boost::optional<cv::Mat> preprocessorThresholdImage;
 		boost::optional<cv::Mat> localizerInputImage;
 		boost::optional<cv::Mat> localizerThresholdImage;
@@ -74,6 +76,7 @@ private:
 
 		// these references are just stored for convenience in order to invalidate all
 		// visualizations in a loop
+<<<<<<< HEAD
 		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
 		
         reference_array_t visualizations = reference_array_t
@@ -89,6 +92,16 @@ private:
 
 	struct LocalizerEvaluationResults 
     {
+=======
+		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 9> reference_array_t;
+		reference_array_t visualizations = reference_array_t{preprocessorImage, preprocessorOptImage,
+			preprocessorHoneyImage,
+			preprocessorThresholdImage, localizerInputImage, localizerThresholdImage,
+				localizerSobelImage, localizerBlobImage, recognizerCannyEdge };
+	} _visualizationData;
+
+	struct LocalizerEvaluationResults {
+>>>>>>> 3e6edff3a9650cc78f96992e0298f496c5329123
 		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
@@ -162,6 +175,7 @@ private slots:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
 	void settingsChanged(const BeesBookCommon::Stage stage);
 	void loadGroundTruthData();
+	void exportConfiguration();
 };
 
 #endif

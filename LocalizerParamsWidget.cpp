@@ -1,11 +1,10 @@
 #include "LocalizerParamsWidget.h"
 #include "source/settings/Settings.h"
 
-using namespace Localizer;
+using namespace pipeline::settings::Localizer;
 
 LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings)
-	: ParamsSubWidgetBase()
-	, _settings(settings)
+: ParamsSubWidgetBase(settings)
 	, _binaryThresholdSlider(this, &_layout, "Binary Threshold", 1, 100,
 	settings.getValueOrDefault(Params::BINARY_THRESHOLD, Defaults::BINARY_THRESHOLD), 1)
 	, _firstDilationNumIterationsSlider(this, &_layout, "First Dilation Iterations", 1, 20,
@@ -21,12 +20,7 @@ LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings)
 	, _minBoundingBoxSizeSlider(this, &_layout, "Minimum Bounding Box Size", 1, 1000,
 	settings.getValueOrDefault(Params::MIN_BOUNDING_BOX_SIZE, Defaults::MIN_BOUNDING_BOX_SIZE), 1)
 {
-	auto connectSlider = [ & ](SpinBoxWithSlider* slider, const std::string& paramName) {
-		  QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
-		        _settings.setParam(paramName, value);
-		        emit settingsChanged(BeesBookCommon::Stage::Localizer);
-			});
-	  };
+
 
 	connectSlider(&_binaryThresholdSlider, Params::BINARY_THRESHOLD);
 	connectSlider(&_firstDilationNumIterationsSlider, Params::FIRST_DILATION_NUM_ITERATIONS);

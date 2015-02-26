@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <QFileDialog>
+#include <QInputDialog>
 
 #include <opencv2/core/core.hpp>
 
@@ -115,6 +116,8 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 
 	QObject::connect(uiTools.pushButtonLoadGroundTruth, &QPushButton::pressed,
 			this, &BeesBookImgAnalysisTracker::loadGroundTruthData);
+	QObject::connect(uiTools.save_config, &QPushButton::pressed,
+				this, &BeesBookImgAnalysisTracker::exportConfiguration);
 
 	_preprocessor.loadSettings(
 			BeesBookCommon::getPreprocessorSettings(_settings));
@@ -144,7 +147,10 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame) {
 		MeasureTimeRAII measure("Preprocessor", notify);
 		_image = _preprocessor.process(frame);
 		_visualizationData.preprocessorImage = _image.clone();
-
+		_visualizationData.preprocessorOptImage =
+						_preprocessor.getOptsImage();
+		_visualizationData.preprocessorHoneyImage =
+						_preprocessor.getHoneyImage();
 		_visualizationData.preprocessorThresholdImage =
 				_preprocessor.getThresholdImage();
 
@@ -317,7 +323,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				const PipelineGrid& grid = candidate.getGridsConst()[0];
 				cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
-				grid.draw(image, 0.5);
+				grid.drawContours(image, 0.5);
 			}
 		}
 		return;
@@ -513,7 +519,7 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 
 int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const {
 	const int radius = _settings.getValueOfParam<int>(
-			Localizer::Params::MIN_BOUNDING_BOX_SIZE) / 2;
+			pipeline::settings::Localizer::Params::MIN_BOUNDING_BOX_SIZE) / 2;
 	// calculate actual pixel size of grid based on current zoom level
 	double displayTagSize = radius / getCurrentZoomLevel();
 	displayTagSize = displayTagSize > 50. ? 50 : displayTagSize;
@@ -572,6 +578,7 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat, const in
 void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) 
 {
 	// don't try to visualize results while data processing is running
+<<<<<<< HEAD
 	if (_tagListLock.try_lock()) 
     {
 		switch (_selectedStage) 
@@ -586,6 +593,33 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view)
                     image = rgbMatFromBwMat(_visualizationData.preprocessorThresholdImage.get(), image.type());
                 }
                 break;
+=======
+	if (_tagListLock.try_lock()) {
+		switch (_selectedStage) {
+		case BeesBookCommon::Stage::Preprocessor:
+			if ((view.name == "Preprocessor Output")
+					&& (_visualizationData.preprocessorImage)) {
+				image = rgbMatFromBwMat(
+						_visualizationData.preprocessorImage.get(),
+						image.type());
+			} else if ((view.name == "Opts")&& (_visualizationData.preprocessorOptImage)) {
+				image = rgbMatFromBwMat(
+						_visualizationData.preprocessorOptImage.get(),
+						image.type());
+
+		} else if ((view.name == "Honeyfilter")&& (_visualizationData.preprocessorHoneyImage)) {
+			image = rgbMatFromBwMat(
+					_visualizationData.preprocessorHoneyImage.get(),
+					image.type());
+
+			} else if ((view.name == "Threshold-Comb")
+					&& (_visualizationData.preprocessorThresholdImage)) {
+				image = rgbMatFromBwMat(
+						_visualizationData.preprocessorThresholdImage.get(),
+						image.type());
+			}
+			break;
+>>>>>>> 3e6edff3a9650cc78f96992e0298f496c5329123
 		case BeesBookCommon::Stage::Localizer:
 			/*if ((view.name == "Sobel Edge")
 			 && (_visualizationData.localizerSobelImage)) {
@@ -692,10 +726,38 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData()
 	//TODO: maybe check filehash here
 }
 
-void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage stage, bool checked)
-{
-	if (checked) 
-    {
+void BeesBookImgAnalysisTracker::exportConfiguration() {
+	 QString dir = QFileDialog::getExistingDirectory(0, tr("select directory"),
+	                                                 "",
+	                                                 QFileDialog::ShowDirsOnly| QFileDialog::DontResolveSymlinks);
+	 if (dir.isEmpty()){
+		 emit notifyGUI("config export: no directory given", MSGS::FAIL);
+	 		return;
+	 }
+	 bool ok;
+	 //std::string image_name = _settings.getValueOfParam<std::string>(PICTUREPARAM::PICTURE_FILES);
+	 QString filename = QInputDialog::getText(0, tr("choose filename (without extension)"),
+	                                           tr("Filename:"), QLineEdit::Normal, "Filename"  , &ok);
+	 if (!ok || filename.isEmpty()){
+		 emit notifyGUI("config export: no filename given", MSGS::FAIL);
+		return;
+	 }
+
+
+
+	 pipeline::settings::preprocessor_settings_t ps= BeesBookCommon::getPreprocessorSettings(_settings);
+	if(ps.writeToJson(dir.toStdString() + "/" +filename.toStdString()+ ".json")){
+		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
+	}else{
+		 emit notifyGUI("config export failed", MSGS::FAIL);
+	}
+
+    return;
+}
+
+void BeesBookImgAnalysisTracker::stageSelectionToogled(
+		BeesBookCommon::Stage stage, bool checked) {
+	if (checked) {
 		_selectedStage = stage;
 
 		emit registerViews( { } );
@@ -703,7 +765,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage sta
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-			emit registerViews( { { "Preprocessor Output" }, { "Threshold" } });
+			emit registerViews( { { "Preprocessor Output" },{"Opts"},{"Honeyfilter"}, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();

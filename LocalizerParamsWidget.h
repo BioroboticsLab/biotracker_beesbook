@@ -17,7 +17,7 @@ public:
 	LocalizerParamsWidget(Settings& settings);
 
 private:
-	Settings& _settings;
+
 
 	SpinBoxWithSlider _binaryThresholdSlider;
 	SpinBoxWithSlider _firstDilationNumIterationsSlider;
