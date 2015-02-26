@@ -3,7 +3,7 @@
 #include "source/settings/Settings.h"
 #include "Common.h"
 
-using namespace Recognizer;
+using namespace pipeline::settings::Recognizer;
 
 RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 : ParamsSubWidgetBase(settings)
@@ -26,12 +26,7 @@ RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 	, _thresholdVoteSlider(this, &_layout, "Threshold Best Vote", 0, 5000,
 		settings.getValueOrDefault<int>(Params::THRESHOLD_VOTE, Defaults::THRESHOLD_VOTE), 1)
 {
-	auto connectSlider = [ & ](SpinBoxWithSlider* slider, const std::string& paramName) {
-		QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
-			_settings.setParam(paramName, value);
-			emit settingsChanged(BeesBookCommon::Stage::Recognizer);
-		});
-	};
+
 
 	connectSlider(&_cannyThresholdLowSlider, Params::CANNY_THRESHOLD_LOW);
 	connectSlider(&_cannyThresholdHighSlider, Params::CANNY_THRESHOLD_HIGH);

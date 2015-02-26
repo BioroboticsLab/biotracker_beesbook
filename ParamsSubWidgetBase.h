@@ -31,10 +31,9 @@ protected:
 	 std::cout<< "signal setting changes value" <<  value << std::endl;
 	 });
 	 }*/
-
 	void connectSlider(SpinBoxWithSlider* slider, const std::string& paramName) {
 			  QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
-			        _settings.setParam(paramName, value);
+			        _settings.setParam(paramName,value);
 			        emit settingsChanged(BeesBookCommon::Stage::Localizer);
 				});
 		  };
