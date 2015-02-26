@@ -143,6 +143,7 @@ private slots:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
 	void settingsChanged(const BeesBookCommon::Stage stage);
 	void loadGroundTruthData();
+	void exportConfiguration();
 };
 
 #endif

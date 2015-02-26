@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <QFileDialog>
+#include <QInputDialog>
 
 #include <opencv2/core/core.hpp>
 
@@ -112,6 +113,8 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 
 	QObject::connect(uiTools.pushButtonLoadGroundTruth, &QPushButton::pressed,
 			this, &BeesBookImgAnalysisTracker::loadGroundTruthData);
+	QObject::connect(uiTools.save_config, &QPushButton::pressed,
+				this, &BeesBookImgAnalysisTracker::exportConfiguration);
 
 	_preprocessor.loadSettings(
 			BeesBookCommon::getPreprocessorSettings(_settings));
@@ -634,6 +637,59 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	//TODO: maybe check filehash here
 }
 
+
+
+void BeesBookImgAnalysisTracker::exportConfiguration() {
+	 QString dir = QFileDialog::getExistingDirectory(0, tr("select directory"),
+	                                                 "",
+	                                                 QFileDialog::ShowDirsOnly| QFileDialog::DontResolveSymlinks);
+	 if (dir.isEmpty()){
+		 emit notifyGUI("config export: no directory given", MSGS::FAIL);
+	 		return;
+	 }
+	 bool ok;
+	 //std::string image_name = _settings.getValueOfParam<std::string>(PICTUREPARAM::PICTURE_FILES);
+	 QString filename = QInputDialog::getText(0, tr("choose filename (without extension)"),
+	                                           tr("Filename:"), QLineEdit::Normal, "Filename"  , &ok);
+	 if (!ok || filename.isEmpty()){
+		 emit notifyGUI("config export: no filename given", MSGS::FAIL);
+		return;
+	 }
+
+
+
+	 pipeline::settings::preprocessor_settings_t ps= BeesBookCommon::getPreprocessorSettings(_settings);
+	if(ps.writeToJson(dir.toStdString() + "/" +filename.toStdString()+ ".json")){
+		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
+	}else{
+		 emit notifyGUI("config export failed", MSGS::FAIL);
+	}
+
+	return;
+/*
+ *
+	std::ifstream is(filename.toStdString());
+	cereal::JSONInputArchive ar(is);
+
+	ar(_groundTruth.data);
+	_groundTruth.available = true;
+
+	const std::array<QLabel*, 10> labels { _groundTruth.labelFalsePositives,
+			_groundTruth.labelFalseNegatives, _groundTruth.labelTruePositives,
+			_groundTruth.labelRecall, _groundTruth.labelPrecision,
+			_groundTruth.labelNumFalsePositives,
+			_groundTruth.labelNumFalseNegatives,
+			_groundTruth.labelNumTruePositives, _groundTruth.labelNumRecall,
+			_groundTruth.labelNumPrecision };
+
+	for (QLabel* label : labels) {
+		label->setEnabled(true);
+	}
+
+	emit forceTracking();
+	//TODO: maybe check filehash here*/
+}
+
 void BeesBookImgAnalysisTracker::stageSelectionToogled(
 		BeesBookCommon::Stage stage, bool checked) {
 	if (checked) {
@@ -643,7 +699,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-			emit registerViews( { { "Preprocessor Output" },{"Honeyfilter"}, { "Threshold-Comb" } });
+			emit registerViews( { { "Preprocessor Output" },{"Opts"},{"Honeyfilter"}, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
