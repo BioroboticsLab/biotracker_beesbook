@@ -24,17 +24,21 @@ protected:
 	Settings& _settings;
 
 	/*template <typename widget, typename parameterType>
-	 void connectSettingsWidget(widget* check, const std::string& paramName, const BeesBookCommon::Stage &stage,parameterType initialValue, void (widget::*signal)(parameterType)) {
+	 void connectSettingsWidget(widget* check, const std::string& paramName, parameterType initialValue, void (widget::*signal)(parameterType)) {
 	 QObject::connect(check, signal, [ = ](parameterType value) {
 	 _settings.setParam(paramName, value);
 	 emit settingsChanged(stage);
 	 std::cout<< "signal setting changes value" <<  value << std::endl;
 	 });
 	 }*/
-	void connectSlider(SpinBoxWithSlider* slider, const std::string& paramName) {
+	void connectSlider(SpinBoxWithSlider* slider, const std::string& paramName, const BeesBookCommon::Stage &stage) {
+		int initialValue = _settings.getValueOfParam<int>(paramName);
+		std::cout << paramName << " initial to " << initialValue << std::endl;
+		slider->setValue(initialValue);
 			  QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
 			        _settings.setParam(paramName,value);
-			        emit settingsChanged(BeesBookCommon::Stage::Localizer);
+
+			        emit settingsChanged(stage);
 				});
 		  };
 

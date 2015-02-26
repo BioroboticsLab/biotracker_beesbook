@@ -30,62 +30,79 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
 			const boost::optional<int> param =
 					settings.maybeGetValueOfParam<int>(
 							base + entry.setting_name);
-			if (param){
+			if (param) {
 				entry.field = boost::get<int>(param);
-		}else{
-			settings.setParam(base + entry.setting_name, boost::get<int>(entry.field));
-		}
+			} else {
+				settings.setParam(base + entry.setting_name,
+						boost::get<int>(entry.field));
+			}
 
 			break;
 		}
 		case (setting_entry_type::DOUBLE): {
 			const boost::optional<double> param = settings.maybeGetValueOfParam<
 					double>(base + entry.setting_name);
-			if (param){
+			if (param) {
 				entry.field = boost::get<double>(param);
-			}else{
-						settings.setParam(base + entry.setting_name, boost::get<double>(entry.field));
-					}
+			} else {
+				settings.setParam(base + entry.setting_name,
+						boost::get<double>(entry.field));
+			}
 			break;
 		}
 		case (setting_entry_type::BOOL): {
 			const boost::optional<bool> param = settings.maybeGetValueOfParam<
 					bool>(base + entry.setting_name);
-			if (param){
+			if (param) {
 				entry.field = boost::get<bool>(param);
-			}else{
-						settings.setParam(base + entry.setting_name, boost::get<bool>(entry.field));
-					}
+			} else {
+				settings.setParam(base + entry.setting_name,
+						boost::get<bool>(entry.field));
+			}
 			break;
 		}
 		case (setting_entry_type::U_INT): {
 			const boost::optional<unsigned int> param =
 					settings.maybeGetValueOfParam<unsigned int>(
 							base + entry.setting_name);
-			if (param){
+			if (param) {
 				entry.field = boost::get<unsigned int>(param);
-			}else{
-				settings.setParam(base + entry.setting_name, boost::get<unsigned int>(entry.field));
+			} else {
+				settings.setParam(base + entry.setting_name,
+						boost::get<unsigned int>(entry.field));
+			}
+			break;
+		}
+		case (setting_entry_type::SIZE_T): {
+			const boost::optional<size_t> param = settings.maybeGetValueOfParam<
+					size_t>(base + entry.setting_name);
+			if (param) {
+				entry.field = boost::get<size_t>(param);
+			} else {
+				settings.setParam(base + entry.setting_name,
+						boost::get<size_t>(entry.field));
 			}
 			break;
 		}
 		}
 
-
 	}
 }
 
-pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(Settings &settings) {
+pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
+		Settings &settings) {
 	pipeline::settings::localizer_settings_t localizerSettings;
-	localizerSettings.loadValues(settings, pipeline::settings::Localizer::Params::BASE);
+	localizerSettings.loadValues(settings,
+			pipeline::settings::Localizer::Params::BASE);
 	return localizerSettings;
 }
 
 pipeline::settings::recognizer_settings_t BeesBookCommon::getRecognizerSettings(
-		 Settings &settings) {
+		Settings &settings) {
 	pipeline::settings::recognizer_settings_t recognizerSettings;
-		recognizerSettings.loadValues(settings, pipeline::settings::Recognizer::Params::BASE);
-		return recognizerSettings;
+	recognizerSettings.loadValues(settings,
+			pipeline::settings::Recognizer::Params::BASE);
+	return recognizerSettings;
 }
 
 pipeline::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
@@ -106,7 +123,8 @@ pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSetti
 		Settings &settings) {
 	pipeline::settings::preprocessor_settings_t preprocessorSettings;
 
-	preprocessorSettings.loadValues(settings, pipeline::settings::Preprocessor::Params::BASE);
+	preprocessorSettings.loadValues(settings,
+			pipeline::settings::Preprocessor::Params::BASE);
 
 	return preprocessorSettings;
 }

@@ -519,7 +519,7 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 }
 
 int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const {
-	const int radius = _settings.getValueOfParam<int>(
+	const int radius = _settings.getValueOfParam<int>(pipeline::settings::Localizer::Params::BASE+
 			pipeline::settings::Localizer::Params::MIN_BOUNDING_BOX_SIZE) / 2;
 	// calculate actual pixel size of grid based on current zoom level
 	double displayTagSize = radius / getCurrentZoomLevel();
