@@ -291,7 +291,7 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
 	for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives) {
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
 		CV_AA);
-		grid->draw(image, 1.0);
+		grid->drawContours(image, 1.0);
 	}
 
 	const float recall = static_cast<float>(results.truePositives.size())
@@ -316,7 +316,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 	//TODO
 	const int thickness = calculateVisualizationThickness();
 
-	if (!_groundTruth.available) 
+    //if (!_groundTruth.available)
     {
 		for (const pipeline::Tag& tag : _taglist) 
         {
@@ -329,16 +329,21 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 				grid.drawContours(image, 0.5);
 			}
 		}
+		return;
+	}
 
-        //precision = TP / Positives
-        //recall = TP / GroundTruth_N
-        unsigned int matches = _groundTruth.gridfitterResults.matches;
-        unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
+    //precision = TP / Positives
+    //recall = TP / GroundTruth_N
+    unsigned int matches = _groundTruth.gridfitterResults.matches;
+    unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
 
-        _groundTruth.labelNumTruePositives->setText( QString::number(matches) );
+    _groundTruth.labelNumTruePositives->setText( QString::number(matches) );
+
+    if (_groundTruth.recognizerResults.taggedGridsOnFrame.size() != 0)
         _groundTruth.labelNumRecall->setText(QString::number(100* matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+
+    if ( (matches + mismatches) != 0)
         _groundTruth.labelNumPrecision->setText( QString::number(matches / ( matches + mismatches ), 'f', 2) + "%");
-    }
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
@@ -368,6 +373,8 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 		const int currentFrameNumber = getCurrentFrameNumber();
 		for (TrackedObject const& object : _groundTruth.data.getTrackedObjects()) {
             const std::shared_ptr<Grid3D> grid3d = object.maybeGet<Grid3D>(currentFrameNumber);
+            if (!grid3d)
+                continue;
             const auto grid = std::make_shared<PipelineGrid>(grid3d->getCenter(), grid3d->getPixelRadius(), grid3d->getZRotation(),
                                                              grid3d->getYRotation(), grid3d->getXRotation());
 			if (grid) results.taggedGridsOnFrame.insert(grid);
