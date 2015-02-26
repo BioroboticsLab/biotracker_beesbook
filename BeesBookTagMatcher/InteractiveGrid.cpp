@@ -83,7 +83,7 @@ void InteractiveGrid::setTransparency(float transparency) {
 	if (transparency < 0.0 || transparency > 1.0) {
 		throw std::invalid_argument("transparency not in range[0.0, 1.0]");
 	}
-	_transparency = transparency;
+    _transparency = transparency;
 }
 
 /**
@@ -215,5 +215,7 @@ Grid::coordinates2D_t InteractiveGrid::generate_3D_coordinates_from_parameters_a
 
 	return result;
 }
+
+
 
 CEREAL_REGISTER_TYPE(InteractiveGrid)
