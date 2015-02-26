@@ -23,6 +23,9 @@
 #include "source/tracking/TrackingAlgorithm.h"
 #include "utility/stdext.h"
 
+//#include "pipeline/datastructure/Tag.h"
+//#include "pipeline/datastructure/TagCandidate.h"
+
 #include "source/tracking/serialization/SerializationData.h"
 
 class PipelineGrid;
@@ -44,22 +47,23 @@ public:
 	}
 
 private:
-	BeesBookCommon::Stage _selectedStage;
+	BeesBookCommon::Stage   _selectedStage;
 
 	const std::shared_ptr<ParamsWidget> _paramsWidget;
-	const std::shared_ptr<QWidget> _toolsWidget;
+	const std::shared_ptr<QWidget>      _toolsWidget;
 
-	pipeline::Preprocessor _preprocessor;
-	pipeline::Localizer _localizer;
-	pipeline::Recognizer _recognizer;
-	pipeline::GridFitter _gridFitter;
-	pipeline::Decoder _decoder;
+	pipeline::Preprocessor  _preprocessor;
+	pipeline::Localizer     _localizer;
+	pipeline::Recognizer    _recognizer;
+	pipeline::GridFitter    _gridFitter;
+	pipeline::Decoder       _decoder;
 
 	cv::Mat _image;
 	std::vector<pipeline::Tag> _taglist;
 	std::mutex _tagListLock;
 
-	struct {
+	struct 
+    {
 		boost::optional<cv::Mat> preprocessorImage;
 		boost::optional<cv::Mat> preprocessorThresholdImage;
 		boost::optional<cv::Mat> localizerInputImage;
@@ -71,12 +75,20 @@ private:
 		// these references are just stored for convenience in order to invalidate all
 		// visualizations in a loop
 		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
-		reference_array_t visualizations = reference_array_t{preprocessorImage,
-			preprocessorThresholdImage, localizerInputImage, localizerThresholdImage,
-				localizerSobelImage, localizerBlobImage, recognizerCannyEdge };
-	} _visualizationData;
+		
+        reference_array_t visualizations = reference_array_t
+        {   preprocessorImage,
+            preprocessorThresholdImage, 
+            localizerInputImage, 
+            localizerThresholdImage,
+            localizerSobelImage, 
+            localizerBlobImage, 
+            recognizerCannyEdge };
+        } 
+        _visualizationData;
 
-	struct LocalizerEvaluationResults {
+	struct LocalizerEvaluationResults 
+    {
 		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
@@ -84,12 +96,21 @@ private:
 		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<PipelineGrid>> gridByTag;
 	};
 
-	struct RecognizerEvaluationResults {
+	struct RecognizerEvaluationResults 
+    {
 		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
-		std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
+
+        //mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
+        std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
 		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
 	};
+
+    struct GridFitterEvaluationResults 
+    {
+        unsigned int matches        = 0;
+        unsigned int mismatches     = 0;
+    };
 
 	struct {
 		bool available = false;
@@ -109,6 +130,7 @@ private:
 
 		LocalizerEvaluationResults localizerResults;
 		RecognizerEvaluationResults recognizerResults;
+        GridFitterEvaluationResults gridfitterResults;
 	} _groundTruth;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;

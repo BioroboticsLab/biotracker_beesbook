@@ -21,8 +21,11 @@
 #include "RecognizerParamsWidget.h"
 #include "PreprocessorParamsWidget.h"
 #include "pipeline/datastructure/Tag.h"
+#include "pipeline/datastructure/TagCandidate.h"
 #include "pipeline/datastructure/PipelineGrid.h"
 #include "source/tracking/algorithm/algorithms.h"
+
+#include "Grid3D.h"
 
 #include "ui_ToolWidget.h"
 
@@ -299,13 +302,17 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
 			QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const {
+void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const 
+{
 	//TODO
 	const int thickness = calculateVisualizationThickness();
 
-	if (!_groundTruth.available) {
-		for (const pipeline::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
+	if (!_groundTruth.available) 
+    {
+		for (const pipeline::Tag& tag : _taglist) 
+        {
+			if (!tag.getCandidates().empty()) 
+            {
 				// get best candidate
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				const PipelineGrid& grid = candidate.getGridsConst()[0];
@@ -315,6 +322,16 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 		}
 		return;
 	}
+
+    //precision = TP / Positives
+    //recall = TP / GroundTruth_N
+    unsigned int matches = _groundTruth.gridfitterResults.matches;
+    unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
+
+    _groundTruth.labelNumTruePositives->setText( QString::number(matches) );
+    _groundTruth.labelNumRecall->setText(QString::number(100* matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+    _groundTruth.labelNumPrecision->setText( QString::number(matches / ( matches + mismatches ), 'f', 2) + "%");
+
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
@@ -343,7 +360,9 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 	{
 		const int currentFrameNumber = getCurrentFrameNumber();
 		for (TrackedObject const& object : _groundTruth.data.getTrackedObjects()) {
-			const std::shared_ptr<PipelineGrid> grid = object.maybeGet<PipelineGrid>(currentFrameNumber);
+            const std::shared_ptr<Grid3D> grid3d = object.maybeGet<Grid3D>(currentFrameNumber);
+            const auto grid = std::make_shared<PipelineGrid>(grid3d->getCenter(), grid3d->getPixelRadius(), grid3d->getZRotation(),
+                                                             grid3d->getYRotation(), grid3d->getXRotation());
 			if (grid) results.taggedGridsOnFrame.insert(grid);
 		}
 	}
@@ -370,7 +389,6 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer() {
 	std::set<std::shared_ptr<PipelineGrid>> notYetDetectedGrids = results.taggedGridsOnFrame;
 	for (const pipeline::Tag& tag : _taglist) {
 		const cv::Rect& tagBox = tag.getBox();
-
 		bool inGroundTruth = false;
 		for (const std::shared_ptr<PipelineGrid>& grid : notYetDetectedGrids) {
 			const cv::Rect gridBox = grid->getBoundingBox();
@@ -432,7 +450,60 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer() {
 
 void BeesBookImgAnalysisTracker::evaluateGridfitter()
 {
-	// TODO
+    assert(_groundTruth.available);
+    //int framenum                = getCurrentFrameNumber();
+
+
+
+    for (auto& candidateByGrid : _groundTruth.recognizerResults.truePositives) {
+        const pipeline::Tag& tag = candidateByGrid.first;
+        const pipeline::TagCandidate& bestCandidate = candidateByGrid.second;
+        assert(!bestCandidate.getGridsConst().empty());
+        const PipelineGrid& bestFoundGrid = bestCandidate.getGridsConst().at(0);
+        const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
+
+        if (groundTruthGrid->compare(bestFoundGrid) > 1.0) {
+            _groundTruth.gridfitterResults.matches++;
+        }
+        else {
+            _groundTruth.gridfitterResults.mismatches++;
+        }
+    }
+
+
+
+//    //iterate over all objects found by pipeline
+//    for (pipeline::Tag& tag : _taglist)
+//    {
+//        if (!tag.getCandidates().empty())
+//        {
+//            // take best grid fit of best ellipse candidate (aka TagCandidate) of current ROI (aka Tag)
+//            PipelineGrid const & pipegrid = tag.getCandidates().at(0).getGrids().at(0);
+
+//            //iterate over all ground truth objects
+//            for (const TrackedObject trObj : GTObjects)
+//            {
+//                // get grid pointer of current object in list
+//                std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(framenum);
+
+//                // if the pointer is valid
+//                if ( pGrid )
+//                {
+//                    // check if grids are sufficiently close to each other
+//                    if ( cv::norm( (pGrid->getCenter() - pipegrid.getCenter()) ) < 10.0 )
+//                    {
+//                        Grid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
+
+//                        //if ( pipegrid.compare(temp) > 1.0 )
+//                        {
+//                            //results.taggedGridsOnFrame.insert( TODO XXX pipegrid);
+//                        }
+//                    }
+//                }
+//            }
+
+//        }
+//    }
 }
 
 void BeesBookImgAnalysisTracker::evaluateDecoder()
@@ -488,8 +559,7 @@ std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBoo
 	return {bestDeviation, *bestCandidate};
 }
 
-cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
-		const int type) const {
+cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat, const int type) const {
 	// TODO: convert B&W to RGB
 	// this could probably be implemented more efficiently
 	cv::Mat image;
@@ -499,23 +569,23 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
 	return image;
 }
 
-void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
+void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) 
+{
 	// don't try to visualize results while data processing is running
-	if (_tagListLock.try_lock()) {
-		switch (_selectedStage) {
-		case BeesBookCommon::Stage::Preprocessor:
-			if ((view.name == "Preprocessor Output")
-					&& (_visualizationData.preprocessorImage)) {
-				image = rgbMatFromBwMat(
-						_visualizationData.preprocessorImage.get(),
-						image.type());
-			} else if ((view.name == "Threshold")
-					&& (_visualizationData.preprocessorThresholdImage)) {
-				image = rgbMatFromBwMat(
-						_visualizationData.preprocessorThresholdImage.get(),
-						image.type());
-			}
-			break;
+	if (_tagListLock.try_lock()) 
+    {
+		switch (_selectedStage) 
+        {
+            case BeesBookCommon::Stage::Preprocessor:
+                if ((view.name == "Preprocessor Output") && (_visualizationData.preprocessorImage)) 
+                {
+                    image = rgbMatFromBwMat(_visualizationData.preprocessorImage.get(), image.type());
+                } 
+                else if ((view.name == "Threshold") && (_visualizationData.preprocessorThresholdImage)) 
+                {
+                    image = rgbMatFromBwMat(_visualizationData.preprocessorThresholdImage.get(), image.type());
+                }
+                break;
 		case BeesBookCommon::Stage::Localizer:
 			/*if ((view.name == "Sobel Edge")
 			 && (_visualizationData.localizerSobelImage)) {
@@ -567,20 +637,17 @@ void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &image) con
 
 }
 
-void BeesBookImgAnalysisTracker::settingsChanged(
-		const BeesBookCommon::Stage stage) {
-	switch (stage) {
-	case BeesBookCommon::Stage::Preprocessor:
-		_preprocessor.loadSettings(
-				BeesBookCommon::getPreprocessorSettings(_settings));
+void BeesBookImgAnalysisTracker::settingsChanged(const BeesBookCommon::Stage stage)
+{
+    switch (stage)
+    {
+        case BeesBookCommon::Stage::Preprocessor : _preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Localizer:
-		_localizer.loadSettings(
-				BeesBookCommon::getLocalizerSettings(_settings));
+        _localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Recognizer:
-		_recognizer.loadSettings(
-				BeesBookCommon::getRecognizerSettings(_settings));
+        _recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
 		// TODO
@@ -593,16 +660,20 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 	}
 }
 
-void BeesBookImgAnalysisTracker::loadGroundTruthData() {
-	QString filename = QFileDialog::getOpenFileName(nullptr,
-			tr("Load tracking data"), "", tr("Data Files (*.tdat)"));
-	if (filename.isEmpty())
+void BeesBookImgAnalysisTracker::loadGroundTruthData()
+{
+    QString filename = QFileDialog::getOpenFileName(nullptr, tr("Load tracking data"), "", tr("Data Files (*.tdat)"));
+
+    if (filename.isEmpty())
 		return;
 
 	std::ifstream is(filename.toStdString());
-	cereal::JSONInputArchive ar(is);
 
-	ar(_groundTruth.data);
+    cereal::JSONInputArchive ar(is);
+
+    // load serialized data into member .data
+    ar(_groundTruth.data);
+
 	_groundTruth.available = true;
 
 	const std::array<QLabel*, 10> labels { _groundTruth.labelFalsePositives,
@@ -621,12 +692,14 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	//TODO: maybe check filehash here
 }
 
-void BeesBookImgAnalysisTracker::stageSelectionToogled(
-		BeesBookCommon::Stage stage, bool checked) {
-	if (checked) {
+void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage stage, bool checked)
+{
+	if (checked) 
+    {
 		_selectedStage = stage;
 
-		emit registerViews( { });
+		emit registerViews( { } );
+        
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
