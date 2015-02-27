@@ -126,6 +126,8 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 			BeesBookCommon::getPreprocessorSettings(_settings));
 	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
 	_recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
+	BeesBookCommon::getGridfitterSettings(_settings);
+
 	//TODO
 }
 

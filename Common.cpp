@@ -7,17 +7,14 @@
 #include "pipeline/datastructure/settings.h"
 #include "source/settings/Settings.h"
 
-namespace {
-template<typename ParamType>
-void maybeSetParam(const Settings& settings, ParamType& paramLoc,
-		const std::string& name) {
-	const boost::optional<ParamType> param = settings.maybeGetValueOfParam<
-			ParamType>(name);
-	if (param)
-		paramLoc = std::move(*param);
-}
-}
-
+/**
+ * try to lad all setting-entries from the general biotracker-settings into the specific pipeline-setting object.
+ * If a setting entry is not found in biotracker-settings, the default is written back into biotracker-settings
+ * (to make sure, that every parameter exists for configuration)
+ *
+ * @param settings settings general biotracker-settings
+ * @param base string, in which node the settings where located
+ */
 void pipeline::settings::settings_abs::loadValues(Settings& settings,
 		std::string base) {
 
@@ -88,7 +85,11 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
 
 	}
 }
-
+/**
+ *
+ * @param settings general biotracker-settings
+ * @return setting object for pipeline
+ */
 pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
 		Settings &settings) {
 	pipeline::settings::localizer_settings_t localizerSettings;
@@ -96,7 +97,11 @@ pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
 			pipeline::settings::Localizer::Params::BASE);
 	return localizerSettings;
 }
-
+/**
+ *
+ * @param settings general biotracker-settings
+ * @return setting object for pipeline
+ */
 pipeline::settings::recognizer_settings_t BeesBookCommon::getRecognizerSettings(
 		Settings &settings) {
 	pipeline::settings::recognizer_settings_t recognizerSettings;
@@ -104,21 +109,25 @@ pipeline::settings::recognizer_settings_t BeesBookCommon::getRecognizerSettings(
 			pipeline::settings::Recognizer::Params::BASE);
 	return recognizerSettings;
 }
+/**
+ *
+ * @param settings general biotracker-settings
+ * @return setting object for pipeline
+ */
+pipeline::settings::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
+		Settings &settings) {
 
-pipeline::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
-		const Settings &settings) {
-	using namespace GridFitter;
-
-	pipeline::gridfitter_settings_t gridfitterSettings;
-
-//	maybeSetParam<int>(settings, gridfitterSettings.initial_step_size, Params::INITIAL_STEP_SIZE);
-//	maybeSetParam<int>(settings, gridfitterSettings.final_step_size, Params::FINAL_STEP_SIZE);
-//	maybeSetParam<float>(settings, gridfitterSettings.up_speed, Params::UP_SPEED);
-//	maybeSetParam<float>(settings, gridfitterSettings.down_speed, Params::DOWN_SPEED);
-
+	pipeline::settings::gridfitter_settings_t gridfitterSettings;
+	gridfitterSettings.loadValues(settings,
+			pipeline::settings::Gridfitter::Params::BASE);
+	return gridfitterSettings;
 	return gridfitterSettings;
 }
-
+/**
+ *
+ * @param settings general biotracker-settings
+ * @return setting object for pipeline
+ */
 pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSettings(
 		Settings &settings) {
 	pipeline::settings::preprocessor_settings_t preprocessorSettings;

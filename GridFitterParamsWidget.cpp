@@ -1,28 +1,76 @@
 #include "GridFitterParamsWidget.h"
 #include "source/settings/Settings.h"
 
-using namespace GridFitter;
+using namespace pipeline::settings::Gridfitter;
+
+
+#include "ui_GridfitterParamsWidget.h"
 
 GridFitterParamsWidget::GridFitterParamsWidget(Settings &settings)
 : ParamsSubWidgetBase(settings)
-//    , _initialStepSizeSlider(this, &_layout, "Initial Step Size", 0, 100,
-//	settings.getValueOrDefault(Params::INITIAL_STEP_SIZE, Defaults::INITIAL_STEP_SIZE), 1)
-//	, _finalStepSizeSlider(this, &_layout, "Final Step Size", 0, 100,
-//	settings.getValueOrDefault(Params::FINAL_STEP_SIZE, Defaults::FINAL_STEP_SIZE), 1)
-//	, _upSpeedSlider(this, &_layout, "Up Speed", 1, 100,
-//	settings.getValueOrDefault(Params::UP_SPEED, Defaults::UP_SPEED), 1)
-//	, _downSpeedSlider(this, &_layout, "(Down Speed)", 1, 100,
-//	settings.getValueOrDefault(Params::DOWN_SPEED, Defaults::DOWN_SPEED ), 1)
 {
-	auto connectSlider = [ & ](SpinBoxWithSlider* slider, const std::string& paramName) {
-		  QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
-		        _settings.setParam(paramName, value);
-		        emit settingsChanged(BeesBookCommon::Stage::GridFitter);
-			});
-	  };
+	Ui::GridfitterParamsWidget paramsWidget;
+	paramsWidget.setupUi(this);
 
-//	connectSlider(&_initialStepSizeSlider, Params::INITIAL_STEP_SIZE);
-//	connectSlider(&_finalStepSizeSlider, Params::FINAL_STEP_SIZE);
-//	connectSlider(&_upSpeedSlider, Params::UP_SPEED);
-//	connectSlider(&_downSpeedSlider, Params::DOWN_SPEED);
+	/*
+	 * err function
+	 */
+	connectSettingsWidget(paramsWidget.err_func_alpha_inner,
+				Params::BASE + Params::ERR_FUNC_ALPHA_INNER,
+				BeesBookCommon::Stage::GridFitter);
+	connectSettingsWidget(paramsWidget.err_func_alpha_inner_edge,
+				Params::BASE + Params::ERR_FUNC_ALPHA_INNER_EDGE,
+				BeesBookCommon::Stage::GridFitter);
+	connectSettingsWidget(paramsWidget.err_func_alpha_outer,
+				Params::BASE + Params::ERR_FUNC_ALPHA_OUTER,
+				BeesBookCommon::Stage::GridFitter);
+	connectSettingsWidget(paramsWidget.err_func_alpha_outer_edge,
+				Params::BASE + Params::ERR_FUNC_ALPHA_OUTER_EDGE,
+				BeesBookCommon::Stage::GridFitter);
+	connectSettingsWidget(paramsWidget.err_func_alpha_variance,
+				Params::BASE + Params::ERR_FUNC_ALPHA_VARIANCE,
+				BeesBookCommon::Stage::GridFitter);
+
+	/*
+	 * adaptive
+	 */
+
+	connectSettingsWidget(paramsWidget.adaptive_block_size,
+					Params::BASE + Params::ADAPTIVE_BLOCK_SIZE,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.adaptive_c,
+					Params::BASE + Params::ADAPTIVE_C,
+					BeesBookCommon::Stage::GridFitter);
+		/*
+		 * gradient descent
+		 */
+		connectSettingsWidget(paramsWidget.gradient_max_iterations,
+					Params::BASE + Params::GRADIENT_MAX_ITERATIONS,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.gradient_num_initial,
+					Params::BASE + Params::GRADIENT_NUM_INITIAL,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.gradient_threshold,
+					Params::BASE + Params::GRADIENT_ERROR_THRESHOLD,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.gradient_num_results,
+					Params::BASE + Params::GRADIENT_NUM_RESULTS,
+					BeesBookCommon::Stage::GridFitter);
+
+		connectSettingsWidget(paramsWidget.eps_angle,
+					Params::BASE + Params::EPS_ANGLE,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.eps_pos,
+					Params::BASE + Params::EPS_POS,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.eps_scale,
+					Params::BASE + Params::EPS_SCALE,
+					BeesBookCommon::Stage::GridFitter);
+		connectSettingsWidget(paramsWidget.alpha,
+					Params::BASE + Params::ALPHA,
+					BeesBookCommon::Stage::GridFitter);
+
+
+
+
 }

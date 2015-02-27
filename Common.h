@@ -8,19 +8,6 @@
 
 class Settings;
 
-
-
-namespace GridFitter {
-namespace Params {
-static const std::string BASE = "BEESBOOKPIPELINE.GRIDFITTER.";
-}
-namespace Defaults {
-}
-}
-
-
-
-
 namespace BeesBookCommon {
 enum class Stage : uint8_t {
 	NoProcessing = 0,
@@ -34,6 +21,6 @@ enum class Stage : uint8_t {
 
 pipeline::settings::localizer_settings_t getLocalizerSettings(Settings& settings);
 pipeline::settings::recognizer_settings_t getRecognizerSettings(Settings& settings);
-pipeline::gridfitter_settings_t getGridfitterSettings(Settings const& settings);
+pipeline::settings::gridfitter_settings_t getGridfitterSettings(Settings& settings);
 pipeline::settings::preprocessor_settings_t getPreprocessorSettings(Settings& settings);
 }
