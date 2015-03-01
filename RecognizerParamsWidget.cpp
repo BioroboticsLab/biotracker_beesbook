@@ -24,7 +24,7 @@ RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 	connectSlider(&_minMajorAxisSlider, Params::BASE+ Params::MIN_MAJOR_AXIS,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_maxMajorAxisSlider, Params::BASE+ Params::MAX_MAJOR_AXIS,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_minMinorAxisSlider, Params::BASE+ Params::MIN_MINOR_AXIS,BeesBookCommon::Stage::Recognizer);
-	connectSlider(&_minMajorAxisSlider, Params::BASE+ Params::MIN_MAJOR_AXIS,BeesBookCommon::Stage::Recognizer);
+	connectSlider(&_maxMinorAxisSlider, Params::BASE+ Params::MAX_MINOR_AXIS,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_thresholdEdgePixelsSlider, Params::BASE+ Params::THRESHOLD_EDGE_PIXELS,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_thresholdBestVoteSlider, Params::BASE+ Params::THRESHOLD_BEST_VOTE,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_thresholdVoteSlider, Params::BASE+ Params::THRESHOLD_VOTE,BeesBookCommon::Stage::Recognizer);
