@@ -356,23 +356,99 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
-	//TODO
+	const int thickness = 2;
+	const int size = 3;
+	const int distance = 30;
+
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
-			if (tag.getCandidates().size()) {
+			if (!tag.getCandidates().empty()) {
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				if (candidate.getDecodings().size()) {
-					const pipeline::decoding_t decoding =
-							candidate.getDecodings()[0];
+
+					pipeline::decoding_t decoding = candidate.getDecodings()[0];
+					int idInt = decoding.to_ulong();
+					std::string idString = "";
+					while (idInt > 1){
+						idString = std::to_string(idInt%2) + idString;
+						idInt = idInt >> 1;
+					}
+					idString = std::to_string(idInt%2) + idString;
+
+
 					cv::putText(image, std::to_string(decoding.to_ulong()),
-							cv::Point(tag.getBox().x, tag.getBox().y),
-							cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-							cv::Scalar(0, 255, 0), 2, CV_AA);
+					  cv::Point(tag.getBox().x, tag.getBox().y-distance),
+	    			cv::FONT_HERSHEY_COMPLEX_SMALL, size,
+					  cv::Scalar(0, 255, 0), thickness, CV_AA);
+					cv::putText(image, idString,
+					  cv::Point(tag.getBox().x, tag.getBox().y),
+					  cv::FONT_HERSHEY_COMPLEX_SMALL, size/2,
+					  cv::Scalar(0, 255, 0), thickness, CV_AA);
 				}
 			}
 		}
 		return;
 	}
+
+	const DecoderEvaluationResults& results = _groundTruth.decoderResults;
+	int matchNum = 0;
+	int partlyMismatchNum = 0;
+	int mismatchNum = 0;
+	int cumulHamming = 0;
+
+	for (const auto& tuple : results.tuples) {
+		int xpos = std::get<0>(tuple);
+		int ypos = std::get<1>(tuple);
+		int tagIdDecDet = std::get<2>(tuple);
+		std::string tagIdStringDet = std::get<3>(tuple);
+		std::string tagIdStringGT = std::get<4>(tuple);
+		int hamming = std::get<5>(tuple);
+
+		// calculate stats
+		cv::Scalar color;
+		static const int threshold = 3;
+		if (hamming == 0){ // match
+			++matchNum;
+			color = cv::Scalar(0,255,0); 
+		} else if (hamming <= threshold){ // partly match
+			++partlyMismatchNum;
+			color = cv::Scalar(0,125,255); 
+		} else { // mismatch
+			++mismatchNum;
+			color = cv::Scalar(0,0,255); 
+		}
+		cumulHamming = cumulHamming + hamming;
+
+		// paint text on image
+		cv::putText(image, std::to_string(tagIdDecDet) + ", d=" + std::to_string(hamming),
+						  cv::Point(xpos, ypos - (distance * 2)),
+						  cv::FONT_HERSHEY_COMPLEX_SMALL, size,
+						  color, thickness, CV_AA);
+		cv::putText(image, tagIdStringDet,
+						  cv::Point(xpos, ypos - distance),
+						  cv::FONT_HERSHEY_COMPLEX_SMALL, size/2,
+						  color, thickness, CV_AA);
+		cv::putText(image, tagIdStringGT,
+						  cv::Point(xpos, ypos),
+						  cv::FONT_HERSHEY_COMPLEX_SMALL, size/2,
+						  color, thickness, CV_AA);
+	}
+
+	// statistics
+	_groundTruth.labelFalsePositives->setText("Match: ");
+	_groundTruth.labelNumFalsePositives->setText(QString::number(matchNum));
+	_groundTruth.labelTruePositives->setText("partly Mismatch");
+	_groundTruth.labelNumTruePositives->setText(QString::number(partlyMismatchNum));
+	_groundTruth.labelFalseNegatives->setText("Mismatch: ");
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(mismatchNum));
+	_groundTruth.labelRecall->setText("average Hamming Distance: ");	
+	_groundTruth.labelNumRecall->setText(QString::number(static_cast<float> (cumulHamming)/results.tuples.size()));
+	_groundTruth.labelPrecision->setText("Precision (matched, partly): ");
+	_groundTruth.labelNumPrecision ->setText(QString::number(static_cast<float> (matchNum)/results.tuples.size())  + ", " 
+		+ QString::number((static_cast<float> (matchNum)+partlyMismatchNum)/results.tuples.size()));
+
+	return;
+
 }
 
 void BeesBookImgAnalysisTracker::evaluateLocalizer() {
@@ -531,8 +607,71 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter() {
 //    }
 }
 
-void BeesBookImgAnalysisTracker::evaluateDecoder() {
-	// TODO
+
+void BeesBookImgAnalysisTracker::evaluateDecoder()
+{
+	assert(_groundTruth.available);
+	DecoderEvaluationResults results;
+	for (pipeline::Tag& tag : _taglist) {
+		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
+		if (it != _groundTruth.localizerResults.gridByTag.end()) {
+			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
+            if (!tag.getCandidates().empty()) {
+				//idarray_t wrongGroundTruthIDArray = grid->getIdArray();
+				std::array<boost::tribool, 12> wrongGroundTruthIDArray = {false,false,false,false,false,false,false,false,false,false,false,false};
+
+				// Correct GT Array for different Decoding Order
+				int indices [12] = {8,7,6,5,4,3,2,1,0,11,10,9};
+				std::array<boost::tribool, 12> groundTruthIDArray;
+				for (int i = 0; i<12; i++){
+					groundTruthIDArray[i] = wrongGroundTruthIDArray[indices[i]];
+				}
+
+				// GroundTruth Array to String
+				std::string idStringGT = "";
+				for (int i = 0; i < 12; i++)
+				{
+					if (groundTruthIDArray[i] == true){
+						idStringGT =  "1" + idStringGT;
+					} else if (groundTruthIDArray[i] == false){
+						idStringGT = "0" + idStringGT;
+					} else {
+						idStringGT = "?" + idStringGT;
+					} 
+				}
+
+
+
+				// detected ID int to binary String
+				std::bitset<12> idArray = tag.getCandidates()[0].getDecodings()[0];
+				unsigned int idInt = idArray.to_ulong();
+
+				std::string idString = "";
+				for (int i = 0; i < 12; i++)
+				{
+					if (idArray[i] == true){
+						idString =  "1" + idString;
+					} else if (idArray[i] == false){
+						idString = "0" + idString;
+					} 
+				}
+
+				// calculate hamming distance
+				int hamming = 0;
+				for (int i=0; i<12; i++){
+					if ((idString[i] != idStringGT[i]) && (idStringGT[i] != '?')){
+						++hamming;
+					}
+				}
+
+				// save results
+				results.tuples.push_back(make_tuple(tag.getBox().x, tag.getBox().y, idInt, idString, idStringGT, hamming));
+			} 
+		} 
+	}
+
+	_groundTruth.decoderResults = std::move(results);
+
 }
 
 int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const {
