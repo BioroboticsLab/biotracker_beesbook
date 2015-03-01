@@ -62,6 +62,9 @@ private:
 	std::vector<pipeline::Tag> _taglist;
 	std::mutex _tagListLock;
 
+	static const size_t NUM_MIDDLE_CELLS = 12;
+	typedef std::array<boost::tribool, NUM_MIDDLE_CELLS> idarray_t;
+
 	struct 
     {
 		boost::optional<cv::Mat> preprocessorImage;
@@ -113,6 +116,12 @@ private:
         unsigned int mismatches     = 0;
     };
 
+	struct DecoderEvaluationResults {
+		//std::vector<std::tuple<std::reference_wrapper<const decoder::Tag>, std::shared_ptr<Grid3D>, int, int>> scoredPairs;
+		// x position, y position, datected tag-id decimal, detected tag-id, gt tag-id,  hamming distance
+		std::vector<std::tuple<int, int, int, std::string, std::string, int>> tuples;
+	};
+
 	struct {
 		bool available = false;
 		Serialization::Data data;
@@ -132,6 +141,7 @@ private:
 		LocalizerEvaluationResults localizerResults;
 		RecognizerEvaluationResults recognizerResults;
         GridFitterEvaluationResults gridfitterResults;
+        DecoderEvaluationResults decoderResults;
 	} _groundTruth;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
@@ -148,6 +158,7 @@ private:
 	int calculateVisualizationThickness() const;
 
 	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<PipelineGrid> const& grid) const;
+	int compareDecodings(pipeline::Tag &detectedTag, const std::shared_ptr<PipelineGrid> &grid) const;
 
 	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
 
