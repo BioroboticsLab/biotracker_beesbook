@@ -541,7 +541,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer() {
 				else
 					results.falsePositives.insert(tag);
 			} else
-				results.falsePositives.insert(tag);
+				results.falseNegatives.insert(grid);
 		} else if (tag.getCandidates().size()) {
 			results.falsePositives.insert(tag);
 		}
