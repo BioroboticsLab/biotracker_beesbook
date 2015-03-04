@@ -315,44 +315,71 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(
 		cv::Mat& image) const {
-	//TODO
-	const int thickness = calculateVisualizationThickness();
+//	//TODO
+    const int thickness = calculateVisualizationThickness();
 
-	//if (!_groundTruth.available)
-	{
-		for (const pipeline::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
-				// get best candidate
-				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
-				const PipelineGrid& grid = candidate.getGridsConst()[0];
-				cv::rectangle(image,
-						(grid.getBoundingBox() + cv::Size(20, 20))
-								- cv::Point(10, 10), COLOR_GREEN, thickness,
-						CV_AA);
-				grid.drawContours(image, 0.5);
-			}
-		}
-		return;
-	}
+    for (auto& candidateByGrid : _groundTruth.recognizerResults.truePositives)
+    {
+        const pipeline::Tag& tag = candidateByGrid.first;
+        const pipeline::TagCandidate& bestCandidate = candidateByGrid.second;
 
-	//precision = TP / Positives
-	//recall = TP / GroundTruth_N
-	unsigned int matches = _groundTruth.gridfitterResults.matches;
-	unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
+        if (!bestCandidate.getGridsConst().empty())
+        {
+            const PipelineGrid& bestFoundGrid = bestCandidate.getGridsConst().at(0);
+            bestFoundGrid.drawContours(image, 0.5);
 
-	_groundTruth.labelNumTruePositives->setText(QString::number(matches));
+            if (_groundTruth.available)
+            {
+                const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
 
-	if (_groundTruth.recognizerResults.taggedGridsOnFrame.size() != 0)
-		_groundTruth.labelNumRecall->setText(
-				QString::number(
-						100 * matches
-								/ _groundTruth.recognizerResults.taggedGridsOnFrame.size(),
-						'f', 2) + "%");
+                if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
+                {
+//                    _groundTruth.gridfitterResults.matches++;
+                    cv::rectangle(image, (bestFoundGrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
+                }
+                else
+                {
+//                    _groundTruth.gridfitterResults.mismatches++;
+                    cv::rectangle(image, (bestFoundGrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
+                }
 
-	if ((matches + mismatches) != 0)
-		_groundTruth.labelNumPrecision->setText(
-				QString::number(matches / (matches + mismatches), 'f', 2)
-						+ "%");
+            }
+        }
+    }
+
+//    for (const pipeline::Tag& tag : _taglist) {
+//        if (!tag.getCandidates().empty()) {
+
+//            if (! tag.getCandidates().empty())
+//            {
+//                // get best candidate
+//                const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+
+//                if (! candidate.getGridsConst().empty())
+//                {
+//                    const PipelineGrid& grid = candidate.getGridsConst()[0];
+//                    //cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
+//                    grid.drawContours(image, 0.5);
+//                }
+//            }
+//        }
+//    }
+
+    if (_groundTruth.available)
+    {
+        //precision = TP / Positives
+        //recall = TP / GroundTruth_N
+        unsigned int matches = _groundTruth.gridfitterResults.matches;
+        unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
+
+        _groundTruth.labelNumTruePositives->setText(QString::number(matches));
+
+        if (_groundTruth.recognizerResults.taggedGridsOnFrame.size() != 0)
+            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+
+        if ((matches + mismatches) != 0)
+            _groundTruth.labelNumPrecision->setText( QString::number(matches / (matches + mismatches), 'f', 2) + "%");
+    }
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
