@@ -7,8 +7,8 @@ using namespace pipeline::settings::Recognizer;
 
 RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 : ParamsSubWidgetBase(settings)
-	, _cannyThresholdLowSlider(this, &_layout, "Canny Threshold Low", 0, 200,0, 1)
-	, _cannyThresholdHighSlider(this, &_layout, "Canny Threshold High", 0, 200,0, 1)
+	, _cannyThresholdLowSlider(this, &_layout, "Canny Mean Min", 0, 200,0, 1)
+	, _cannyThresholdHighSlider(this, &_layout, "Canny Mean Max", 0, 200,0, 1)
 	, _minMajorAxisSlider(this, &_layout, "Min Major Axis", 0, 100,0, 1)
 	, _maxMajorAxisSlider(this, &_layout, "Max Major Axis", 0, 100,0, 1)
 	, _minMinorAxisSlider(this, &_layout, "Min Minor Axis", 0, 100,0, 1)
@@ -19,8 +19,8 @@ RecognizerParamsWidget::RecognizerParamsWidget(Settings &settings)
 {
 
 
-	connectSlider(&_cannyThresholdLowSlider, Params::BASE+ Params::CANNY_THRESHOLD_LOW,BeesBookCommon::Stage::Recognizer);
-	connectSlider(&_cannyThresholdHighSlider, Params::BASE+ Params::CANNY_THRESHOLD_HIGH,BeesBookCommon::Stage::Recognizer);
+	connectSlider(&_cannyThresholdLowSlider, Params::BASE+ Params::CANNY_MEAN_MIN,BeesBookCommon::Stage::Recognizer);
+	connectSlider(&_cannyThresholdHighSlider, Params::BASE+ Params::CANNY_MEAN_MAX,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_minMajorAxisSlider, Params::BASE+ Params::MIN_MAJOR_AXIS,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_maxMajorAxisSlider, Params::BASE+ Params::MAX_MAJOR_AXIS,BeesBookCommon::Stage::Recognizer);
 	connectSlider(&_minMinorAxisSlider, Params::BASE+ Params::MIN_MINOR_AXIS,BeesBookCommon::Stage::Recognizer);
