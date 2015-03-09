@@ -114,8 +114,8 @@ private:
     {
         unsigned int matches        = 0;
         unsigned int mismatches     = 0;
-        std::set<std::reference_wrapper<const PipelineGrid>> truePositives;
-        std::set<std::reference_wrapper<const PipelineGrid>> falsePositives;
+        std::vector<std::reference_wrapper<const PipelineGrid>> truePositives;
+        std::vector<std::reference_wrapper<const PipelineGrid>> falsePositives;
 
     };
 

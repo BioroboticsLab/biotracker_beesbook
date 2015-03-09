@@ -383,13 +383,13 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 
     for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.truePositives)
     {
-    //    pipegrid.
+        pipegrid.drawContours(image, 0.5);
         cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
     }
 
     for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.falsePositives)
     {
-    //    pipegrid.
+        pipegrid.drawContours(image, 0.5);
         cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
     }
 
@@ -725,12 +725,12 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
             if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
             {
                 _groundTruth.gridfitterResults.matches++;
-               _groundTruth.gridfitterResults.truePositives.insert(bestFoundGrid);
+                _groundTruth.gridfitterResults.truePositives.push_back(bestFoundGrid);
             }
             else
             {
                 _groundTruth.gridfitterResults.mismatches++;
-                _groundTruth.gridfitterResults.falsePositives.insert(bestFoundGrid);
+                _groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid);
             }
         }
 	}
