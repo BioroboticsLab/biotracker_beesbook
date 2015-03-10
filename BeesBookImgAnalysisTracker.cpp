@@ -22,7 +22,7 @@
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
 #include "LocalizerParamsWidget.h"
-#include "RecognizerParamsWidget.h"
+#include "EllipseFitterParamsWidget.h"
 #include "PreprocessorParamsWidget.h"
 #include "pipeline/datastructure/Tag.h"
 #include "pipeline/datastructure/TagCandidate.h"
@@ -113,8 +113,8 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 			BeesBookCommon::Stage::Preprocessor);
 	connectRadioButton(uiTools.radioButtonLocalizer,
 			BeesBookCommon::Stage::Localizer);
-	connectRadioButton(uiTools.radioButtonRecognizer,
-			BeesBookCommon::Stage::Recognizer);
+	connectRadioButton(uiTools.radioButtonEllipseFitter,
+			BeesBookCommon::Stage::EllipseFitter);
 	connectRadioButton(uiTools.radioButtonGridFitter,
 			BeesBookCommon::Stage::GridFitter);
 	connectRadioButton(uiTools.radioButtonDecoder,
@@ -134,7 +134,7 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
     // load settings from config file
 	_preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
 	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
-	_recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
+	_ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(_settings));
 	_gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(_settings));
 }
 
@@ -202,23 +202,23 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 	}
 
     // end of localizer stage
-	if (_selectedStage < BeesBookCommon::Stage::Recognizer)
+	if (_selectedStage < BeesBookCommon::Stage::EllipseFitter)
 		return;
 
 	{
         // start the clock
-		MeasureTimeRAII measure("Recognizer", notify);
+		MeasureTimeRAII measure("EllipseFitter", notify);
 
         // find ellipses in taglist
-		_taglist = _recognizer.process(std::move(_taglist));
+		_taglist = _ellipsefitter.process(std::move(_taglist));
 
         // set ellipsefitter views
         // TODO: maybe only visualize areas with ROIs
-        _visualizationData.recognizerCannyEdge = _recognizer.computeCannyEdgeMap(frame);
+        _visualizationData.ellipsefitterCannyEdge = _ellipsefitter.computeCannyEdgeMap(frame);
 
         // evaluate ellipsefitter
         if (_groundTruth.available)
-			evaluateRecognizer();
+			evaluateEllipseFitter();
 	}
 
     // end of ellipsefitter stage
@@ -309,7 +309,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
     _groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
+void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 		cv::Mat& image) const {
 	const int thickness = calculateVisualizationThickness();
 
@@ -332,7 +332,7 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
 		return;
 	}
 
-	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
+	const EllipseFitterEvaluationResults& results = _groundTruth.ellipsefitterResults;
 
 	for (const auto& tagCandidatePair : results.truePositives) {
 		const pipeline::Tag& tag = tagCandidatePair.first;
@@ -423,8 +423,8 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 
 //        _groundTruth.labelNumTruePositives->setText(QString::number(matches));
 
-//        if (_groundTruth.recognizerResults.taggedGridsOnFrame.size() != 0)
-//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+//        if (_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size() != 0)
+//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
 
 //        if ((matches + mismatches) != 0)
 //            _groundTruth.labelNumPrecision->setText( QString::number(matches / (matches + mismatches), 'f', 2) + "%");
@@ -616,7 +616,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 	_groundTruth.localizerResults = std::move(results);
 }
 
-void BeesBookImgAnalysisTracker::evaluateRecognizer()
+void BeesBookImgAnalysisTracker::evaluateEllipseFitter()
 {
     // ToDo
 	static const double threshold = 100.;
@@ -624,7 +624,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 	assert(_groundTruth.available);
 
     // local convenience variable
-	RecognizerEvaluationResults results;
+	EllipseFitterEvaluationResults results;
 
     // copy ground truth grids from localizer results struct
     results.taggedGridsOnFrame = _groundTruth.localizerResults.taggedGridsOnFrame;
@@ -687,7 +687,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 	}
 
     // move local struct to global member
-	_groundTruth.recognizerResults = std::move(results);
+	_groundTruth.ellipsefitterResults = std::move(results);
 }
 
 void BeesBookImgAnalysisTracker::evaluateGridfitter()
@@ -695,7 +695,7 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 	assert(_groundTruth.available);
 
     // iterate over all correctly found ROI / ellipse pairs
-    for (auto& candidateByGrid : _groundTruth.recognizerResults.truePositives)
+    for (auto& candidateByGrid : _groundTruth.ellipsefitterResults.truePositives)
     {
         // get ROI
 		const pipeline::Tag& tag = candidateByGrid.first;
@@ -938,14 +938,14 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 			}
 			visualizeLocalizerOutput(image);
 			break;
-		case BeesBookCommon::Stage::Recognizer:
+		case BeesBookCommon::Stage::EllipseFitter:
 			if ((view.name == "Canny Edge")
-					&& (_visualizationData.recognizerCannyEdge)) {
+					&& (_visualizationData.ellipsefitterCannyEdge)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.recognizerCannyEdge.get(),
+						_visualizationData.ellipsefitterCannyEdge.get(),
 						image.type());
 			}
-			visualizeRecognizerOutput(image);
+			visualizeEllipseFitterOutput(image);
 			break;
 		case BeesBookCommon::Stage::GridFitter:
 			visualizeGridFitterOutput(image);
@@ -981,9 +981,9 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 		_localizer.loadSettings(
 				BeesBookCommon::getLocalizerSettings(_settings));
 		break;
-	case BeesBookCommon::Stage::Recognizer:
-		_recognizer.loadSettings(
-				BeesBookCommon::getRecognizerSettings(_settings));
+	case BeesBookCommon::Stage::EllipseFitter:
+		_ellipsefitter.loadSettings(
+				BeesBookCommon::getEllipseFitterSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
 		_gridFitter.loadSettings(
@@ -1049,7 +1049,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	boost::property_tree::ptree pt = BeesBookCommon::getPreprocessorSettings(
 			_settings).getPTree();
 	BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
-	BeesBookCommon::getRecognizerSettings(_settings).addToPTree(pt);
+	BeesBookCommon::getEllipseFitterSettings(_settings).addToPTree(pt);
 
 	try {
 		boost::property_tree::write_json(
@@ -1078,8 +1078,8 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 			setParamsWidget<LocalizerParamsWidget>();
 			emit registerViews( { { "Input" }, { "Threshold" }, { "Blobs" } });
 			break;
-		case BeesBookCommon::Stage::Recognizer:
-			setParamsWidget<RecognizerParamsWidget>();
+		case BeesBookCommon::Stage::EllipseFitter:
+			setParamsWidget<EllipseFitterParamsWidget>();
 			emit registerViews( { { "Canny Edge" } });
 			break;
 		case BeesBookCommon::Stage::GridFitter:

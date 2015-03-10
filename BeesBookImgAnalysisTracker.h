@@ -16,7 +16,7 @@
 #include "ParamsWidget.h"
 #include "pipeline/Preprocessor.h"
 #include "pipeline/Localizer.h"
-#include "pipeline/Recognizer.h"
+#include "pipeline/EllipseFitter.h"
 #include "pipeline/GridFitter.h"
 #include "pipeline/Decoder.h"
 #include "source/settings/Settings.h"
@@ -54,7 +54,7 @@ private:
 
 	pipeline::Preprocessor  _preprocessor;
 	pipeline::Localizer     _localizer;
-	pipeline::Recognizer    _recognizer;
+	pipeline::EllipseFitter    _ellipsefitter;
 	pipeline::GridFitter    _gridFitter;
 	pipeline::Decoder       _decoder;
 
@@ -75,7 +75,7 @@ private:
 		boost::optional<cv::Mat> localizerThresholdImage;
 		boost::optional<cv::Mat> localizerSobelImage;
 		boost::optional<cv::Mat> localizerBlobImage;
-		boost::optional<cv::Mat> recognizerCannyEdge;
+		boost::optional<cv::Mat> ellipsefitterCannyEdge;
 
 		// these references are just stored for convenience in order to invalidate all
         // visualizations in a loop
@@ -88,7 +88,7 @@ private:
             localizerThresholdImage,
             localizerSobelImage, 
             localizerBlobImage, 
-            recognizerCannyEdge };
+            ellipsefitterCannyEdge };
         } 
         _visualizationData;
 
@@ -100,7 +100,7 @@ private:
 		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<PipelineGrid>> gridByTag;
 	};
 
-	struct RecognizerEvaluationResults 
+	struct EllipseFitterEvaluationResults
     {
 		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
@@ -148,19 +148,19 @@ private:
 		QLabel* labelNumPrecision      = nullptr;
 
 		LocalizerEvaluationResults localizerResults;
-		RecognizerEvaluationResults recognizerResults;
+		EllipseFitterEvaluationResults ellipsefitterResults;
         GridFitterEvaluationResults gridfitterResults;
         DecoderEvaluationResults decoderResults;
 	} _groundTruth;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
 	void visualizeLocalizerOutput(cv::Mat& image) const;
-	void visualizeRecognizerOutput(cv::Mat& image) const;
+	void visualizeEllipseFitterOutput(cv::Mat& image) const;
 	void visualizeGridFitterOutput(cv::Mat& image) const;
 	void visualizeDecoderOutput(cv::Mat& image) const;
 
 	void evaluateLocalizer();
-	void evaluateRecognizer();
+	void evaluateEllipseFitter();
 	void evaluateGridfitter();
 	void evaluateDecoder();
 
