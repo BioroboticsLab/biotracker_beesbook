@@ -46,10 +46,11 @@ struct CursorOverrideRAII {
 	}
 };
 
-static const cv::Scalar COLOR_ORANGE = cv::Scalar(0, 102, 255);
-static const cv::Scalar COLOR_GREEN = cv::Scalar(0, 255, 0);
-static const cv::Scalar COLOR_RED = cv::Scalar(0, 0, 255);
-static const cv::Scalar COLOR_BLUE = cv::Scalar(255, 0, 0);
+static const cv::Scalar COLOR_ORANGE(0, 102, 255);
+static const cv::Scalar COLOR_GREEN(0, 255, 0);
+static const cv::Scalar COLOR_RED(0, 0, 255);
+static const cv::Scalar COLOR_BLUE(255, 0, 0);
+static const cv::Scalar COLOR_LIGHT_BLUE(255, 200, 150);
 
 class MeasureTimeRAII {
 public:
@@ -265,7 +266,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
         for (const pipeline::Tag& tag : _taglist)
         {
 			const cv::Rect& box = tag.getBox();
-			cv::rectangle(image, box, COLOR_BLUE, thickness, CV_AA);
+			cv::rectangle(image, box, COLOR_LIGHT_BLUE, thickness, CV_AA);
 		}
 		return;
 	}
@@ -321,12 +322,12 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 				const pipeline::Ellipse& ellipse = candidate.getEllipse();
 				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
 						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
-						cv::Scalar(0, 255, 0), 3);
+						COLOR_LIGHT_BLUE, 3);
 				cv::putText(image,
 						"Score: " + std::to_string(ellipse.getVote()),
 						tag.getBox().tl() + cv::Point(80, 80),
 						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-						cv::Scalar(0, 255, 0), 2, CV_AA);
+						COLOR_LIGHT_BLUE, 2, CV_AA);
 			}
 		}
 		return;
@@ -393,7 +394,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 					if (! candidate.getGridsConst().empty())
 					{
 						const PipelineGrid& grid = candidate.getGridsConst()[0];
-						cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
+						cv::rectangle(image, grid.getBoundingBox(), COLOR_LIGHT_BLUE, thickness, CV_AA);
 						grid.drawContours(image, 0.5);
 					}
 				}
@@ -450,14 +451,14 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 					const std::string idString = decoding.to_string();
 
 					cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10),
-					              COLOR_GREEN, boundingBoxThickness, CV_AA);
+					              COLOR_LIGHT_BLUE, boundingBoxThickness, CV_AA);
 					cv::putText(image, std::to_string(decoding.to_ulong()),
 					            cv::Point(tag.getBox().x, tag.getBox().y - distance),
 					            cv::FONT_HERSHEY_COMPLEX_SMALL, size,
-					            cv::Scalar(0, 255, 0), textThickness, CV_AA);
+					            COLOR_LIGHT_BLUE, textThickness, CV_AA);
 					cv::putText(image, idString, cv::Point(tag.getBox().x, tag.getBox().y),
 					            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2,
-					            cv::Scalar(0, 255, 0), textThickness, CV_AA);
+					            COLOR_LIGHT_BLUE, textThickness, CV_AA);
 				}
 			}
 		}
@@ -965,9 +966,7 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 void BeesBookImgAnalysisTracker::reset() {
 }
 
-void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(
-		cv::Mat &image) const {
-
+void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &) const {
 }
 
 void BeesBookImgAnalysisTracker::settingsChanged(
