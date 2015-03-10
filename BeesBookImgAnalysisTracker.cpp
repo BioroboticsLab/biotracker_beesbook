@@ -22,7 +22,7 @@
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
 #include "LocalizerParamsWidget.h"
-#include "RecognizerParamsWidget.h"
+#include "EllipseFitterParamsWidget.h"
 #include "PreprocessorParamsWidget.h"
 #include "pipeline/datastructure/Tag.h"
 #include "pipeline/datastructure/TagCandidate.h"
@@ -46,25 +46,33 @@ struct CursorOverrideRAII {
 	}
 };
 
-static const cv::Scalar COLOR_ORANGE = cv::Scalar(0, 102, 255);
-static const cv::Scalar COLOR_GREEN = cv::Scalar(0, 255, 0);
-static const cv::Scalar COLOR_RED = cv::Scalar(0, 0, 255);
-static const cv::Scalar COLOR_BLUE = cv::Scalar(255, 0, 0);
+static const cv::Scalar COLOR_ORANGE(0, 102, 255);
+static const cv::Scalar COLOR_GREEN(0, 255, 0);
+static const cv::Scalar COLOR_RED(0, 0, 255);
+static const cv::Scalar COLOR_BLUE(255, 0, 0);
+static const cv::Scalar COLOR_LIGHT_BLUE(255, 200, 150);
 
 class MeasureTimeRAII {
 public:
-	MeasureTimeRAII(std::string const& what,
-			std::function<void(std::string const&)> notify) :
-			_start(std::chrono::steady_clock::now()), _what(what), _notify(
-					notify) {
-	}
+	MeasureTimeRAII(std::string const& what, std::function<void(std::string const&)> notify,
+	                boost::optional<size_t> num = boost::optional<size_t>())
+	    : _start(std::chrono::steady_clock::now()),
+	      _what(what),
+	      _notify(notify),
+	      _num(num)
+	{}
+
 	~MeasureTimeRAII() {
 		const auto end = std::chrono::steady_clock::now();
-		const std::string message { _what + " finished in "
-				+ std::to_string(
-						std::chrono::duration_cast<std::chrono::milliseconds>(
-								end - _start).count()) + +"ms.\n" };
-		_notify(message);
+		const auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count();
+		std::stringstream message;
+		message << _what << " finished in " << dur << "ms.";
+		if (_num) {
+			const auto avg = dur / _num.get();
+			message << " (Average: " << avg << "ms)";
+		}
+		message << std::endl;
+		_notify(message.str());
 		// display message right away
 		QApplication::processEvents();
 	}
@@ -72,6 +80,7 @@ private:
 	const std::chrono::steady_clock::time_point _start;
 	const std::string _what;
 	const std::function<void(std::string const&)> _notify;
+	const boost::optional<size_t> _num;
 };
 }
 
@@ -113,8 +122,8 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 			BeesBookCommon::Stage::Preprocessor);
 	connectRadioButton(uiTools.radioButtonLocalizer,
 			BeesBookCommon::Stage::Localizer);
-	connectRadioButton(uiTools.radioButtonRecognizer,
-			BeesBookCommon::Stage::Recognizer);
+	connectRadioButton(uiTools.radioButtonEllipseFitter,
+			BeesBookCommon::Stage::EllipseFitter);
 	connectRadioButton(uiTools.radioButtonGridFitter,
 			BeesBookCommon::Stage::GridFitter);
 	connectRadioButton(uiTools.radioButtonDecoder,
@@ -134,7 +143,7 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
     // load settings from config file
 	_preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
 	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
-	_recognizer.loadSettings(BeesBookCommon::getRecognizerSettings(_settings));
+	_ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(_settings));
 	_gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(_settings));
 }
 
@@ -202,23 +211,23 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 	}
 
     // end of localizer stage
-	if (_selectedStage < BeesBookCommon::Stage::Recognizer)
+	if (_selectedStage < BeesBookCommon::Stage::EllipseFitter)
 		return;
 
 	{
         // start the clock
-		MeasureTimeRAII measure("Recognizer", notify);
+		MeasureTimeRAII measure("EllipseFitter", notify, _taglist.size());
 
         // find ellipses in taglist
-		_taglist = _recognizer.process(std::move(_taglist));
+		_taglist = _ellipsefitter.process(std::move(_taglist));
 
         // set ellipsefitter views
         // TODO: maybe only visualize areas with ROIs
-        _visualizationData.recognizerCannyEdge = _recognizer.computeCannyEdgeMap(frame);
+        _visualizationData.ellipsefitterCannyEdge = _ellipsefitter.computeCannyEdgeMap(frame);
 
         // evaluate ellipsefitter
         if (_groundTruth.available)
-			evaluateRecognizer();
+			evaluateEllipseFitter();
 	}
 
     // end of ellipsefitter stage
@@ -227,7 +236,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 
 	{
         // start the clock
-		MeasureTimeRAII measure("GridFitter", notify);
+		MeasureTimeRAII measure("GridFitter", notify, _taglist.size());
 
         // fit grids to the ellipses found
         _taglist = _gridFitter.process(std::move(_taglist));
@@ -243,7 +252,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 
 	{
         // start the clock
-		MeasureTimeRAII measure("Decoder", notify);
+		MeasureTimeRAII measure("Decoder", notify, _taglist.size());
 
         // decode grids that were matched to the image
         _taglist = _decoder.process(std::move(_taglist));
@@ -265,7 +274,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
         for (const pipeline::Tag& tag : _taglist)
         {
 			const cv::Rect& box = tag.getBox();
-			cv::rectangle(image, box, COLOR_BLUE, thickness, CV_AA);
+			cv::rectangle(image, box, COLOR_LIGHT_BLUE, thickness, CV_AA);
 		}
 		return;
 	}
@@ -309,7 +318,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
     _groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
+void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 		cv::Mat& image) const {
 	const int thickness = calculateVisualizationThickness();
 
@@ -321,18 +330,18 @@ void BeesBookImgAnalysisTracker::visualizeRecognizerOutput(
 				const pipeline::Ellipse& ellipse = candidate.getEllipse();
 				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
 						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
-						cv::Scalar(0, 255, 0), 3);
+						COLOR_LIGHT_BLUE, 3);
 				cv::putText(image,
 						"Score: " + std::to_string(ellipse.getVote()),
 						tag.getBox().tl() + cv::Point(80, 80),
 						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-						cv::Scalar(0, 255, 0), 2, CV_AA);
+						COLOR_LIGHT_BLUE, 2, CV_AA);
 			}
 		}
 		return;
 	}
 
-	const RecognizerEvaluationResults& results = _groundTruth.recognizerResults;
+	const EllipseFitterEvaluationResults& results = _groundTruth.ellipsefitterResults;
 
 	for (const auto& tagCandidatePair : results.truePositives) {
 		const pipeline::Tag& tag = tagCandidatePair.first;
@@ -381,6 +390,27 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 {
     const int thickness = calculateVisualizationThickness();
 
+	if (!_groundTruth.available) {
+		for (const pipeline::Tag& tag : _taglist) {
+			if (!tag.getCandidates().empty()) {
+
+				if (! tag.getCandidates().empty())
+				{
+					// get best candidate
+					const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+
+					if (! candidate.getGridsConst().empty())
+					{
+						const PipelineGrid& grid = candidate.getGridsConst()[0];
+						cv::rectangle(image, grid.getBoundingBox(), COLOR_LIGHT_BLUE, thickness, CV_AA);
+						grid.drawContours(image, 0.5);
+					}
+				}
+			}
+		}
+		return;
+	}
+
     for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.truePositives)
     {
         pipegrid.drawContours(image, 0.5);
@@ -393,24 +423,6 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
         cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
     }
 
-//    for (const pipeline::Tag& tag : _taglist) {
-//        if (!tag.getCandidates().empty()) {
-
-//            if (! tag.getCandidates().empty())
-//            {
-//                // get best candidate
-//                const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
-
-//                if (! candidate.getGridsConst().empty())
-//                {
-//                    const PipelineGrid& grid = candidate.getGridsConst()[0];
-//                    //cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
-//                    grid.drawContours(image, 0.5);
-//                }
-//            }
-//        }
-//    }
-
 //    if (_groundTruth.available)
 //    {
 //        //precision = TP / Positives
@@ -420,8 +432,8 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 
 //        _groundTruth.labelNumTruePositives->setText(QString::number(matches));
 
-//        if (_groundTruth.recognizerResults.taggedGridsOnFrame.size() != 0)
-//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.recognizerResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+//        if (_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size() != 0)
+//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
 
 //        if ((matches + mismatches) != 0)
 //            _groundTruth.labelNumPrecision->setText( QString::number(matches / (matches + mismatches), 'f', 2) + "%");
@@ -429,34 +441,32 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
-	const int thickness = 2;
-	const int size = 3;
-	const int distance = 30;
+	static const int size          = 3;
+	static const int distance      = 30;
+	static const int textThickness = 2;
+
+	const int boundingBoxThickness = calculateVisualizationThickness();
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
 			if (!tag.getCandidates().empty()) {
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				if (candidate.getDecodings().size()) {
+					assert(candidate.getGridsConst().size());
 
-					pipeline::decoding_t decoding = candidate.getDecodings()[0];
-					int idInt = decoding.to_ulong();
-					std::string idString = "";
-					while (idInt > 1){
-						idString = std::to_string(idInt%2) + idString;
-						idInt = idInt >> 1;
-					}
-					idString = std::to_string(idInt%2) + idString;
+					const PipelineGrid& grid = candidate.getGridsConst()[0];
+					const pipeline::decoding_t& decoding = candidate.getDecodings()[0];
+					const std::string idString = decoding.to_string();
 
-
+					cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10),
+					              COLOR_LIGHT_BLUE, boundingBoxThickness, CV_AA);
 					cv::putText(image, std::to_string(decoding.to_ulong()),
-					  cv::Point(tag.getBox().x, tag.getBox().y-distance),
-	    			cv::FONT_HERSHEY_COMPLEX_SMALL, size,
-					  cv::Scalar(0, 255, 0), thickness, CV_AA);
-					cv::putText(image, idString,
-					  cv::Point(tag.getBox().x, tag.getBox().y),
-					  cv::FONT_HERSHEY_COMPLEX_SMALL, size/2,
-					  cv::Scalar(0, 255, 0), thickness, CV_AA);
+					            cv::Point(tag.getBox().x, tag.getBox().y - distance),
+					            cv::FONT_HERSHEY_COMPLEX_SMALL, size,
+					            COLOR_LIGHT_BLUE, textThickness, CV_AA);
+					cv::putText(image, idString, cv::Point(tag.getBox().x, tag.getBox().y),
+					            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2,
+					            COLOR_LIGHT_BLUE, textThickness, CV_AA);
 				}
 			}
 		}
@@ -464,47 +474,39 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	}
 
 	const DecoderEvaluationResults& results = _groundTruth.decoderResults;
-	int matchNum = 0;
+	int matchNum          = 0;
 	int partlyMismatchNum = 0;
-	int mismatchNum = 0;
-	int cumulHamming = 0;
+	int mismatchNum       = 0;
+	int cumulHamming      = 0;
 
-	for (const auto& tuple : results.tuples) {
-		int xpos = std::get<0>(tuple);
-		int ypos = std::get<1>(tuple);
-		int tagIdDecDet = std::get<2>(tuple);
-		std::string tagIdStringDet = std::get<3>(tuple);
-		std::string tagIdStringGT = std::get<4>(tuple);
-		int hamming = std::get<5>(tuple);
-
+	for (const DecoderEvaluationResults::result_t& result : results.evaluationResults) {
 		// calculate stats
 		cv::Scalar color;
 		static const int threshold = 3;
-		if (hamming == 0){ // match
+		if (result.hammingDistance == 0){ // match
 			++matchNum;
-			color = cv::Scalar(0,255,0); 
-		} else if (hamming <= threshold){ // partly match
+			color = COLOR_GREEN;
+		} else if (result.hammingDistance <= threshold){ // partly match
 			++partlyMismatchNum;
-			color = cv::Scalar(0,125,255); 
+			color = COLOR_ORANGE;
 		} else { // mismatch
 			++mismatchNum;
-			color = cv::Scalar(0,0,255); 
+			color = COLOR_RED;
 		}
-		cumulHamming = cumulHamming + hamming;
+		cumulHamming = cumulHamming + result.hammingDistance;
 
+		cv::rectangle(image, result.boundingBox, color, boundingBoxThickness, CV_AA);
+
+		const int xpos = result.boundingBox.tl().x;
+		const int ypos = result.boundingBox.tl().y;
 		// paint text on image
-		cv::putText(image, std::to_string(tagIdDecDet) + ", d=" + std::to_string(hamming),
-						  cv::Point(xpos, ypos - (distance * 2)),
-						  cv::FONT_HERSHEY_COMPLEX_SMALL, size,
-						  color, thickness, CV_AA);
-		cv::putText(image, tagIdStringDet,
-						  cv::Point(xpos, ypos - distance),
-						  cv::FONT_HERSHEY_COMPLEX_SMALL, size/2,
-						  color, thickness, CV_AA);
-		cv::putText(image, tagIdStringGT,
-						  cv::Point(xpos, ypos),
-						  cv::FONT_HERSHEY_COMPLEX_SMALL, size/2,
-						  color, thickness, CV_AA);
+		cv::putText(image, std::to_string(result.decodedTagId) + ", d=" + std::to_string(result.hammingDistance),
+		            cv::Point(xpos, ypos - (distance * 2)), cv::FONT_HERSHEY_COMPLEX_SMALL,
+		            size, color, textThickness, CV_AA);
+		cv::putText(image, result.decodedTagIdStr, cv::Point(xpos, ypos - distance),
+		            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2, color, textThickness, CV_AA);
+		cv::putText(image, result.groundTruthTagIdStr, cv::Point(xpos, ypos),
+		            cv::FONT_HERSHEY_COMPLEX_SMALL, size/2, color, textThickness, CV_AA);
 	}
 
 	// statistics
@@ -514,14 +516,13 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	_groundTruth.labelNumTruePositives->setText(QString::number(partlyMismatchNum));
 	_groundTruth.labelFalseNegatives->setText("Mismatch: ");
 	_groundTruth.labelNumFalseNegatives->setText(QString::number(mismatchNum));
-	_groundTruth.labelRecall->setText("average Hamming Distance: ");	
-	_groundTruth.labelNumRecall->setText(QString::number(static_cast<float> (cumulHamming)/results.tuples.size()));
+	_groundTruth.labelRecall->setText("average Hamming Distance: ");
+	_groundTruth.labelNumRecall->setText(QString::number(static_cast<float> (cumulHamming)/results.evaluationResults.size()));
 	_groundTruth.labelPrecision->setText("Precision (matched, partly): ");
-	_groundTruth.labelNumPrecision ->setText(QString::number(static_cast<float> (matchNum)/results.tuples.size())  + ", " 
-		+ QString::number((static_cast<float> (matchNum)+partlyMismatchNum)/results.tuples.size()));
+	_groundTruth.labelNumPrecision ->setText(QString::number(static_cast<float> (matchNum)/results.evaluationResults.size())  + ", "
+		+ QString::number((static_cast<float> (matchNum)+partlyMismatchNum)/results.evaluationResults.size()));
 
 	return;
-
 }
 
 void BeesBookImgAnalysisTracker::evaluateLocalizer()
@@ -530,7 +531,6 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 
     // convenience variable, is moved to _groundtruth.localizerResults later
     LocalizerEvaluationResults results;
-
 
     const int currentFrameNumber = getCurrentFrameNumber();
 
@@ -625,7 +625,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 	_groundTruth.localizerResults = std::move(results);
 }
 
-void BeesBookImgAnalysisTracker::evaluateRecognizer()
+void BeesBookImgAnalysisTracker::evaluateEllipseFitter()
 {
     // ToDo
 	static const double threshold = 100.;
@@ -633,7 +633,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 	assert(_groundTruth.available);
 
     // local convenience variable
-	RecognizerEvaluationResults results;
+	EllipseFitterEvaluationResults results;
 
     // copy ground truth grids from localizer results struct
     results.taggedGridsOnFrame = _groundTruth.localizerResults.taggedGridsOnFrame;
@@ -696,7 +696,7 @@ void BeesBookImgAnalysisTracker::evaluateRecognizer()
 	}
 
     // move local struct to global member
-	_groundTruth.recognizerResults = std::move(results);
+	_groundTruth.ellipsefitterResults = std::move(results);
 }
 
 void BeesBookImgAnalysisTracker::evaluateGridfitter()
@@ -704,7 +704,7 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 	assert(_groundTruth.available);
 
     // iterate over all correctly found ROI / ellipse pairs
-    for (auto& candidateByGrid : _groundTruth.recognizerResults.truePositives)
+    for (auto& candidateByGrid : _groundTruth.ellipsefitterResults.truePositives)
     {
         // get ROI
 		const pipeline::Tag& tag = candidateByGrid.first;
@@ -774,60 +774,46 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 {
 	assert(_groundTruth.available);
 	DecoderEvaluationResults results;
+
 	for (pipeline::Tag& tag : _taglist) {
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
 			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
             if (!tag.getCandidates().empty()) {
-				//idarray_t wrongGroundTruthIDArray = grid->getIdArray();
-				std::array<boost::tribool, 12> wrongGroundTruthIDArray = {false,false,false,false,false,false,false,false,false,false,false,false};
+				if (!tag.getCandidates()[0].getDecodings().empty()) {
+					DecoderEvaluationResults::result_t result;
 
-				// Correct GT Array for different Decoding Order
-				int indices [12] = {8,7,6,5,4,3,2,1,0,11,10,9};
-				std::array<boost::tribool, 12> groundTruthIDArray;
-				for (int i = 0; i<12; i++){
-					groundTruthIDArray[i] = wrongGroundTruthIDArray[indices[i]];
-				}
+					result.boundingBox = tag.getBox();
 
-				// GroundTruth Array to String
-				std::string idStringGT = "";
-				for (int i = 0; i < 12; i++)
-				{
-					if (groundTruthIDArray[i] == true){
-						idStringGT =  "1" + idStringGT;
-					} else if (groundTruthIDArray[i] == false){
-						idStringGT = "0" + idStringGT;
-					} else {
-						idStringGT = "?" + idStringGT;
-					} 
-				}
+					// decoder results
+					// TODO: fix bit order in Decoder
+					const pipeline::decoding_t& decoderIds = tag.getCandidates()[0].getDecodings()[0];
+					result.decodedTagId    = decoderIds.to_ulong();
+					result.decodedTagIdStr = decoderIds.to_string();
 
+					// ground truth data
+					const idarray_t& groundTruthIds = grid->getIdArray();
+					result.groundTruthTagId = groundTruthIds;
 
+					assert(decoderIds.size() == Grid::NUM_MIDDLE_CELLS);
+					assert(groundTruthIds.size() == Grid::NUM_MIDDLE_CELLS);
 
-				// detected ID int to binary String
-				std::bitset<12> idArray = tag.getCandidates()[0].getDecodings()[0];
-				unsigned int idInt = idArray.to_ulong();
-
-				std::string idString = "";
-				for (int i = 0; i < 12; i++)
-				{
-					if (idArray[i] == true){
-						idString =  "1" + idString;
-					} else if (idArray[i] == false){
-						idString = "0" + idString;
-					} 
-				}
-
-				// calculate hamming distance
-				int hamming = 0;
-				for (int i=0; i<12; i++){
-					if ((idString[i] != idStringGT[i]) && (idStringGT[i] != '?')){
-						++hamming;
+					std::stringstream groundTruthIdStr;
+					for (size_t i = 0; i < Grid::NUM_MIDDLE_CELLS; ++i) {
+						groundTruthIdStr << groundTruthIds[i];
 					}
-				}
+					result.groundTruthTagIdStr = groundTruthIdStr.str();
 
-				// save results
-				results.tuples.push_back(make_tuple(tag.getBox().x, tag.getBox().y, idInt, idString, idStringGT, hamming));
+					// calculate hamming distance
+					result.hammingDistance = 0;
+					for (size_t i = 0; i < Grid::NUM_MIDDLE_CELLS; ++i) {
+						if ((decoderIds[i] != groundTruthIds[i]) && (!boost::indeterminate(groundTruthIds[i]))) {
+							++result.hammingDistance;
+						}
+					}
+
+					results.evaluationResults.push_back(result);
+				}
 			} 
 		} 
 	}
@@ -961,14 +947,14 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 			}
 			visualizeLocalizerOutput(image);
 			break;
-		case BeesBookCommon::Stage::Recognizer:
+		case BeesBookCommon::Stage::EllipseFitter:
 			if ((view.name == "Canny Edge")
-					&& (_visualizationData.recognizerCannyEdge)) {
+					&& (_visualizationData.ellipsefitterCannyEdge)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.recognizerCannyEdge.get(),
+						_visualizationData.ellipsefitterCannyEdge.get(),
 						image.type());
 			}
-			visualizeRecognizerOutput(image);
+			visualizeEllipseFitterOutput(image);
 			break;
 		case BeesBookCommon::Stage::GridFitter:
 			visualizeGridFitterOutput(image);
@@ -988,9 +974,7 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 void BeesBookImgAnalysisTracker::reset() {
 }
 
-void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(
-		cv::Mat &image) const {
-
+void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &) const {
 }
 
 void BeesBookImgAnalysisTracker::settingsChanged(
@@ -1004,12 +988,13 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 		_localizer.loadSettings(
 				BeesBookCommon::getLocalizerSettings(_settings));
 		break;
-	case BeesBookCommon::Stage::Recognizer:
-		_recognizer.loadSettings(
-				BeesBookCommon::getRecognizerSettings(_settings));
+	case BeesBookCommon::Stage::EllipseFitter:
+		_ellipsefitter.loadSettings(
+				BeesBookCommon::getEllipseFitterSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
-		// TODO
+		_gridFitter.loadSettings(
+		        BeesBookCommon::getGridfitterSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Decoder:
 		// TODO
@@ -1071,7 +1056,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	boost::property_tree::ptree pt = BeesBookCommon::getPreprocessorSettings(
 			_settings).getPTree();
 	BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
-	BeesBookCommon::getRecognizerSettings(_settings).addToPTree(pt);
+	BeesBookCommon::getEllipseFitterSettings(_settings).addToPTree(pt);
 
 	try {
 		boost::property_tree::write_json(
@@ -1090,9 +1075,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage st
     {
 		_selectedStage = stage;
 
-        // ToDo: this should be encapsuled in an appropriate function, like "resetViews()" or similar
-		emit registerViews( { });
-
+		resetViews();
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
@@ -1102,8 +1085,8 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage st
 			setParamsWidget<LocalizerParamsWidget>();
 			emit registerViews( { { "Input" }, { "Threshold" }, { "Blobs" } });
 			break;
-		case BeesBookCommon::Stage::Recognizer:
-			setParamsWidget<RecognizerParamsWidget>();
+		case BeesBookCommon::Stage::EllipseFitter:
+			setParamsWidget<EllipseFitterParamsWidget>();
 			emit registerViews( { { "Canny Edge" } });
 			break;
 		case BeesBookCommon::Stage::GridFitter:
