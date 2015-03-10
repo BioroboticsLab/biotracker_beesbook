@@ -1095,9 +1095,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 	if (checked) {
 		_selectedStage = stage;
 
-        // ToDo: this should be encapsuled in an appropriate function, like "resetViews()" or similar
-		emit registerViews( { });
-
+		resetViews();
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
