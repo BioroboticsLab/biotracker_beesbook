@@ -381,6 +381,27 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 {
     const int thickness = calculateVisualizationThickness();
 
+	if (!_groundTruth.available) {
+		for (const pipeline::Tag& tag : _taglist) {
+			if (!tag.getCandidates().empty()) {
+
+				if (! tag.getCandidates().empty())
+				{
+					// get best candidate
+					const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+
+					if (! candidate.getGridsConst().empty())
+					{
+						const PipelineGrid& grid = candidate.getGridsConst()[0];
+						cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
+						grid.drawContours(image, 0.5);
+					}
+				}
+			}
+		}
+		return;
+	}
+
     for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.truePositives)
     {
         pipegrid.drawContours(image, 0.5);
@@ -392,24 +413,6 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
         pipegrid.drawContours(image, 0.5);
         cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
     }
-
-//    for (const pipeline::Tag& tag : _taglist) {
-//        if (!tag.getCandidates().empty()) {
-
-//            if (! tag.getCandidates().empty())
-//            {
-//                // get best candidate
-//                const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
-
-//                if (! candidate.getGridsConst().empty())
-//                {
-//                    const PipelineGrid& grid = candidate.getGridsConst()[0];
-//                    //cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
-//                    grid.drawContours(image, 0.5);
-//                }
-//            }
-//        }
-//    }
 
 //    if (_groundTruth.available)
 //    {
