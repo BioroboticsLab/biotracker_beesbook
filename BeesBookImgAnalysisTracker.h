@@ -120,9 +120,15 @@ private:
     };
 
 	struct DecoderEvaluationResults {
-		//std::vector<std::tuple<std::reference_wrapper<const decoder::Tag>, std::shared_ptr<Grid3D>, int, int>> scoredPairs;
-		// x position, y position, datected tag-id decimal, detected tag-id, gt tag-id,  hamming distance
-		std::vector<std::tuple<int, int, int, std::string, std::string, int>> tuples;
+		typedef struct {
+			cv::Rect boundingBox;
+			int decodedTagId;
+			std::string decodedTagIdStr;
+			idarray_t groundTruthTagId;
+			std::string groundTruthTagIdStr;
+			int hammingDistance;
+		} result_t;
+		std::vector<result_t> evaluationResults;
 	};
 
 	struct {
