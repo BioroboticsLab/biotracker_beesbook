@@ -50,6 +50,10 @@ public:
     std::set<Qt::Key> const& grabbedKeys() const override;
 
 private:
+
+    // a grid to interact with
+    PipelineGrid            _interactionGrid;
+
 	BeesBookCommon::Stage   _selectedStage;
 
 	const std::shared_ptr<ParamsWidget> _paramsWidget;
@@ -182,7 +186,15 @@ private:
 		_paramsWidget->setParamSubWidget(std::move(widget));
 	}
 
+
+    std::chrono::system_clock::time_point _lastMouseEventTime;
+
     void keyPressEvent(QKeyEvent *e) override;
+    void mouseMoveEvent    (QMouseEvent * e) override;
+    void mousePressEvent   (QMouseEvent * e) override;
+
+    int findGridInGroundTruth(PipelineGrid & templateGrid);
+
 protected:
     bool event(QEvent* event) override;
 

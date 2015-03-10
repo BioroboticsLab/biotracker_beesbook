@@ -86,9 +86,12 @@ private:
 
 BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent) :
         TrackingAlgorithm(settings, parent),
+        _interactionGrid(cv::Point2i( 300, 300), 23, 0.0, 0.0, 0.0),
         _selectedStage( BeesBookCommon::Stage::NoProcessing),
                         _paramsWidget(  std::make_shared<ParamsWidget>()),
-                        _toolsWidget( std::make_shared<QWidget>())
+                        _toolsWidget( std::make_shared<QWidget>()),
+        _lastMouseEventTime(std::chrono::system_clock::now())
+
 {
 	Ui::ToolWidget uiTools;
 	uiTools.setupUi(_toolsWidget.get());
@@ -724,49 +727,16 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
             // compare ground truth grid to pipeline grid
             if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
             {
-                _groundTruth.gridfitterResults.matches++;
+                _groundTruth.gridfitterResults.matches++; //ToDo delete
                 _groundTruth.gridfitterResults.truePositives.push_back(bestFoundGrid);
             }
             else
             {
-                _groundTruth.gridfitterResults.mismatches++;
+                _groundTruth.gridfitterResults.mismatches++; //ToDo delete
                 _groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid);
             }
         }
 	}
-
-//    //iterate over all objects found by pipeline
-//    for (pipeline::Tag& tag : _taglist)
-//    {
-//        if (!tag.getCandidates().empty())
-//        {
-//            // take best grid fit of best ellipse candidate (aka TagCandidate) of current ROI (aka Tag)
-//            PipelineGrid const & pipegrid = tag.getCandidates().at(0).getGrids().at(0);
-
-//            //iterate over all ground truth objects
-//            for (const TrackedObject trObj : GTObjects)
-//            {
-//                // get grid pointer of current object in list
-//                std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(framenum);
-
-//                // if the pointer is valid
-//                if ( pGrid )
-//                {
-//                    // check if grids are sufficiently close to each other
-//                    if ( cv::norm( (pGrid->getCenter() - pipegrid.getCenter()) ) < 10.0 )
-//                    {
-//                        Grid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
-
-//                        //if ( pipegrid.compare(temp) > 1.0 )
-//                        {
-//                            //results.taggedGridsOnFrame.insert( TODO XXX pipegrid);
-//                        }
-//                    }
-//                }
-//            }
-
-//        }
-//    }
 }
 
 
@@ -891,8 +861,33 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
 	return image;
 }
 
-void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
+void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view)
+{
 	// don't try to visualize results while data processing is running
+    double similarity = 0;
+
+    int i = findGridInGroundTruth(_interactionGrid);
+
+    if ( i >= 0)
+    {
+        TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
+        // get grid pointer of current object in list
+        std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
+
+        // if the pointer is valid
+        if ( pGrid )
+        {
+            // check if grids are sufficiently close to each other
+            if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
+            {
+                PipelineGrid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
+                similarity = _interactionGrid.compare(temp) / 2;
+            }
+        }
+    }
+
+    _interactionGrid.drawContours(image, 0.5, cv::Scalar( (1 - similarity) * 255, similarity*255.0, 0));
+
 
 	if (_tagListLock.try_lock()) {
 		switch (_selectedStage) {
@@ -1112,15 +1107,15 @@ bool BeesBookImgAnalysisTracker::event(QEvent *event)
     case QEvent::KeyPress:
         keyPressEvent(static_cast<QKeyEvent*>(event));
         return true;
-//    case QEvent::MouseButtonPress:
-//        mousePressEvent(static_cast<QMouseEvent*>(event));
-//        return true;
-//    case QEvent::MouseButtonRelease:
-//        mouseReleaseEvent(static_cast<QMouseEvent*>(event));
-//        return true;
-//    case QEvent::MouseMove:
-//        mouseMoveEvent(static_cast<QMouseEvent*>(event));
-//        return true;
+    case QEvent::MouseButtonPress:
+        mousePressEvent(static_cast<QMouseEvent*>(event));
+        return true;
+    case QEvent::MouseButtonRelease:
+        mouseReleaseEvent(static_cast<QMouseEvent*>(event));
+        return true;
+    case QEvent::MouseMove:
+        mouseMoveEvent(static_cast<QMouseEvent*>(event));
+        return true;
     default:
         event->ignore();
         return false;
@@ -1133,8 +1128,9 @@ const std::set<Qt::Key> &BeesBookImgAnalysisTracker::grabbedKeys() const
     static const std::set<Qt::Key> keys {
                                           Qt::Key_W, Qt::Key_A,
                                           Qt::Key_S, Qt::Key_D,
-//	                                      Qt::Key_G, Qt::Key_H,
-//	                                      Qt::Key_U, Qt::Key_F,
+                                          Qt::Key_Q, Qt::Key_E,
+                                          Qt::Key_R,
+//                                                  Qt::Key_F,
 //	                                      Qt::Key_CapsLock,
 //	                                      Qt::Key_0, Qt::Key_1, Qt::Key_2, Qt::Key_3,
 //	                                      Qt::Key_4, Qt::Key_5, Qt::Key_6, Qt::Key_7,
@@ -1153,27 +1149,59 @@ void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
         // rotate
     case Qt::Key_W:
     {
-
+        _interactionGrid.setXRotation(_interactionGrid.getXRotation() + 0.1);
         break;
 
     }
     case Qt::Key_S:
     {
-
+        _interactionGrid.setXRotation(_interactionGrid.getXRotation() - 0.1);
         break;
     }
     case Qt::Key_A:
     {
-
+        _interactionGrid.setYRotation(_interactionGrid.getYRotation() + 0.1);
         break;
 
     }
     case Qt::Key_D:
     {
-
+        _interactionGrid.setYRotation(_interactionGrid.getYRotation() - 0.1);
         break;
     }
+    case Qt::Key_Q:
+    {
+        _interactionGrid.setZRotation(_interactionGrid.getZRotation() + 0.1);
+        break;
 
+    }
+    case Qt::Key_E:
+    {
+        _interactionGrid.setZRotation(_interactionGrid.getZRotation() - 0.1);
+        break;
+    }
+    case Qt::Key_R:
+    {
+        int i = findGridInGroundTruth(_interactionGrid);
+
+        if ( i >= 0)
+        {
+            TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
+            // get grid pointer of current object in list
+            std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
+
+            // if the pointer is valid
+            if ( pGrid )
+            {
+                // check if grids are sufficiently close to each other
+                if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
+                {
+                    _interactionGrid = PipelineGrid(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
+                }
+            }
+        }
+        break;
+    }
         default:
             break;
     } // END: switch (e->key())
@@ -1181,4 +1209,65 @@ void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
 
     // TODO: skip "emit update()" if event doesn't alter image (i.e. ctrl + 0)
     emit update();
+}
+
+
+// called when MOUSE BUTTON IS CLICKED
+void BeesBookImgAnalysisTracker::mousePressEvent(QMouseEvent * e)
+{
+    // position of mouse cursor
+    cv::Point mousePosition(e->x(), e->y());
+
+    _interactionGrid.setCenter(mousePosition);
+
+    emit update();
+}
+
+// called when mouse pointer MOVES
+void BeesBookImgAnalysisTracker::mouseMoveEvent(QMouseEvent * e)
+{
+    // get current time
+    const auto elapsed = std::chrono::system_clock::now() - _lastMouseEventTime;
+
+    // slow down update rate to 1000 Hz max
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 10)
+    {
+        if (e->buttons() & Qt::LeftButton)
+        {
+            cv::Point mousePosition(e->x(), e->y());
+            _interactionGrid.setCenter(mousePosition);
+            emit update();
+        }
+        _lastMouseEventTime = std::chrono::system_clock::now();
+    }
+}
+
+int BeesBookImgAnalysisTracker::findGridInGroundTruth(PipelineGrid & templateGrid)
+{
+    if(_groundTruth.available)
+    {
+        int framenum = getCurrentFrameNumber();
+        std::vector<TrackedObject> GTObjects = _groundTruth.data.getTrackedObjects();
+
+        //iterate over all ground truth objects
+//        for (const TrackedObject trObj : GTObjects)
+        for (unsigned int i = 0; i < GTObjects.size(); i++)
+        {
+            TrackedObject trObj = GTObjects.at(i);
+            // get grid pointer of current object in list
+            std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(framenum);
+
+            // if the pointer is valid
+            if ( pGrid )
+            {
+                // check if grids are sufficiently close to each other
+                if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
+                {
+                    return i;
+
+                }
+            }
+        }
+    }
+    return -1;
 }
