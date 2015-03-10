@@ -881,13 +881,13 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view)
             if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
             {
                 PipelineGrid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
-                similarity = _interactionGrid.compare(temp) / 2;
+                similarity = _interactionGrid.compare(temp);
             }
         }
     }
 
     _interactionGrid.drawContours(image, 0.5, cv::Scalar( (1 - similarity) * 255, similarity*255.0, 0));
-
+    _groundTruth.labelNumTruePositives->setText( QString::number(similarity, 'f', 2));
 
 	if (_tagListLock.try_lock()) {
 		switch (_selectedStage) {
