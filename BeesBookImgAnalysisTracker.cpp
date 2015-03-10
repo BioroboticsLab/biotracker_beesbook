@@ -1084,9 +1084,10 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	return;
 }
 
-void BeesBookImgAnalysisTracker::stageSelectionToogled(
-		BeesBookCommon::Stage stage, bool checked) {
-	if (checked) {
+void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage stage, bool checked)
+{
+    if (checked)
+    {
 		_selectedStage = stage;
 
         // ToDo: this should be encapsuled in an appropriate function, like "resetViews()" or similar
@@ -1095,8 +1096,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-			emit registerViews( { { "Preprocessor Output" }, { "Opts" }, {
-					"Honeyfilter" }, { "Threshold-Comb" } });
+            emit registerViews( { { "Preprocessor Output" }, { "Opts" }, { "Honeyfilter" }, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
@@ -1121,3 +1121,81 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(
 	}
 }
 
+
+bool BeesBookImgAnalysisTracker::event(QEvent *event)
+{
+    const QEvent::Type etype = event->type();
+    switch (etype) {
+    case QEvent::KeyPress:
+        keyPressEvent(static_cast<QKeyEvent*>(event));
+        return true;
+//    case QEvent::MouseButtonPress:
+//        mousePressEvent(static_cast<QMouseEvent*>(event));
+//        return true;
+//    case QEvent::MouseButtonRelease:
+//        mouseReleaseEvent(static_cast<QMouseEvent*>(event));
+//        return true;
+//    case QEvent::MouseMove:
+//        mouseMoveEvent(static_cast<QMouseEvent*>(event));
+//        return true;
+    default:
+        event->ignore();
+        return false;
+    }
+}
+
+
+const std::set<Qt::Key> &BeesBookImgAnalysisTracker::grabbedKeys() const
+{
+    static const std::set<Qt::Key> keys {
+                                          Qt::Key_W, Qt::Key_A,
+                                          Qt::Key_S, Qt::Key_D,
+//	                                      Qt::Key_G, Qt::Key_H,
+//	                                      Qt::Key_U, Qt::Key_F,
+//	                                      Qt::Key_CapsLock,
+//	                                      Qt::Key_0, Qt::Key_1, Qt::Key_2, Qt::Key_3,
+//	                                      Qt::Key_4, Qt::Key_5, Qt::Key_6, Qt::Key_7,
+//	                                      Qt::Key_8, Qt::Key_9
+                                        };
+    return keys;
+}
+
+
+void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
+{
+    static const double rotateIncrement = 0.05;
+
+    switch (e->key())
+    {
+        // rotate
+    case Qt::Key_W:
+    {
+
+        break;
+
+    }
+    case Qt::Key_S:
+    {
+
+        break;
+    }
+    case Qt::Key_A:
+    {
+
+        break;
+
+    }
+    case Qt::Key_D:
+    {
+
+        break;
+    }
+
+        default:
+            break;
+    } // END: switch (e->key())
+    //} // END: _activeGrid
+
+    // TODO: skip "emit update()" if event doesn't alter image (i.e. ctrl + 0)
+    emit update();
+}

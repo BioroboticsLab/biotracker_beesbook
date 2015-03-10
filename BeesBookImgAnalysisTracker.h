@@ -46,6 +46,9 @@ public:
 		return _toolsWidget;
 	}
 
+    // return keys that are handled by the tracker
+    std::set<Qt::Key> const& grabbedKeys() const override;
+
 private:
 	BeesBookCommon::Stage   _selectedStage;
 
@@ -172,6 +175,10 @@ private:
 		  this, &BeesBookImgAnalysisTracker::settingsChanged);
 		_paramsWidget->setParamSubWidget(std::move(widget));
 	}
+
+    void keyPressEvent(QKeyEvent *e) override;
+protected:
+    bool event(QEvent* event) override;
 
 private slots:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
