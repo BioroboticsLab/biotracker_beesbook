@@ -1014,7 +1014,8 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 				BeesBookCommon::getRecognizerSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
-		// TODO
+		_gridFitter.loadSettings(
+		        BeesBookCommon::getGridfitterSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Decoder:
 		// TODO
