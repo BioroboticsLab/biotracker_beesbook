@@ -54,18 +54,25 @@ static const cv::Scalar COLOR_LIGHT_BLUE(255, 200, 150);
 
 class MeasureTimeRAII {
 public:
-	MeasureTimeRAII(std::string const& what,
-			std::function<void(std::string const&)> notify) :
-			_start(std::chrono::steady_clock::now()), _what(what), _notify(
-					notify) {
-	}
+	MeasureTimeRAII(std::string const& what, std::function<void(std::string const&)> notify,
+	                boost::optional<size_t> num = boost::optional<size_t>())
+	    : _start(std::chrono::steady_clock::now()),
+	      _what(what),
+	      _notify(notify),
+	      _num(num)
+	{}
+
 	~MeasureTimeRAII() {
 		const auto end = std::chrono::steady_clock::now();
-		const std::string message { _what + " finished in "
-				+ std::to_string(
-						std::chrono::duration_cast<std::chrono::milliseconds>(
-								end - _start).count()) + +"ms.\n" };
-		_notify(message);
+		const auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count();
+		std::stringstream message;
+		message << _what << " finished in " << dur << "ms.";
+		if (_num) {
+			const auto avg = dur / _num.get();
+			message << " (Average: " << avg << "ms)";
+		}
+		message << std::endl;
+		_notify(message.str());
 		// display message right away
 		QApplication::processEvents();
 	}
@@ -73,6 +80,7 @@ private:
 	const std::chrono::steady_clock::time_point _start;
 	const std::string _what;
 	const std::function<void(std::string const&)> _notify;
+	const boost::optional<size_t> _num;
 };
 }
 
@@ -208,7 +216,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 
 	{
         // start the clock
-		MeasureTimeRAII measure("EllipseFitter", notify);
+		MeasureTimeRAII measure("EllipseFitter", notify, _taglist.size());
 
         // find ellipses in taglist
 		_taglist = _ellipsefitter.process(std::move(_taglist));
@@ -228,7 +236,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 
 	{
         // start the clock
-		MeasureTimeRAII measure("GridFitter", notify);
+		MeasureTimeRAII measure("GridFitter", notify, _taglist.size());
 
         // fit grids to the ellipses found
         _taglist = _gridFitter.process(std::move(_taglist));
@@ -244,7 +252,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 
 	{
         // start the clock
-		MeasureTimeRAII measure("Decoder", notify);
+		MeasureTimeRAII measure("Decoder", notify, _taglist.size());
 
         // decode grids that were matched to the image
         _taglist = _decoder.process(std::move(_taglist));
