@@ -441,7 +441,9 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 			if (!tag.getCandidates().empty()) {
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				if (candidate.getDecodings().size()) {
+					assert(candidate.getGridsConst().size());
 
+					const PipelineGrid& grid = candidate.getGridsConst()[0];
 					pipeline::decoding_t decoding = candidate.getDecodings()[0];
 					int idInt = decoding.to_ulong();
 					std::string idString = "";
@@ -451,7 +453,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 					}
 					idString = std::to_string(idInt%2) + idString;
 
-
+					cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
 					cv::putText(image, std::to_string(decoding.to_ulong()),
 					  cv::Point(tag.getBox().x, tag.getBox().y-distance),
 	    			cv::FONT_HERSHEY_COMPLEX_SMALL, size,
