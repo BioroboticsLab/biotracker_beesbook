@@ -175,7 +175,8 @@ Grid::coordinates2D_t Grid::generate_3D_coordinates_from_parameters_and_project_
 		result._inner_line[i] = p2;
 	}
 
-	_boundingBox = cv::Rect(minx, miny, maxx - minx, maxy - miny);
+	// max values are exclusive
+	_boundingBox = cv::Rect(minx, miny, maxx - minx + 1, maxy - miny + 1);
 
 	return result;
 }
