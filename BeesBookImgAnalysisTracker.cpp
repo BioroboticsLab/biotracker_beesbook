@@ -1149,35 +1149,35 @@ void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
         // rotate
     case Qt::Key_W:
     {
-        _interactionGrid.setXRotation(_interactionGrid.getXRotation() + 0.1);
+		_interactionGrid.setXRotation(_interactionGrid.getXRotation() + rotateIncrement);
         break;
 
     }
     case Qt::Key_S:
     {
-        _interactionGrid.setXRotation(_interactionGrid.getXRotation() - 0.1);
+		_interactionGrid.setXRotation(_interactionGrid.getXRotation() - rotateIncrement);
         break;
     }
     case Qt::Key_A:
     {
-        _interactionGrid.setYRotation(_interactionGrid.getYRotation() + 0.1);
+		_interactionGrid.setYRotation(_interactionGrid.getYRotation() + rotateIncrement);
         break;
 
     }
     case Qt::Key_D:
     {
-        _interactionGrid.setYRotation(_interactionGrid.getYRotation() - 0.1);
+		_interactionGrid.setYRotation(_interactionGrid.getYRotation() - rotateIncrement);
         break;
     }
     case Qt::Key_Q:
     {
-        _interactionGrid.setZRotation(_interactionGrid.getZRotation() + 0.1);
+		_interactionGrid.setZRotation(_interactionGrid.getZRotation() + rotateIncrement);
         break;
 
     }
     case Qt::Key_E:
     {
-        _interactionGrid.setZRotation(_interactionGrid.getZRotation() - 0.1);
+		_interactionGrid.setZRotation(_interactionGrid.getZRotation() - rotateIncrement);
         break;
     }
     case Qt::Key_R:
