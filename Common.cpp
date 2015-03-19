@@ -16,7 +16,7 @@
  * @param base string, in which node the settings where located
  */
 void pipeline::settings::settings_abs::loadValues(Settings& settings,
-		std::string base) {
+                                                  std::string base) {
 
 	typedef std::map<std::string, setting_entry>::iterator it_type;
 	for (it_type it = _settings.begin(); it != _settings.end(); it++) {
@@ -25,59 +25,59 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
 		switch (entry.type) {
 		case (setting_entry_type::INT): {
 			const boost::optional<int> param =
-					settings.maybeGetValueOfParam<int>(
-							base + entry.setting_name);
+			        settings.maybeGetValueOfParam<int>(
+			            base + entry.setting_name);
 			if (param) {
 				entry.field = boost::get<int>(param);
 			} else {
 				settings.setParam(base + entry.setting_name,
-						boost::get<int>(entry.field));
+				                  boost::get<int>(entry.field));
 			}
 
 			break;
 		}
 		case (setting_entry_type::DOUBLE): {
 			const boost::optional<double> param = settings.maybeGetValueOfParam<
-					double>(base + entry.setting_name);
+			        double>(base + entry.setting_name);
 			if (param) {
 				entry.field = boost::get<double>(param);
 			} else {
 				settings.setParam(base + entry.setting_name,
-						boost::get<double>(entry.field));
+				                  boost::get<double>(entry.field));
 			}
 			break;
 		}
 		case (setting_entry_type::BOOL): {
 			const boost::optional<bool> param = settings.maybeGetValueOfParam<
-					bool>(base + entry.setting_name);
+			        bool>(base + entry.setting_name);
 			if (param) {
 				entry.field = boost::get<bool>(param);
 			} else {
 				settings.setParam(base + entry.setting_name,
-						boost::get<bool>(entry.field));
+				                  boost::get<bool>(entry.field));
 			}
 			break;
 		}
 		case (setting_entry_type::U_INT): {
 			const boost::optional<unsigned int> param =
-					settings.maybeGetValueOfParam<unsigned int>(
-							base + entry.setting_name);
+			        settings.maybeGetValueOfParam<unsigned int>(
+			            base + entry.setting_name);
 			if (param) {
 				entry.field = boost::get<unsigned int>(param);
 			} else {
 				settings.setParam(base + entry.setting_name,
-						boost::get<unsigned int>(entry.field));
+				                  boost::get<unsigned int>(entry.field));
 			}
 			break;
 		}
 		case (setting_entry_type::SIZE_T): {
 			const boost::optional<size_t> param = settings.maybeGetValueOfParam<
-					size_t>(base + entry.setting_name);
+			        size_t>(base + entry.setting_name);
 			if (param) {
 				entry.field = boost::get<size_t>(param);
 			} else {
 				settings.setParam(base + entry.setting_name,
-						boost::get<size_t>(entry.field));
+				                  boost::get<size_t>(entry.field));
 			}
 			break;
 		}
@@ -91,10 +91,10 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
  * @return setting object for pipeline
  */
 pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
-		Settings &settings) {
+        Settings &settings) {
 	pipeline::settings::localizer_settings_t localizerSettings;
 	localizerSettings.loadValues(settings,
-			pipeline::settings::Localizer::Params::BASE);
+	                             pipeline::settings::Localizer::Params::BASE);
 	return localizerSettings;
 }
 /**
@@ -103,10 +103,10 @@ pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
  * @return setting object for pipeline
  */
 pipeline::settings::ellipsefitter_settings_t BeesBookCommon::getEllipseFitterSettings(
-		Settings &settings) {
+        Settings &settings) {
 	pipeline::settings::ellipsefitter_settings_t ellipsefitterSettings;
 	ellipsefitterSettings.loadValues(settings,
-			pipeline::settings::EllipseFitter::Params::BASE);
+	                                 pipeline::settings::EllipseFitter::Params::BASE);
 	return ellipsefitterSettings;
 }
 /**
@@ -115,11 +115,11 @@ pipeline::settings::ellipsefitter_settings_t BeesBookCommon::getEllipseFitterSet
  * @return setting object for pipeline
  */
 pipeline::settings::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
-		Settings &settings) {
+        Settings &settings) {
 
 	pipeline::settings::gridfitter_settings_t gridfitterSettings;
 	gridfitterSettings.loadValues(settings,
-			pipeline::settings::Gridfitter::Params::BASE);
+	                              pipeline::settings::Gridfitter::Params::BASE);
 	return gridfitterSettings;
 	return gridfitterSettings;
 }
@@ -129,11 +129,11 @@ pipeline::settings::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
  * @return setting object for pipeline
  */
 pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSettings(
-		Settings &settings) {
+        Settings &settings) {
 	pipeline::settings::preprocessor_settings_t preprocessorSettings;
 
 	preprocessorSettings.loadValues(settings,
-			pipeline::settings::Preprocessor::Params::BASE);
+	                                pipeline::settings::Preprocessor::Params::BASE);
 
 	return preprocessorSettings;
 }

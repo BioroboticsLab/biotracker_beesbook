@@ -35,7 +35,7 @@
 
 namespace {
 auto _ = Algorithms::Registry::getInstance().register_tracker_type<
-		BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
+        BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
 
 struct CursorOverrideRAII {
 	CursorOverrideRAII(Qt::CursorShape shape) {
@@ -85,65 +85,65 @@ private:
 }
 
 BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent) :
-        TrackingAlgorithm(settings, parent),
-        _interactionGrid(cv::Point2i( 300, 300), 23, 0.0, 0.0, 0.0),
-        _selectedStage( BeesBookCommon::Stage::NoProcessing),
-                        _paramsWidget(  std::make_shared<ParamsWidget>()),
-                        _toolsWidget( std::make_shared<QWidget>()),
-        _lastMouseEventTime(std::chrono::system_clock::now())
+    TrackingAlgorithm(settings, parent),
+    _interactionGrid(cv::Point2i( 300, 300), 23, 0.0, 0.0, 0.0),
+    _selectedStage( BeesBookCommon::Stage::NoProcessing),
+    _paramsWidget(  std::make_shared<ParamsWidget>()),
+    _toolsWidget( std::make_shared<QWidget>()),
+    _lastMouseEventTime(std::chrono::system_clock::now())
 
 {
 	Ui::ToolWidget uiTools;
 	uiTools.setupUi(_toolsWidget.get());
 
-    // store label pointer in groundtruth object for convenience (I suppose?)
+	// store label pointer in groundtruth object for convenience (I suppose?)
 	_groundTruth.labelNumFalsePositives = uiTools.labelNumFalsePositives;
 	_groundTruth.labelNumFalseNegatives = uiTools.labelNumFalseNegatives;
-    _groundTruth.labelNumTruePositives  = uiTools.labelNumTruePositives;
-    _groundTruth.labelNumRecall         = uiTools.labelNumRecall;
-    _groundTruth.labelNumPrecision      = uiTools.labelNumPrecision;
+	_groundTruth.labelNumTruePositives  = uiTools.labelNumTruePositives;
+	_groundTruth.labelNumRecall         = uiTools.labelNumRecall;
+	_groundTruth.labelNumPrecision      = uiTools.labelNumPrecision;
 
-    _groundTruth.labelFalsePositives    = uiTools.labelFalsePositives;
-    _groundTruth.labelFalseNegatives    = uiTools.labelFalseNegatives;
-    _groundTruth.labelTruePositives     = uiTools.labelTruePositives;
-    _groundTruth.labelRecall            = uiTools.labelRecall;
-    _groundTruth.labelPrecision         = uiTools.labelPrecision;
+	_groundTruth.labelFalsePositives    = uiTools.labelFalsePositives;
+	_groundTruth.labelFalseNegatives    = uiTools.labelFalseNegatives;
+	_groundTruth.labelTruePositives     = uiTools.labelTruePositives;
+	_groundTruth.labelRecall            = uiTools.labelRecall;
+	_groundTruth.labelPrecision         = uiTools.labelPrecision;
 
-    // lambda function that implements generic "new style connect"
-    auto connectRadioButton = [&](QRadioButton* button, BeesBookCommon::Stage stage)
-    {
-        QObject::connect(button, &QRadioButton::toggled, [ = ](bool checked)
-        {
-            stageSelectionToogled(stage, checked);
-        } );
-    };
+	// lambda function that implements generic "new style connect"
+	auto connectRadioButton = [&](QRadioButton* button, BeesBookCommon::Stage stage)
+	{
+		QObject::connect(button, &QRadioButton::toggled, [ = ](bool checked)
+		{
+			stageSelectionToogled(stage, checked);
+		} );
+	};
 
-    // connect radio buttons with their respective (lambda) handlers
+	// connect radio buttons with their respective (lambda) handlers
 	connectRadioButton(uiTools.radioButtonNoProcessing,
-			BeesBookCommon::Stage::NoProcessing);
+	                   BeesBookCommon::Stage::NoProcessing);
 	connectRadioButton(uiTools.radioButtonPreprocessor,
-			BeesBookCommon::Stage::Preprocessor);
+	                   BeesBookCommon::Stage::Preprocessor);
 	connectRadioButton(uiTools.radioButtonLocalizer,
-			BeesBookCommon::Stage::Localizer);
+	                   BeesBookCommon::Stage::Localizer);
 	connectRadioButton(uiTools.radioButtonEllipseFitter,
-			BeesBookCommon::Stage::EllipseFitter);
+	                   BeesBookCommon::Stage::EllipseFitter);
 	connectRadioButton(uiTools.radioButtonGridFitter,
-			BeesBookCommon::Stage::GridFitter);
+	                   BeesBookCommon::Stage::GridFitter);
 	connectRadioButton(uiTools.radioButtonDecoder,
-			BeesBookCommon::Stage::Decoder);
+	                   BeesBookCommon::Stage::Decoder);
 
-    // send forceTracking upon button "process"
+	// send forceTracking upon button "process"
 	QObject::connect(uiTools.processButton, &QPushButton::pressed,
-			[&]() {emit forceTracking();});
+	                 [&]() {emit forceTracking();});
 
-    //
+	//
 	QObject::connect(uiTools.pushButtonLoadGroundTruth, &QPushButton::pressed,
-			this, &BeesBookImgAnalysisTracker::loadGroundTruthData);
+	                 this, &BeesBookImgAnalysisTracker::loadGroundTruthData);
 
-    QObject::connect(uiTools.save_config, &QPushButton::pressed, this,
-			&BeesBookImgAnalysisTracker::exportConfiguration);
+	QObject::connect(uiTools.save_config, &QPushButton::pressed, this,
+	                 &BeesBookImgAnalysisTracker::exportConfiguration);
 
-    // load settings from config file
+	// load settings from config file
 	_preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
 	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
 	_ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(_settings));
@@ -152,116 +152,115 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 
 void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 {
-    // notify lambda function
-    const auto notify =
-			[&](std::string const& message) {emit notifyGUI(message, MSGS::NOTIFICATION);};
+	// notify lambda function
+	const auto notify =
+	        [&](std::string const& message) {emit notifyGUI(message, MSGS::NOTIFICATION);};
 
-    // acquire mutex (released when leaving function scope)
+	// acquire mutex (released when leaving function scope)
 	const std::lock_guard<std::mutex> lock(_tagListLock);
 
-    // set wait cursor until end of track function
+	// set wait cursor until end of track function
 	const CursorOverrideRAII cursorOverride(Qt::WaitCursor);
 
-    // invalidate previous visualizations (aka views)
+	// invalidate previous visualizations (aka views)
 	for (boost::optional<cv::Mat>& visualization : _visualizationData.visualizations) {
 		visualization.reset();
 	}
 
-    // taglist holds the tags found by the pipeline
+	// taglist holds the tags found by the pipeline
 	_taglist.clear();
 
-    // algorithm layer selection cascade
+	// algorithm layer selection cascade
 	if (_selectedStage < BeesBookCommon::Stage::Preprocessor)
 		return;
 
-    // keep code in extra block for measuring execution time in RAII-fashion
-    cv::Mat image;
-    {
-        // start the clock
-        MeasureTimeRAII measure("Preprocessor", notify);
+	// keep code in extra block for measuring execution time in RAII-fashion
+	cv::Mat image;
+	{
+		// start the clock
+		MeasureTimeRAII measure("Preprocessor", notify);
 
-        // process current frame and store result frame in _image
-        // as of now this is a sobel filtered image further processed
-        _image = _preprocessor.process(frame);
+		// process current frame and store result frame in _image
+		// as of now this is a sobel filtered image further processed
+		_image = _preprocessor.process(frame);
 
-        // set preprocessor views
-        _visualizationData.preprocessorImage            = _image.clone();
-        _visualizationData.preprocessorOptImage         = _preprocessor.getOptsImage();
-        _visualizationData.preprocessorHoneyImage       = _preprocessor.getHoneyImage();
-        _visualizationData.preprocessorThresholdImage   = _preprocessor.getThresholdImage();
-
+		// set preprocessor views
+		_visualizationData.preprocessorImage            = _image.clone();
+		_visualizationData.preprocessorOptImage         = _preprocessor.getOptsImage();
+		_visualizationData.preprocessorHoneyImage       = _preprocessor.getHoneyImage();
+		_visualizationData.preprocessorThresholdImage   = _preprocessor.getThresholdImage();
 	}
 
-    // end of preprocessor stage
+	// end of preprocessor stage
 	if (_selectedStage < BeesBookCommon::Stage::Localizer)
 		return;
 
-    {
-        // start the clock
+	{
+		// start the clock
 		MeasureTimeRAII measure("Localizer", notify);
 
-        // process image, find ROIs with tags
-        _taglist = _localizer.process(std::move(frame), std::move(_image));
+		// process image, find ROIs with tags
+		_taglist = _localizer.process(std::move(frame), std::move(_image));
 
-        // set localizer views
-        _visualizationData.localizerInputImage      =  _image.clone();
-        _visualizationData.localizerBlobImage       = _localizer.getBlob().clone();
-        _visualizationData.localizerThresholdImage  = _localizer.getThresholdImage().clone();
+		// set localizer views
+		_visualizationData.localizerInputImage      =  _image.clone();
+		_visualizationData.localizerBlobImage       = _localizer.getBlob().clone();
+		_visualizationData.localizerThresholdImage  = _localizer.getThresholdImage().clone();
 
-        // evaluate localizer
-        if (_groundTruth.available)
+		// evaluate localizer
+		if (_groundTruth.available)
 			evaluateLocalizer();
 	}
 
-    // end of localizer stage
+	// end of localizer stage
 	if (_selectedStage < BeesBookCommon::Stage::EllipseFitter)
 		return;
 
 	{
-        // start the clock
+		// start the clock
 		MeasureTimeRAII measure("EllipseFitter", notify, _taglist.size());
 
-        // find ellipses in taglist
+		// find ellipses in taglist
 		_taglist = _ellipsefitter.process(std::move(_taglist));
 
-        // set ellipsefitter views
-        // TODO: maybe only visualize areas with ROIs
-        _visualizationData.ellipsefitterCannyEdge = _ellipsefitter.computeCannyEdgeMap(frame);
+		// set ellipsefitter views
+		// TODO: maybe only visualize areas with ROIs
+		_visualizationData.ellipsefitterCannyEdge = _ellipsefitter.computeCannyEdgeMap(frame);
 
-        // evaluate ellipsefitter
-        if (_groundTruth.available)
+		// evaluate ellipsefitter
+		if (_groundTruth.available)
 			evaluateEllipseFitter();
 	}
 
-    // end of ellipsefitter stage
+	// end of ellipsefitter stage
 	if (_selectedStage < BeesBookCommon::Stage::GridFitter)
 		return;
 
 	{
-        // start the clock
+		// start the clock
 		MeasureTimeRAII measure("GridFitter", notify, _taglist.size());
 
-        // fit grids to the ellipses found
-        _taglist = _gridFitter.process(std::move(_taglist));
+		// fit grids to the ellipses found
+		_taglist = _gridFitter.process(std::move(_taglist));
 
-        // evaluate grids
-        if (_groundTruth.available)
+		// evaluate grids
+		if (_groundTruth.available)
 			evaluateGridfitter();
 	}
 
-    // end of gridfitter stage
+	// end of gridfitter stage
 	if (_selectedStage < BeesBookCommon::Stage::Decoder)
 		return;
 
 	{
-        // start the clock
+		// start the clock
 		MeasureTimeRAII measure("Decoder", notify, _taglist.size());
 
-        // decode grids that were matched to the image
-        _taglist = _decoder.process(std::move(_taglist));
+		// decode grids that were matched to the image
+		_taglist = _decoder.process(std::move(_taglist));
 
-        // evaluate decodings
-        if (_groundTruth.available)
+		// evaluate decodings
+		if (_groundTruth.available)
 			evaluateDecoder();
 	}
 }
@@ -270,59 +269,59 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
 {
 	const int thickness = calculateVisualizationThickness();
 
-    // if there is no ground truth, draw all
-    // pipeline ROIs in blue and return
-    if (!_groundTruth.available)
-    {
-        for (const pipeline::Tag& tag : _taglist)
-        {
+	// if there is no ground truth, draw all
+	// pipeline ROIs in blue and return
+	if (!_groundTruth.available)
+	{
+		for (const pipeline::Tag& tag : _taglist)
+		{
 			const cv::Rect& box = tag.getBox();
 			cv::rectangle(image, box, COLOR_LIGHT_BLUE, thickness, CV_AA);
 		}
 		return;
 	}
 
-    // ... GT available, that means localizer has been evaluated (localizerResults holds data)
-    // get localizer results struct
+	// ... GT available, that means localizer has been evaluated (localizerResults holds data)
+	// get localizer results struct
 	const LocalizerEvaluationResults& results = _groundTruth.localizerResults;
 
-    // correctly found
-    for (const pipeline::Tag& tag : results.truePositives)
-    {
+	// correctly found
+	for (const pipeline::Tag& tag : results.truePositives)
+	{
 		cv::rectangle(image, tag.getBox(), COLOR_GREEN, thickness, CV_AA);
 	}
 
-    // false detections
-    for (const pipeline::Tag& tag : results.falsePositives)
-    {
+	// false detections
+	for (const pipeline::Tag& tag : results.falsePositives)
+	{
 		cv::rectangle(image, tag.getBox(), COLOR_RED, thickness, CV_AA);
 	}
 
-    // missing detections
-    for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives)
-    {
-        cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
+	// missing detections
+	for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives)
+	{
+		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 	}
 
-    // calculate recall / precision
-    const float recall      = static_cast<float>(results.truePositives.size()) /
-                              static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	// calculate recall / precision
+	const float recall      = static_cast<float>(results.truePositives.size()) /
+	        static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
 
-    const float precision   = static_cast<float>(results.truePositives.size()) /
-                              static_cast<float>(results.truePositives.size() +
-                                                 results.falsePositives.size()) * 100.f;
+	const float precision   = static_cast<float>(results.truePositives.size()) /
+	        static_cast<float>(results.truePositives.size() +
+	                           results.falsePositives.size()) * 100.f;
 
-    // set text in statistics labels
-    // ToDo encapsulate in member function
-    _groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
-    _groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
-    _groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
+	// set text in statistics labels
+	// ToDo encapsulate in member function
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
+	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
+	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
 	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-    _groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
 void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
-		cv::Mat& image) const {
+        cv::Mat& image) const {
 	const int thickness = calculateVisualizationThickness();
 
 	if (!_groundTruth.available) {
@@ -332,13 +331,13 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
 				const pipeline::Ellipse& ellipse = candidate.getEllipse();
 				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-						ellipse.getAxis(), ellipse.getAngle(), 0, 360,
-						COLOR_LIGHT_BLUE, 3);
+				            ellipse.getAxis(), ellipse.getAngle(), 0, 360,
+				            COLOR_LIGHT_BLUE, 3);
 				cv::putText(image,
-						"Score: " + std::to_string(ellipse.getVote()),
-						tag.getBox().tl() + cv::Point(80, 80),
-						cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
-						COLOR_LIGHT_BLUE, 2, CV_AA);
+				            "Score: " + std::to_string(ellipse.getVote()),
+				            tag.getBox().tl() + cv::Point(80, 80),
+				            cv::FONT_HERSHEY_COMPLEX_SMALL, 3.0,
+				            COLOR_LIGHT_BLUE, 2, CV_AA);
 			}
 		}
 		return;
@@ -351,47 +350,47 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 		const pipeline::TagCandidate& candidate = tagCandidatePair.second;
 		const pipeline::Ellipse& ellipse = candidate.getEllipse();
 		cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-				ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_GREEN,
-				thickness);
+		            ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_GREEN,
+		            thickness);
 	}
 
 	for (const pipeline::Tag& tag : results.falsePositives) {
 		//TODO: should use ellipse with best score
 		if (tag.getCandidates().size()) {
 			const pipeline::Ellipse& ellipse =
-					tag.getCandidates().at(0).getEllipse();
+			        tag.getCandidates().at(0).getEllipse();
 			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
-					ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
-					thickness);
+			            ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
+			            thickness);
 		}
 	}
 
 	for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives) {
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness,
-		CV_AA);
+		              CV_AA);
 		grid->drawContours(image, 1.0);
 	}
 
 	const float recall = static_cast<float>(results.truePositives.size())
-			/ static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	        / static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
 	const float precision = static_cast<float>(results.truePositives.size())
-			/ static_cast<float>(results.truePositives.size()
-					+ results.falsePositives.size()) * 100.f;
+	        / static_cast<float>(results.truePositives.size()
+	                             + results.falsePositives.size()) * 100.f;
 
 	_groundTruth.labelNumFalseNegatives->setText(
-			QString::number(results.falseNegatives.size()));
+	            QString::number(results.falseNegatives.size()));
 	_groundTruth.labelNumFalsePositives->setText(
-			QString::number(results.falsePositives.size()));
+	            QString::number(results.falsePositives.size()));
 	_groundTruth.labelNumTruePositives->setText(
-			QString::number(results.truePositives.size()));
+	            QString::number(results.truePositives.size()));
 	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
 	_groundTruth.labelNumPrecision->setText(
-			QString::number(precision, 'f', 2) + "%");
+	            QString::number(precision, 'f', 2) + "%");
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 {
-    const int thickness = calculateVisualizationThickness();
+	const int thickness = calculateVisualizationThickness();
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
@@ -414,33 +413,33 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 		return;
 	}
 
-    for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.truePositives)
-    {
-        pipegrid.drawContours(image, 0.5);
-        cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
-    }
+	for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.truePositives)
+	{
+		pipegrid.drawContours(image, 0.5);
+		cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
+	}
 
-    for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.falsePositives)
-    {
-        pipegrid.drawContours(image, 0.5);
-        cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
-    }
+	for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.falsePositives)
+	{
+		pipegrid.drawContours(image, 0.5);
+		cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
+	}
 
-//    if (_groundTruth.available)
-//    {
-//        //precision = TP / Positives
-//        //recall = TP / GroundTruth_N
-//        unsigned int matches = _groundTruth.gridfitterResults.matches;
-//        unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
+	//    if (_groundTruth.available)
+	//    {
+	//        //precision = TP / Positives
+	//        //recall = TP / GroundTruth_N
+	//        unsigned int matches = _groundTruth.gridfitterResults.matches;
+	//        unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
 
-//        _groundTruth.labelNumTruePositives->setText(QString::number(matches));
+	//        _groundTruth.labelNumTruePositives->setText(QString::number(matches));
 
-//        if (_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size() != 0)
-//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
+	//        if (_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size() != 0)
+	//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
 
-//        if ((matches + mismatches) != 0)
-//            _groundTruth.labelNumPrecision->setText( QString::number(matches / (matches + mismatches), 'f', 2) + "%");
-//    }
+	//        if ((matches + mismatches) != 0)
+	//            _groundTruth.labelNumPrecision->setText( QString::number(matches / (matches + mismatches), 'f', 2) + "%");
+	//    }
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
@@ -523,7 +522,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	_groundTruth.labelNumRecall->setText(QString::number(static_cast<float> (cumulHamming)/results.evaluationResults.size()));
 	_groundTruth.labelPrecision->setText("Precision (matched, partly): ");
 	_groundTruth.labelNumPrecision ->setText(QString::number(static_cast<float> (matchNum)/results.evaluationResults.size())  + ", "
-		+ QString::number((static_cast<float> (matchNum)+partlyMismatchNum)/results.evaluationResults.size()));
+	                                         + QString::number((static_cast<float> (matchNum)+partlyMismatchNum)/results.evaluationResults.size()));
 
 	return;
 }
@@ -532,173 +531,173 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 {
 	assert(_groundTruth.available);
 
-    // convenience variable, is moved to _groundtruth.localizerResults later
-    LocalizerEvaluationResults results;
+	// convenience variable, is moved to _groundtruth.localizerResults later
+	LocalizerEvaluationResults results;
 
-    const int currentFrameNumber = getCurrentFrameNumber();
+	const int currentFrameNumber = getCurrentFrameNumber();
 
-    // iterate over ground truth data (typed Grid3D), convert them to PipelineGrids
-    // and store them in the std::set taggedGridsOnFrame
-    for (TrackedObject const& object : _groundTruth.data.getTrackedObjects())
-    {
-        const std::shared_ptr<Grid3D> grid3d = object.maybeGet<Grid3D>(currentFrameNumber);
-        if (!grid3d)
-            continue;
-        // convert to PipelineGrid
-        const auto grid = std::make_shared<PipelineGrid>(
-                grid3d->getCenter(), grid3d->getPixelRadius(),
-                grid3d->getZRotation(), grid3d->getYRotation(),
-                grid3d->getXRotation());
+	// iterate over ground truth data (typed Grid3D), convert them to PipelineGrids
+	// and store them in the std::set taggedGridsOnFrame
+	for (TrackedObject const& object : _groundTruth.data.getTrackedObjects())
+	{
+		const std::shared_ptr<Grid3D> grid3d = object.maybeGet<Grid3D>(currentFrameNumber);
+		if (!grid3d)
+			continue;
+		// convert to PipelineGrid
+		const auto grid = std::make_shared<PipelineGrid>(
+		            grid3d->getCenter(), grid3d->getPixelRadius(),
+		            grid3d->getZRotation(), grid3d->getYRotation(),
+		            grid3d->getXRotation());
 
-        // insert in set
-        if (grid)
-            results.taggedGridsOnFrame.insert(grid);
-    }
+		// insert in set
+		if (grid)
+			results.taggedGridsOnFrame.insert(grid);
+	}
 
-    // Detect False Negatives
-    for (const std::shared_ptr<PipelineGrid>& grid : results.taggedGridsOnFrame)
-    {
-        // ROI of ground truth
-        const cv::Rect gridBox = grid->getBoundingBox();
+	// Detect False Negatives
+	for (const std::shared_ptr<PipelineGrid>& grid : results.taggedGridsOnFrame)
+	{
+		// ROI of ground truth
+		const cv::Rect gridBox = grid->getBoundingBox();
 
 		bool inGroundTruth = false;
-        for (const pipeline::Tag& tag : _taglist)
-        {
-            // ROI of pipeline tag
+		for (const pipeline::Tag& tag : _taglist)
+		{
+			// ROI of pipeline tag
 			const cv::Rect& tagBox = tag.getBox();
 
-            // target property is complete containment
-            if (tagBox.contains(gridBox.tl())
-                && tagBox.contains(gridBox.br()))
-            {
+			// target property is complete containment
+			if (tagBox.contains(gridBox.tl())
+			    && tagBox.contains(gridBox.br()))
+			{
 				inGroundTruth = true;
 				break;
 			}
 		}
 
-        // mark current ground truth box as missing detection (false negative)
+		// mark current ground truth box as missing detection (false negative)
 		if (!inGroundTruth)
 			results.falseNegatives.insert(grid);
 	}
 
-    // Detect False Positives
-    // ground truth grids
-    std::set<std::shared_ptr<PipelineGrid>> notYetDetectedGrids = results.taggedGridsOnFrame;
+	// Detect False Positives
+	// ground truth grids
+	std::set<std::shared_ptr<PipelineGrid>> notYetDetectedGrids = results.taggedGridsOnFrame;
 
-    // iterate over all pipeline tags
-    for (const pipeline::Tag& tag : _taglist)
-    {
-        // ROI of pipeline tag
-        const cv::Rect& tagBox = tag.getBox();
+	// iterate over all pipeline tags
+	for (const pipeline::Tag& tag : _taglist)
+	{
+		// ROI of pipeline tag
+		const cv::Rect& tagBox = tag.getBox();
 
-        bool inGroundTruth = false;
+		bool inGroundTruth = false;
 
-        // iterate over all ground truth grids
-        for (const std::shared_ptr<PipelineGrid>& grid : notYetDetectedGrids)
-        {
-            // ROI of ground truth grid
+		// iterate over all ground truth grids
+		for (const std::shared_ptr<PipelineGrid>& grid : notYetDetectedGrids)
+		{
+			// ROI of ground truth grid
 			const cv::Rect gridBox = grid->getBoundingBox();
 
-            if (tagBox.contains(gridBox.tl())
-                && tagBox.contains(gridBox.br()))
-            {
-                // match!
+			if (tagBox.contains(gridBox.tl())
+			    && tagBox.contains(gridBox.br()))
+			{
+				// match!
 				inGroundTruth = true;
 
-                // store pipeline tag in extra set
+				// store pipeline tag in extra set
 				results.truePositives.insert(tag);
 
-                // store mapping from roi -> grid
+				// store mapping from roi -> grid
 				results.gridByTag[tag] = grid;
 
-                // this modifies the container in a range based for loop, which may invalidate
+				// this modifies the container in a range based for loop, which may invalidate
 				// the iterators. This is not problem in this specific case because we exit the loop
-                // right away. (beware if that is going to be changed)
+				// right away. (beware if that is going to be changed)
 				notYetDetectedGrids.erase(grid);
 				break;
 			}
 		}
 
-        // if no match was found, the pipeline-reported roi is a false detection
+		// if no match was found, the pipeline-reported roi is a false detection
 		if (!inGroundTruth)
 			results.falsePositives.insert(tag);
 	}
 
-    // move local results to global member struct
+	// move local results to global member struct
 	_groundTruth.localizerResults = std::move(results);
 }
 
 void BeesBookImgAnalysisTracker::evaluateEllipseFitter()
 {
-    // ToDo
+	// ToDo
 	static const double threshold = 100.;
 
 	assert(_groundTruth.available);
 
-    // local convenience variable
+	// local convenience variable
 	EllipseFitterEvaluationResults results;
 
-    // copy ground truth grids from localizer results struct
-    results.taggedGridsOnFrame = _groundTruth.localizerResults.taggedGridsOnFrame;
+	// copy ground truth grids from localizer results struct
+	results.taggedGridsOnFrame = _groundTruth.localizerResults.taggedGridsOnFrame;
 
-    // iterate over pipeline ROIs
-    for (const pipeline::Tag& tag : _taglist)
-    {
-        // find ground truth grid associated to current ROI
+	// iterate over pipeline ROIs
+	for (const pipeline::Tag& tag : _taglist)
+	{
+		// find ground truth grid associated to current ROI
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 
-        // if valid iterator (and grid)
-        if (it != _groundTruth.localizerResults.gridByTag.end())
-        {
-            // get ground truth grid
+		// if valid iterator (and grid)
+		if (it != _groundTruth.localizerResults.gridByTag.end())
+		{
+			// get ground truth grid
 			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
 
-            // if the pipeline ROI has ellipses
-            if (!tag.getCandidates().empty())
-            {
-                // calculate similarity score (or distance measure?)
-                // and store it in std::pair with the
-                // ROI's ellipse
+			// if the pipeline ROI has ellipses
+			if (!tag.getCandidates().empty())
+			{
+				// calculate similarity score (or distance measure?)
+				// and store it in std::pair with the
+				// ROI's ellipse
 				auto scoreCandidatePair = compareGrids(tag, grid);
 
-                // get the score
-                const double score = scoreCandidatePair.first;
+				// get the score
+				const double score = scoreCandidatePair.first;
 
-                // print the score
-                std::cout << "Score " << score  << std::endl;
+				// print the score
+				std::cout << "Score " << score  << std::endl;
 
-                // get the ellipse
-                const pipeline::TagCandidate& candidate = scoreCandidatePair.second;
+				// get the ellipse
+				const pipeline::TagCandidate& candidate = scoreCandidatePair.second;
 
-                // store the ROI-ellipse pair if match (why that way?)
+				// store the ROI-ellipse pair if match (why that way?)
 				if (score <= threshold)
 					results.truePositives.push_back( { tag, candidate });
-                else // store as false detection
+				else // store as false detection
 					results.falsePositives.insert(tag);
-            }
-            // if no ellipses are found by pipeline,
-            // this tag (ROI) is counted as a missing detection
-            else
+			}
+			// if no ellipses are found by pipeline,
+			// this tag (ROI) is counted as a missing detection
+			else
 				results.falseNegatives.insert(grid);
 
-        }
-        // there is no ground truth data for the specified ROI
-        // --> also count it as a false detection
-        else
-            if (tag.getCandidates().size())
-            {
-                results.falsePositives.insert(tag);
-            }
+		}
+		// there is no ground truth data for the specified ROI
+		// --> also count it as a false detection
+		else
+			if (tag.getCandidates().size())
+			{
+				results.falsePositives.insert(tag);
+			}
 	}
 
-    // mark all ground truth grids that the localizer wasn't able to find
-    // as missing detections on the ellipsefitter layer as well
-    for (const std::shared_ptr<PipelineGrid>& grid : _groundTruth.localizerResults.falseNegatives)
-    {
+	// mark all ground truth grids that the localizer wasn't able to find
+	// as missing detections on the ellipsefitter layer as well
+	for (const std::shared_ptr<PipelineGrid>& grid : _groundTruth.localizerResults.falseNegatives)
+	{
 		results.falseNegatives.insert(grid);
 	}
 
-    // move local struct to global member
+	// move local struct to global member
 	_groundTruth.ellipsefitterResults = std::move(results);
 }
 
@@ -706,39 +705,39 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 {
 	assert(_groundTruth.available);
 
-    // iterate over all correctly found ROI / ellipse pairs
-    for (auto& candidateByGrid : _groundTruth.ellipsefitterResults.truePositives)
-    {
-        // get ROI
+	// iterate over all correctly found ROI / ellipse pairs
+	for (auto& candidateByGrid : _groundTruth.ellipsefitterResults.truePositives)
+	{
+		// get ROI
 		const pipeline::Tag& tag = candidateByGrid.first;
 
-        // get ellipse
+		// get ellipse
 		const pipeline::TagCandidate& bestCandidate = candidateByGrid.second;
 
-        // if there are grids stored with that ellipse
-        if (!bestCandidate.getGridsConst().empty())
-        {
-            // get the best grid of that ellipse
-            const PipelineGrid& bestFoundGrid = bestCandidate.getGridsConst().at(0);
+		// if there are grids stored with that ellipse
+		if (!bestCandidate.getGridsConst().empty())
+		{
+			// get the best grid of that ellipse
+			const PipelineGrid& bestFoundGrid = bestCandidate.getGridsConst().at(0);
 
-            // use the ROI (tag) to lookup the groundtruth grid (the map was build in evaluateLocalizer)
+			// use the ROI (tag) to lookup the groundtruth grid (the map was build in evaluateLocalizer)
 			// TODO: Workaround, remove this!
 			if (!_groundTruth.localizerResults.gridByTag.count(tag)) continue;
 
-            const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
+			const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
 
-            // compare ground truth grid to pipeline grid
-            if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
-            {
-                _groundTruth.gridfitterResults.matches++; //ToDo delete
-                _groundTruth.gridfitterResults.truePositives.push_back(bestFoundGrid);
-            }
-            else
-            {
-                _groundTruth.gridfitterResults.mismatches++; //ToDo delete
-                _groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid);
-            }
-        }
+			// compare ground truth grid to pipeline grid
+			if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
+			{
+				_groundTruth.gridfitterResults.matches++; //ToDo delete
+				_groundTruth.gridfitterResults.truePositives.push_back(bestFoundGrid);
+			}
+			else
+			{
+				_groundTruth.gridfitterResults.mismatches++; //ToDo delete
+				_groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid);
+			}
+		}
 	}
 }
 
@@ -752,7 +751,7 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
 			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
-            if (!tag.getCandidates().empty()) {
+			if (!tag.getCandidates().empty()) {
 				if (!tag.getCandidates()[0].getDecodings().empty()) {
 					DecoderEvaluationResults::result_t result;
 
@@ -787,8 +786,8 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 
 					results.evaluationResults.push_back(result);
 				}
-			} 
-		} 
+			}
+		}
 	}
 
 	_groundTruth.decoderResults = std::move(results);
@@ -797,10 +796,10 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 
 int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 {
-    const int radius = _settings.getValueOfParam<int>(
-					pipeline::settings::Localizer::Params::BASE
-							+ pipeline::settings::Localizer::Params::MIN_BOUNDING_BOX_SIZE)
-					/ 2;
+	const int radius = _settings.getValueOfParam<int>(
+	            pipeline::settings::Localizer::Params::BASE
+	            + pipeline::settings::Localizer::Params::MIN_BOUNDING_BOX_SIZE)
+	        / 2;
 	// calculate actual pixel size of grid based on current zoom level
 	double displayTagSize = radius / getCurrentZoomLevel();
 	displayTagSize = displayTagSize > 50. ? 50 : displayTagSize;
@@ -812,28 +811,28 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 }
 
 std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBookImgAnalysisTracker::compareGrids(
-		const pipeline::Tag &detectedTag,
-		const std::shared_ptr<PipelineGrid> &grid) const {
+        const pipeline::Tag &detectedTag,
+        const std::shared_ptr<PipelineGrid> &grid) const {
 	assert(!detectedTag.getCandidates().empty());
 	auto deviation =
-			[](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
-			{
-				const double sina = std::sin(angle);
-				const double cosa = std::cos(angle);
-				const int x = point.x;
-				const int y = point.y;
-				const int a = axis.width;
-				const int b = axis.height;
+	        [](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
+	{
+		const double sina = std::sin(angle);
+		const double cosa = std::cos(angle);
+		const int x = point.x;
+		const int y = point.y;
+		const int a = axis.width;
+		const int b = axis.height;
 
-				double res = std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
+		double res = std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
 
-				std::cout << "Punkt "<< point.x << " " << point.y << " in  Ellipse "<< cen.x << ", " << cen.y <<", " << axis.width << "," << axis.height << " : " << res << std::endl;
-				return res;
-			};
+		std::cout << "Punkt "<< point.x << " " << point.y << " in  Ellipse "<< cen.x << ", " << cen.y <<", " << axis.width << "," << axis.height << " : " << res << std::endl;
+		return res;
+	};
 
 	pipeline::TagCandidate const* bestCandidate = nullptr;
 	const std::vector<cv::Point> outerPoints =
-			grid->getOuterRingEdgeCoordinates();
+	        grid->getOuterRingEdgeCoordinates();
 	double bestDeviation = std::numeric_limits<double>::max();
 	for (pipeline::TagCandidate const& candidate : detectedTag.getCandidates()) {
 		double sumDeviation = 0.;
@@ -841,7 +840,7 @@ std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBoo
 		for (cv::Point const& point : outerPoints) {
 			cv::Point rel_point = cv::Point(point.x -detectedTag.getBox().x,point.y -detectedTag.getBox().y);
 			sumDeviation += deviation(ellipse.getCen(), ellipse.getAxis(),
-					ellipse.getAngle(), rel_point);
+			                          ellipse.getAngle(), rel_point);
 		}
 		const double deviation = sumDeviation / outerPoints.size();
 		if (deviation < bestDeviation) {
@@ -854,7 +853,7 @@ std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBoo
 }
 
 cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
-		const int type) const {
+                                                    const int type) const {
 	// TODO: convert B&W to RGB
 	// this could probably be implemented more efficiently
 	cv::Mat image;
@@ -869,56 +868,56 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 	cv::Mat& image = proxy.getmat();
 
 	// don't try to visualize results while data processing is running
-    double similarity = 0;
+	double similarity = 0;
 
-    int i = findGridInGroundTruth(_interactionGrid);
+	int i = findGridInGroundTruth(_interactionGrid);
 
-    if ( i >= 0)
-    {
-        TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
-        // get grid pointer of current object in list
-        std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
+	if ( i >= 0)
+	{
+		TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
+		// get grid pointer of current object in list
+		std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
 
-        // if the pointer is valid
-        if ( pGrid )
-        {
-            // check if grids are sufficiently close to each other
-            if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
-            {
-                PipelineGrid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
-                similarity = _interactionGrid.compare(temp);
-            }
-        }
-    }
+		// if the pointer is valid
+		if ( pGrid )
+		{
+			// check if grids are sufficiently close to each other
+			if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
+			{
+				PipelineGrid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
+				similarity = _interactionGrid.compare(temp);
+			}
+		}
+	}
 
-    _interactionGrid.drawContours(image, 0.5, cv::Scalar( (1 - similarity) * 255, similarity*255.0, 0));
-    _groundTruth.labelNumTruePositives->setText( QString::number(similarity, 'f', 2));
+	_interactionGrid.drawContours(image, 0.5, cv::Scalar( (1 - similarity) * 255, similarity*255.0, 0));
+	_groundTruth.labelNumTruePositives->setText( QString::number(similarity, 'f', 2));
 
 	if (_tagListLock.try_lock()) {
 		switch (_selectedStage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			if ((view.name == "Preprocessor Output")
-					&& (_visualizationData.preprocessorImage)) {
+			    && (_visualizationData.preprocessorImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.preprocessorImage.get(),
-						image.type());
+				            _visualizationData.preprocessorImage.get(),
+				            image.type());
 			} else if ((view.name == "Opts")
-					&& (_visualizationData.preprocessorOptImage)) {
+			           && (_visualizationData.preprocessorOptImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.preprocessorOptImage.get(),
-						image.type());
+				            _visualizationData.preprocessorOptImage.get(),
+				            image.type());
 
 			} else if ((view.name == "Honeyfilter")
-					&& (_visualizationData.preprocessorHoneyImage)) {
+			           && (_visualizationData.preprocessorHoneyImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.preprocessorHoneyImage.get(),
-						image.type());
+				            _visualizationData.preprocessorHoneyImage.get(),
+				            image.type());
 
 			} else if ((view.name == "Threshold-Comb")
-					&& (_visualizationData.preprocessorThresholdImage)) {
+			           && (_visualizationData.preprocessorThresholdImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.preprocessorThresholdImage.get(),
-						image.type());
+				            _visualizationData.preprocessorThresholdImage.get(),
+				            image.type());
 			}
 			break;
 
@@ -929,30 +928,30 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 			 _visualizationData.localizerSobelImage.get(),
 			 image.type());*/
 			if ((view.name == "Blobs")
-					&& (_visualizationData.localizerBlobImage)) {
+			    && (_visualizationData.localizerBlobImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.localizerBlobImage.get(),
-						image.type());
+				            _visualizationData.localizerBlobImage.get(),
+				            image.type());
 			} else if ((view.name == "Input")
-					&& (_visualizationData.localizerInputImage)) {
+			           && (_visualizationData.localizerInputImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.localizerInputImage.get(),
-						image.type());
+				            _visualizationData.localizerInputImage.get(),
+				            image.type());
 
 			} else if ((view.name == "Threshold")
-					&& (_visualizationData.localizerThresholdImage)) {
+			           && (_visualizationData.localizerThresholdImage)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.localizerThresholdImage.get(),
-						image.type());
+				            _visualizationData.localizerThresholdImage.get(),
+				            image.type());
 			}
 			visualizeLocalizerOutput(image);
 			break;
 		case BeesBookCommon::Stage::EllipseFitter:
 			if ((view.name == "Canny Edge")
-					&& (_visualizationData.ellipsefitterCannyEdge)) {
+			    && (_visualizationData.ellipsefitterCannyEdge)) {
 				image = rgbMatFromBwMat(
-						_visualizationData.ellipsefitterCannyEdge.get(),
-						image.type());
+				            _visualizationData.ellipsefitterCannyEdge.get(),
+				            image.type());
 			}
 			visualizeEllipseFitterOutput(image);
 			break;
@@ -980,23 +979,23 @@ void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &) const {
 }
 
 void BeesBookImgAnalysisTracker::settingsChanged(
-		const BeesBookCommon::Stage stage) {
+        const BeesBookCommon::Stage stage) {
 	switch (stage) {
 	case BeesBookCommon::Stage::Preprocessor:
 		_preprocessor.loadSettings(
-				BeesBookCommon::getPreprocessorSettings(_settings));
+		            BeesBookCommon::getPreprocessorSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Localizer:
 		_localizer.loadSettings(
-				BeesBookCommon::getLocalizerSettings(_settings));
+		            BeesBookCommon::getLocalizerSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::EllipseFitter:
 		_ellipsefitter.loadSettings(
-				BeesBookCommon::getEllipseFitterSettings(_settings));
+		            BeesBookCommon::getEllipseFitterSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
 		_gridFitter.loadSettings(
-		        BeesBookCommon::getGridfitterSettings(_settings));
+		            BeesBookCommon::getGridfitterSettings(_settings));
 		break;
 	case BeesBookCommon::Stage::Decoder:
 		// TODO
@@ -1008,7 +1007,7 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 
 void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	QString filename = QFileDialog::getOpenFileName(nullptr,
-			tr("Load tracking data"), "", tr("Data Files (*.tdat)"));
+	                                                tr("Load tracking data"), "", tr("Data Files (*.tdat)"));
 
 	if (filename.isEmpty())
 		return;
@@ -1023,12 +1022,12 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	_groundTruth.available = true;
 
 	const std::array<QLabel*, 10> labels { _groundTruth.labelFalsePositives,
-			_groundTruth.labelFalseNegatives, _groundTruth.labelTruePositives,
-			_groundTruth.labelRecall, _groundTruth.labelPrecision,
-			_groundTruth.labelNumFalsePositives,
-			_groundTruth.labelNumFalseNegatives,
-			_groundTruth.labelNumTruePositives, _groundTruth.labelNumRecall,
-			_groundTruth.labelNumPrecision };
+		        _groundTruth.labelFalseNegatives, _groundTruth.labelTruePositives,
+		        _groundTruth.labelRecall, _groundTruth.labelPrecision,
+		        _groundTruth.labelNumFalsePositives,
+		        _groundTruth.labelNumFalseNegatives,
+		        _groundTruth.labelNumTruePositives, _groundTruth.labelNumRecall,
+		        _groundTruth.labelNumPrecision };
 
 	for (QLabel* label : labels) {
 		label->setEnabled(true);
@@ -1040,7 +1039,7 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 
 void BeesBookImgAnalysisTracker::exportConfiguration() {
 	QString dir = QFileDialog::getExistingDirectory(0, tr("select directory"),
-			"", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+	                                                "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 	if (dir.isEmpty()) {
 		emit notifyGUI("config export: no directory given", MSGS::FAIL);
 		return;
@@ -1048,21 +1047,21 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	bool ok;
 	//std::string image_name = _settings.getValueOfParam<std::string>(PICTUREPARAM::PICTURE_FILES);
 	QString filename = QInputDialog::getText(0,
-			tr("choose filename (without extension)"), tr("Filename:"),
-			QLineEdit::Normal, "Filename", &ok);
+	                                         tr("choose filename (without extension)"), tr("Filename:"),
+	                                         QLineEdit::Normal, "Filename", &ok);
 	if (!ok || filename.isEmpty()) {
 		emit notifyGUI("config export: no filename given", MSGS::FAIL);
 		return;
 	}
 
 	boost::property_tree::ptree pt = BeesBookCommon::getPreprocessorSettings(
-			_settings).getPTree();
+	            _settings).getPTree();
 	BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
 	BeesBookCommon::getEllipseFitterSettings(_settings).addToPTree(pt);
 
 	try {
 		boost::property_tree::write_json(
-				dir.toStdString() + "/" + filename.toStdString() + ".json", pt);
+		            dir.toStdString() + "/" + filename.toStdString() + ".json", pt);
 		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
 	} catch (std::exception &e) {
 		emit notifyGUI("config export failed", MSGS::FAIL);
@@ -1073,15 +1072,15 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 
 void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage stage, bool checked)
 {
-    if (checked)
-    {
+	if (checked)
+	{
 		_selectedStage = stage;
 
 		resetViews();
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-            emit registerViews( { { "Preprocessor Output" }, { "Opts" }, { "Honeyfilter" }, { "Threshold-Comb" } });
+			emit registerViews( { { "Preprocessor Output" }, { "Opts" }, { "Honeyfilter" }, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
@@ -1109,172 +1108,172 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage st
 
 bool BeesBookImgAnalysisTracker::event(QEvent *event)
 {
-    const QEvent::Type etype = event->type();
-    switch (etype) {
-    case QEvent::KeyPress:
-        keyPressEvent(static_cast<QKeyEvent*>(event));
-        return true;
-    case QEvent::MouseButtonPress:
-        mousePressEvent(static_cast<QMouseEvent*>(event));
-        return true;
-    case QEvent::MouseButtonRelease:
-        mouseReleaseEvent(static_cast<QMouseEvent*>(event));
-        return true;
-    case QEvent::MouseMove:
-        mouseMoveEvent(static_cast<QMouseEvent*>(event));
-        return true;
-    default:
-        event->ignore();
-        return false;
-    }
+	const QEvent::Type etype = event->type();
+	switch (etype) {
+	case QEvent::KeyPress:
+		keyPressEvent(static_cast<QKeyEvent*>(event));
+		return true;
+	case QEvent::MouseButtonPress:
+		mousePressEvent(static_cast<QMouseEvent*>(event));
+		return true;
+	case QEvent::MouseButtonRelease:
+		mouseReleaseEvent(static_cast<QMouseEvent*>(event));
+		return true;
+	case QEvent::MouseMove:
+		mouseMoveEvent(static_cast<QMouseEvent*>(event));
+		return true;
+	default:
+		event->ignore();
+		return false;
+	}
 }
 
 
 const std::set<Qt::Key> &BeesBookImgAnalysisTracker::grabbedKeys() const
 {
-    static const std::set<Qt::Key> keys {
-                                          Qt::Key_W, Qt::Key_A,
-                                          Qt::Key_S, Qt::Key_D,
-                                          Qt::Key_Q, Qt::Key_E,
-                                          Qt::Key_R,
-//                                                  Qt::Key_F,
-//	                                      Qt::Key_CapsLock,
-//	                                      Qt::Key_0, Qt::Key_1, Qt::Key_2, Qt::Key_3,
-//	                                      Qt::Key_4, Qt::Key_5, Qt::Key_6, Qt::Key_7,
-//	                                      Qt::Key_8, Qt::Key_9
-                                        };
-    return keys;
+	static const std::set<Qt::Key> keys {
+		Qt::Key_W, Qt::Key_A,
+		        Qt::Key_S, Qt::Key_D,
+		        Qt::Key_Q, Qt::Key_E,
+		        Qt::Key_R,
+		        //                                                  Qt::Key_F,
+		        //	                                      Qt::Key_CapsLock,
+		        //	                                      Qt::Key_0, Qt::Key_1, Qt::Key_2, Qt::Key_3,
+		        //	                                      Qt::Key_4, Qt::Key_5, Qt::Key_6, Qt::Key_7,
+		        //	                                      Qt::Key_8, Qt::Key_9
+	};
+	return keys;
 }
 
 
 void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
 {
-    static const double rotateIncrement = 0.05;
+	static const double rotateIncrement = 0.05;
 
-    switch (e->key())
-    {
-        // rotate
-    case Qt::Key_W:
-    {
+	switch (e->key())
+	{
+	// rotate
+	case Qt::Key_W:
+	{
 		_interactionGrid.setXRotation(_interactionGrid.getXRotation() + rotateIncrement);
-        break;
+		break;
 
-    }
-    case Qt::Key_S:
-    {
+	}
+	case Qt::Key_S:
+	{
 		_interactionGrid.setXRotation(_interactionGrid.getXRotation() - rotateIncrement);
-        break;
-    }
-    case Qt::Key_A:
-    {
+		break;
+	}
+	case Qt::Key_A:
+	{
 		_interactionGrid.setYRotation(_interactionGrid.getYRotation() + rotateIncrement);
-        break;
+		break;
 
-    }
-    case Qt::Key_D:
-    {
+	}
+	case Qt::Key_D:
+	{
 		_interactionGrid.setYRotation(_interactionGrid.getYRotation() - rotateIncrement);
-        break;
-    }
-    case Qt::Key_Q:
-    {
+		break;
+	}
+	case Qt::Key_Q:
+	{
 		_interactionGrid.setZRotation(_interactionGrid.getZRotation() + rotateIncrement);
-        break;
+		break;
 
-    }
-    case Qt::Key_E:
-    {
+	}
+	case Qt::Key_E:
+	{
 		_interactionGrid.setZRotation(_interactionGrid.getZRotation() - rotateIncrement);
-        break;
-    }
-    case Qt::Key_R:
-    {
-        int i = findGridInGroundTruth(_interactionGrid);
+		break;
+	}
+	case Qt::Key_R:
+	{
+		int i = findGridInGroundTruth(_interactionGrid);
 
-        if ( i >= 0)
-        {
-            TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
-            // get grid pointer of current object in list
-            std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
+		if ( i >= 0)
+		{
+			TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
+			// get grid pointer of current object in list
+			std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
 
-            // if the pointer is valid
-            if ( pGrid )
-            {
-                // check if grids are sufficiently close to each other
-                if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
-                {
-                    _interactionGrid = PipelineGrid(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
-                }
-            }
-        }
-        break;
-    }
-        default:
-            break;
-    } // END: switch (e->key())
-    //} // END: _activeGrid
+			// if the pointer is valid
+			if ( pGrid )
+			{
+				// check if grids are sufficiently close to each other
+				if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
+				{
+					_interactionGrid = PipelineGrid(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
+				}
+			}
+		}
+		break;
+	}
+	default:
+		break;
+	} // END: switch (e->key())
+	//} // END: _activeGrid
 
-    // TODO: skip "emit update()" if event doesn't alter image (i.e. ctrl + 0)
-    emit update();
+	// TODO: skip "emit update()" if event doesn't alter image (i.e. ctrl + 0)
+	emit update();
 }
 
 
 // called when MOUSE BUTTON IS CLICKED
 void BeesBookImgAnalysisTracker::mousePressEvent(QMouseEvent * e)
 {
-    // position of mouse cursor
-    cv::Point mousePosition(e->x(), e->y());
+	// position of mouse cursor
+	cv::Point mousePosition(e->x(), e->y());
 
-    _interactionGrid.setCenter(mousePosition);
+	_interactionGrid.setCenter(mousePosition);
 
-    emit update();
+	emit update();
 }
 
 // called when mouse pointer MOVES
 void BeesBookImgAnalysisTracker::mouseMoveEvent(QMouseEvent * e)
 {
-    // get current time
-    const auto elapsed = std::chrono::system_clock::now() - _lastMouseEventTime;
+	// get current time
+	const auto elapsed = std::chrono::system_clock::now() - _lastMouseEventTime;
 
-    // slow down update rate to 1000 Hz max
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 10)
-    {
-        if (e->buttons() & Qt::LeftButton)
-        {
-            cv::Point mousePosition(e->x(), e->y());
-            _interactionGrid.setCenter(mousePosition);
-            emit update();
-        }
-        _lastMouseEventTime = std::chrono::system_clock::now();
-    }
+	// slow down update rate to 1000 Hz max
+	if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 10)
+	{
+		if (e->buttons() & Qt::LeftButton)
+		{
+			cv::Point mousePosition(e->x(), e->y());
+			_interactionGrid.setCenter(mousePosition);
+			emit update();
+		}
+		_lastMouseEventTime = std::chrono::system_clock::now();
+	}
 }
 
 int BeesBookImgAnalysisTracker::findGridInGroundTruth(PipelineGrid & templateGrid)
 {
-    if(_groundTruth.available)
-    {
-        int framenum = getCurrentFrameNumber();
-        std::vector<TrackedObject> GTObjects = _groundTruth.data.getTrackedObjects();
+	if(_groundTruth.available)
+	{
+		int framenum = getCurrentFrameNumber();
+		std::vector<TrackedObject> GTObjects = _groundTruth.data.getTrackedObjects();
 
-        //iterate over all ground truth objects
-//        for (const TrackedObject trObj : GTObjects)
-        for (unsigned int i = 0; i < GTObjects.size(); i++)
-        {
-            TrackedObject trObj = GTObjects.at(i);
-            // get grid pointer of current object in list
-            std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(framenum);
+		//iterate over all ground truth objects
+		//        for (const TrackedObject trObj : GTObjects)
+		for (unsigned int i = 0; i < GTObjects.size(); i++)
+		{
+			TrackedObject trObj = GTObjects.at(i);
+			// get grid pointer of current object in list
+			std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(framenum);
 
-            // if the pointer is valid
-            if ( pGrid )
-            {
-                // check if grids are sufficiently close to each other
-                if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
-                {
-                    return i;
+			// if the pointer is valid
+			if ( pGrid )
+			{
+				// check if grids are sufficiently close to each other
+				if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
+				{
+					return i;
 
-                }
-            }
-        }
-    }
-    return -1;
+				}
+			}
+		}
+	}
+	return -1;
 }

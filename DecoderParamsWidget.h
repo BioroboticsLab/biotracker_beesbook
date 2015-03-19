@@ -14,5 +14,4 @@ class DecoderParamsWidget : public ParamsSubWidgetBase
 	Q_OBJECT
 public:
 	DecoderParamsWidget(Settings& settings);
-
 };

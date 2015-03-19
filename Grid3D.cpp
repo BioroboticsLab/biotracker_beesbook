@@ -20,19 +20,19 @@ const double Grid3D::BULGE_FACTOR       = 0.4;
 const double Grid3D::FOCAL_LENGTH       = 2.0;
 
 Grid3D::Grid3D()
-	: Grid3D(cv::Point2i(0, 0), 0., 0., 0., 0.)
+    : Grid3D(cv::Point2i(0, 0), 0., 0., 0., 0.)
 {}
 
 Grid3D::Grid3D(cv::Point2i center, double radius_px, double angle_z, double angle_y, double angle_x)
-	: _center(center)
-	, _radius(radius_px * FOCAL_LENGTH)
-	, _angle_z(angle_z)
-	, _angle_y(angle_y)
-	, _angle_x(angle_x)
-	, _coordinates2D(NUM_CELLS)
-	, _transparency(0.5)
-	, _bitsTouched(false)
-	, _isSettable(true)
+    : _center(center)
+    , _radius(radius_px * FOCAL_LENGTH)
+    , _angle_z(angle_z)
+    , _angle_y(angle_y)
+    , _angle_x(angle_x)
+    , _coordinates2D(NUM_CELLS)
+    , _transparency(0.5)
+    , _bitsTouched(false)
+    , _isSettable(true)
 {
 	prepare_visualization_data();
 }
@@ -56,10 +56,10 @@ Grid3D::coordinates3D_t Grid3D::generate_3D_base_coordinates() {
 		const value_type angle = i * 2.0 * CV_PI / static_cast<double>(POINTS_PER_RING);
 		// unit vector
 		const point_type p(
-		  std::cos(angle),
-		  std::sin(angle),
-		  0.0
-		);
+		            std::cos(angle),
+		            std::sin(angle),
+		            0.0
+		            );
 
 		// scale unit vector to obtain three concentric rings in the plane (z = 0)
 		result._inner_ring[i]  = p * INNER_RING_RADIUS;
@@ -87,7 +87,7 @@ Grid3D::coordinates3D_t Grid3D::generate_3D_base_coordinates() {
 		const value_type z_outer_ring  = - std::cos(BULGE_FACTOR * OUTER_RING_RADIUS);
 
 		const double z_line_sum = std::accumulate(result._inner_line.begin(), result._inner_line.end(), 0.,
-			[](double res, const cv::Point3d& val) { return (res + val.z); });
+		                                          [](double res, const cv::Point3d& val) { return (res + val.z); });
 
 		// mean z of all points in the ring (discard the few points on the line)
 		const value_type mean = (z_inner_ring + z_middle_ring + z_outer_ring + z_line_sum) /
@@ -126,17 +126,17 @@ Grid3D::coordinates2D_t Grid3D::generate_3D_coordinates_from_parameters_and_proj
 	int maxx = INT_MIN, maxy = INT_MIN;
 
 	// iterate over all rings
-	for (size_t r = 0; r < _coordinates3D._rings.size(); ++r) 
+	for (size_t r = 0; r < _coordinates3D._rings.size(); ++r)
 	{
 		// iterate over all points in ring
-		for (size_t i = 0; i < _coordinates3D._rings[r].size(); ++i) 
+		for (size_t i = 0; i < _coordinates3D._rings[r].size(); ++i)
 		{
 			// rotate and scale point (aka vector)
 			const cv::Point3d p = rotationMatrix * _coordinates3D._rings[r][i];
 
 			// project onto image plane
 			const cv::Point2i projectedPoint(static_cast<int>(round((p.x / (p.z + FOCAL_LENGTH))  * _radius)),
-											 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
+			                                 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
 
 			// determine outer points of bounding box
 			if (r == OUTER_RING) {
@@ -161,10 +161,10 @@ Grid3D::coordinates2D_t Grid3D::generate_3D_coordinates_from_parameters_and_proj
 	{
 		// rotate point (aka vector)
 		const cv::Point3d p = rotationMatrix * _coordinates3D._inner_line[i];
-        
-        // project onto image plane
+
+		// project onto image plane
 		const cv::Point   p2(static_cast<int>(round((p.x / (p.z + FOCAL_LENGTH))  * _radius)),
-							 static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
+		                     static_cast<int>(round((p.y / (p.z + FOCAL_LENGTH)) * _radius)));
 
 		result._inner_line[i] = p2;
 
@@ -176,7 +176,7 @@ Grid3D::coordinates2D_t Grid3D::generate_3D_coordinates_from_parameters_and_proj
 
 	}
 
-    // the last interaction point is P1
+	// the last interaction point is P1
 	_interactionPoints.push_back(result._outer_ring[0]);
 
 	return result;
@@ -348,13 +348,13 @@ int Grid3D::getKeyPointIndex(cv::Point p) const
 
 void Grid3D::toggleIdBit(size_t cell_id, bool indeterminate)
 { 
-    _bitsTouched = true;
+	_bitsTouched = true;
 
-    // if set to indeterminate, switch it to true, because we want to flip the bit in the next line
+	// if set to indeterminate, switch it to true, because we want to flip the bit in the next line
 	if (_ID[cell_id].value == boost::logic::tribool::value_t::indeterminate_value)
 		_ID[cell_id] = true;
 
-	_ID[cell_id] = indeterminate ? boost::logic::indeterminate : !_ID[cell_id]; 
+	_ID[cell_id] = indeterminate ? boost::logic::indeterminate : !_ID[cell_id];
 }
 
 cv::Scalar Grid3D::tribool2Color(const boost::logic::tribool &tribool) const
@@ -381,33 +381,33 @@ cv::Scalar Grid3D::tribool2Color(const boost::logic::tribool &tribool) const
 
 void Grid3D::zRotateTowardsPointInPlane(cv::Point p)
 {
-    // still seems to flutter when heavily rotated ... hmmm ..
+	// still seems to flutter when heavily rotated ... hmmm ..
 
 	// vector of grid center to mouse pointer
-    cv::Point d_p = (p - _center);
-    
-    // angular bisection of current orientation
-    double d_a = fmod( _angle_z - atan2(d_p.y, d_p.x), 2*CV_PI );
-    d_a = (d_a > CV_PI)     ? d_a - CV_PI: d_a;
-    d_a = (d_a < -CV_PI)    ? d_a + CV_PI: d_a;
+	cv::Point d_p = (p - _center);
 
-    // current rotation axis
-    cv::Point2d axis0(_angle_x, _angle_y);
+	// angular bisection of current orientation
+	double d_a = fmod( _angle_z - atan2(d_p.y, d_p.x), 2*CV_PI );
+	d_a = (d_a > CV_PI)     ? d_a - CV_PI: d_a;
+	d_a = (d_a < -CV_PI)    ? d_a + CV_PI: d_a;
 
-    // new rotation axis
-    cv::Point2d axis(cos(-d_a) * _angle_x + sin(-d_a) * _angle_y, -sin(-d_a) * _angle_x + cos(-d_a) * _angle_y);
-    
-    // if rotation axis is rotated to far, flip it back. 
-    // otherwise the tag is pitched into the other direction
-    if (axis0.dot(axis) < 0)
-        axis = -axis;
+	// current rotation axis
+	cv::Point2d axis0(_angle_x, _angle_y);
 
-    // update rotation parameters
-    _angle_x = axis.x;
-    _angle_y = axis.y;
-    _angle_z = atan2(d_p.y, d_p.x);
+	// new rotation axis
+	cv::Point2d axis(cos(-d_a) * _angle_x + sin(-d_a) * _angle_y, -sin(-d_a) * _angle_x + cos(-d_a) * _angle_y);
 
-    prepare_visualization_data();
+	// if rotation axis is rotated to far, flip it back.
+	// otherwise the tag is pitched into the other direction
+	if (axis0.dot(axis) < 0)
+		axis = -axis;
+
+	// update rotation parameters
+	_angle_x = axis.x;
+	_angle_y = axis.y;
+	_angle_z = atan2(d_p.y, d_p.x);
+
+	prepare_visualization_data();
 }
 
 void Grid3D::xyRotateIntoPlane(float angle_y, float angle_x)
@@ -431,7 +431,7 @@ void Grid3D::setWorldRadius(const double radius)
 cv::Rect Grid3D::getBoundingBox() const
 {
 	return cv::Rect(_boundingBox.tl() + _center,
-					_boundingBox.size());
+	                _boundingBox.size());
 }
 
 CEREAL_REGISTER_TYPE(Grid3D)

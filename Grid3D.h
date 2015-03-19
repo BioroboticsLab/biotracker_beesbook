@@ -21,7 +21,7 @@ public:
 	static const size_t NUM_MIDDLE_CELLS = 12;
 
 	// indices in polygon vector
-	static const size_t INDEX_OUTER_WHITE_RING       = 0; 
+	static const size_t INDEX_OUTER_WHITE_RING       = 0;
 	static const size_t INDEX_INNER_WHITE_SEMICIRCLE = 1;
 	static const size_t INDEX_INNER_BLACK_SEMICIRCLE = 2;
 	static const size_t INDEX_MIDDLE_CELLS_BEGIN     = 3;
@@ -48,7 +48,7 @@ public:
 
 	typedef std::array<boost::tribool, NUM_MIDDLE_CELLS> idarray_t;
 
-    /******************************************
+	/******************************************
 	 *                                        *
 	 *            public function             *
 	 *                                        *
@@ -132,7 +132,7 @@ private:
 	};
 
 	template<typename POINT>
-	struct coordinates_t 
+	struct coordinates_t
 	{
 		typedef typename POINT::value_type              value_type;
 		typedef POINT                                   point_type;
@@ -145,15 +145,15 @@ private:
 		container_type &_middle_ring;
 		container_type &_outer_ring;
 
-        // default constructor with member initialization
+		// default constructor with member initialization
 		coordinates_t() : _inner_ring(_rings[INNER_RING]), _middle_ring(_rings[MIDDLE_RING]), _outer_ring(_rings[OUTER_RING]) {}
 		
-        // move constructor, && : r-value reference 
+		// move constructor, && : r-value reference
 		coordinates_t(coordinates_t &&rhs) : _rings(std::move(rhs._rings)), _inner_line(std::move(rhs._inner_line)), _inner_ring(_rings[INNER_RING]), _middle_ring(_rings[MIDDLE_RING]), _outer_ring(_rings[OUTER_RING]) {}
 		
-        // delete copy constructor and assignment operator
-        // -> make struct non-copyable
-        coordinates_t(const coordinates_t&) = delete;
+		// delete copy constructor and assignment operator
+		// -> make struct non-copyable
+		coordinates_t(const coordinates_t&) = delete;
 		coordinates_t& operator=(const coordinates_t&) = delete;
 	};
 

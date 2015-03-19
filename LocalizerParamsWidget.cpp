@@ -14,22 +14,22 @@ LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings) :
 				this, &_layout, "Minimum Bounding Box Size", 1, 1000, 1, 1) {
 
 	connectSlider(&_binaryThresholdSlider,
-			Params::BASE + Params::BINARY_THRESHOLD,
-			BeesBookCommon::Stage::Localizer);
+	              Params::BASE + Params::BINARY_THRESHOLD,
+	              BeesBookCommon::Stage::Localizer);
 	connectSlider(&_firstDilationNumIterationsSlider,
-			Params::BASE + Params::FIRST_DILATION_NUM_ITERATIONS,
-			BeesBookCommon::Stage::Localizer);
+	              Params::BASE + Params::FIRST_DILATION_NUM_ITERATIONS,
+	              BeesBookCommon::Stage::Localizer);
 	connectSlider(&_firstDilationSizeSlider,
-			Params::BASE + Params::FIRST_DILATION_SIZE,
-			BeesBookCommon::Stage::Localizer);
+	              Params::BASE + Params::FIRST_DILATION_SIZE,
+	              BeesBookCommon::Stage::Localizer);
 	connectSlider(&_erosionSizeSlider, Params::BASE + Params::EROSION_SIZE,
-			BeesBookCommon::Stage::Localizer);
+	              BeesBookCommon::Stage::Localizer);
 	connectSlider(&_secondDilationSizeSlider,
-			Params::BASE + Params::SECOND_DILATION_SIZE,
-			BeesBookCommon::Stage::Localizer);
+	              Params::BASE + Params::SECOND_DILATION_SIZE,
+	              BeesBookCommon::Stage::Localizer);
 	connectSlider(&_maxTagSizeSlider, Params::BASE + Params::MAX_TAG_SIZE,
-			BeesBookCommon::Stage::Localizer);
+	              BeesBookCommon::Stage::Localizer);
 	connectSlider(&_minBoundingBoxSizeSlider,
-			Params::BASE + Params::MIN_BOUNDING_BOX_SIZE,
-			BeesBookCommon::Stage::Localizer);
+	              Params::BASE + Params::MIN_BOUNDING_BOX_SIZE,
+	              BeesBookCommon::Stage::Localizer);
 }

@@ -23,9 +23,6 @@
 #include "source/tracking/TrackingAlgorithm.h"
 #include "utility/stdext.h"
 
-//#include "pipeline/datastructure/Tag.h"
-//#include "pipeline/datastructure/TagCandidate.h"
-
 #include "source/tracking/serialization/SerializationData.h"
 
 class PipelineGrid;
@@ -46,22 +43,21 @@ public:
 		return _toolsWidget;
 	}
 
-    // return keys that are handled by the tracker
-    std::set<Qt::Key> const& grabbedKeys() const override;
+	// return keys that are handled by the tracker
+	std::set<Qt::Key> const& grabbedKeys() const override;
 
 private:
+	// a grid to interact with
+	PipelineGrid          _interactionGrid;
 
-    // a grid to interact with
-    PipelineGrid            _interactionGrid;
-
-	BeesBookCommon::Stage   _selectedStage;
+	BeesBookCommon::Stage _selectedStage;
 
 	const std::shared_ptr<ParamsWidget> _paramsWidget;
 	const std::shared_ptr<QWidget>      _toolsWidget;
 
 	pipeline::Preprocessor  _preprocessor;
 	pipeline::Localizer     _localizer;
-	pipeline::EllipseFitter    _ellipsefitter;
+	pipeline::EllipseFitter _ellipsefitter;
 	pipeline::GridFitter    _gridFitter;
 	pipeline::Decoder       _decoder;
 
@@ -72,8 +68,8 @@ private:
 	static const size_t NUM_MIDDLE_CELLS = 12;
 	typedef std::array<boost::tribool, NUM_MIDDLE_CELLS> idarray_t;
 
-	struct 
-    {
+	struct
+	{
 		boost::optional<cv::Mat> preprocessorImage;
 		boost::optional<cv::Mat> preprocessorOptImage;
 		boost::optional<cv::Mat> preprocessorHoneyImage;
@@ -85,22 +81,21 @@ private:
 		boost::optional<cv::Mat> ellipsefitterCannyEdge;
 
 		// these references are just stored for convenience in order to invalidate all
-        // visualizations in a loop
+		// visualizations in a loop
 		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
 		
-        reference_array_t visualizations = reference_array_t
-        {   preprocessorImage,
-            preprocessorThresholdImage, 
-            localizerInputImage, 
-            localizerThresholdImage,
-            localizerSobelImage, 
-            localizerBlobImage, 
-            ellipsefitterCannyEdge };
-        } 
-        _visualizationData;
+		reference_array_t visualizations = reference_array_t
+		{ preprocessorImage,
+		  preprocessorThresholdImage,
+		  localizerInputImage,
+		  localizerThresholdImage,
+		  localizerSobelImage,
+		  localizerBlobImage,
+		  ellipsefitterCannyEdge };
+	} _visualizationData;
 
-    struct LocalizerEvaluationResults 		{
-        std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
+	struct LocalizerEvaluationResults 		{
+		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
 		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
@@ -108,23 +103,23 @@ private:
 	};
 
 	struct EllipseFitterEvaluationResults
-    {
+	{
 		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
 		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
 
-        //mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
-        std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
+		//mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
+		std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
 		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
 	};
 
-    struct GridFitterEvaluationResults 
-    {
-        unsigned int matches        = 0;
-        unsigned int mismatches     = 0;
-        std::vector<std::reference_wrapper<const PipelineGrid>> truePositives;
-        std::vector<std::reference_wrapper<const PipelineGrid>> falsePositives;
+	struct GridFitterEvaluationResults
+	{
+		unsigned int matches        = 0;
+		unsigned int mismatches     = 0;
+		std::vector<std::reference_wrapper<const PipelineGrid>> truePositives;
+		std::vector<std::reference_wrapper<const PipelineGrid>> falsePositives;
 
-    };
+	};
 
 	struct DecoderEvaluationResults {
 		typedef struct {
@@ -156,8 +151,8 @@ private:
 
 		LocalizerEvaluationResults localizerResults;
 		EllipseFitterEvaluationResults ellipsefitterResults;
-        GridFitterEvaluationResults gridfitterResults;
-        DecoderEvaluationResults decoderResults;
+		GridFitterEvaluationResults gridfitterResults;
+		DecoderEvaluationResults decoderResults;
 	} _groundTruth;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
@@ -182,21 +177,20 @@ private:
 	void setParamsWidget() {
 		std::unique_ptr<Widget> widget(std::make_unique<Widget>(_settings));
 		QObject::connect(widget.get(), &Widget::settingsChanged,
-		  this, &BeesBookImgAnalysisTracker::settingsChanged);
+		                 this, &BeesBookImgAnalysisTracker::settingsChanged);
 		_paramsWidget->setParamSubWidget(std::move(widget));
 	}
 
+	std::chrono::system_clock::time_point _lastMouseEventTime;
 
-    std::chrono::system_clock::time_point _lastMouseEventTime;
+	void keyPressEvent(QKeyEvent *e) override;
+	void mouseMoveEvent    (QMouseEvent * e) override;
+	void mousePressEvent   (QMouseEvent * e) override;
 
-    void keyPressEvent(QKeyEvent *e) override;
-    void mouseMoveEvent    (QMouseEvent * e) override;
-    void mousePressEvent   (QMouseEvent * e) override;
-
-    int findGridInGroundTruth(PipelineGrid & templateGrid);
+	int findGridInGroundTruth(PipelineGrid & templateGrid);
 
 protected:
-    bool event(QEvent* event) override;
+	bool event(QEvent* event) override;
 
 private slots:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
