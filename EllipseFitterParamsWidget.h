@@ -10,11 +10,11 @@
 
 class Settings;
 
-class RecognizerParamsWidget : public ParamsSubWidgetBase
+class EllipseFitterParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	RecognizerParamsWidget(Settings& settings);
+	EllipseFitterParamsWidget(Settings& settings);
 
 private:
 /*

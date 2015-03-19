@@ -47,7 +47,7 @@
     <attribute name="title">
      <string>general</string>
     </attribute>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QWidget" name="layoutWidget0">
      <property name="geometry">
       <rect>
        <x>110</x>
@@ -95,7 +95,7 @@
       <string>Adaptive Threshold</string>
      </property>
     </widget>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QWidget" name="layoutWidget1">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -126,7 +126,7 @@
     <attribute name="title">
      <string>err_func</string>
     </attribute>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QWidget" name="layoutWidget2">
      <property name="geometry">
       <rect>
        <x>120</x>
@@ -191,7 +191,7 @@
       </item>
      </layout>
     </widget>
-    <widget class="QWidget" name="layoutWidget">
+    <widget class="QWidget" name="layoutWidget3">
      <property name="geometry">
       <rect>
        <x>10</x>

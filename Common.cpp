@@ -102,12 +102,12 @@ pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
  * @param settings general biotracker-settings
  * @return setting object for pipeline
  */
-pipeline::settings::recognizer_settings_t BeesBookCommon::getRecognizerSettings(
+pipeline::settings::ellipsefitter_settings_t BeesBookCommon::getEllipseFitterSettings(
 		Settings &settings) {
-	pipeline::settings::recognizer_settings_t recognizerSettings;
-	recognizerSettings.loadValues(settings,
-			pipeline::settings::Recognizer::Params::BASE);
-	return recognizerSettings;
+	pipeline::settings::ellipsefitter_settings_t ellipsefitterSettings;
+	ellipsefitterSettings.loadValues(settings,
+			pipeline::settings::EllipseFitter::Params::BASE);
+	return ellipsefitterSettings;
 }
 /**
  *
