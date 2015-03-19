@@ -722,6 +722,9 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
             const PipelineGrid& bestFoundGrid = bestCandidate.getGridsConst().at(0);
 
             // use the ROI (tag) to lookup the groundtruth grid (the map was build in evaluateLocalizer)
+			// TODO: Workaround, remove this!
+			if (!_groundTruth.localizerResults.gridByTag.count(tag)) continue;
+
             const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
 
             // compare ground truth grid to pipeline grid
