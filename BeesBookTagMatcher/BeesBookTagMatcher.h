@@ -18,7 +18,7 @@
 class BeesBookTagMatcher : public TrackingAlgorithm {
 	Q_OBJECT
 private:
-
+	
 	static const size_t GRID_RADIUS_PIXELS;
 
 	std::shared_ptr<InteractiveGrid>	_activeGrid; // points to active grid (grid must be active to be altered)
@@ -133,7 +133,7 @@ public:
 	~BeesBookTagMatcher();
 
 	void track(ulong frameNumber, cv::Mat& frame) override;
-	void paint(cv::Mat& image, View const& view = OriginalView) override;
+    void paint(ProxyPaintObject&, View const& view = OriginalView) override;
 	void reset() override {}
 	void postLoad() override;
 
