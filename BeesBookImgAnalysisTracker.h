@@ -118,7 +118,6 @@ private:
 		unsigned int mismatches     = 0;
 		std::vector<std::reference_wrapper<const PipelineGrid>> truePositives;
 		std::vector<std::reference_wrapper<const PipelineGrid>> falsePositives;
-
 	};
 
 	struct DecoderEvaluationResults {
