@@ -17,7 +17,7 @@ public:
 	RecognizerParamsWidget(Settings& settings);
 
 private:
-
+/*
 
 	SpinBoxWithSlider _cannyThresholdLowSlider;
 	SpinBoxWithSlider _cannyThresholdHighSlider;
@@ -27,5 +27,5 @@ private:
 	SpinBoxWithSlider _maxMinorAxisSlider;
 	SpinBoxWithSlider _thresholdEdgePixelsSlider;
 	SpinBoxWithSlider _thresholdBestVoteSlider;
-	SpinBoxWithSlider _thresholdVoteSlider;
+	SpinBoxWithSlider _thresholdVoteSlider;*/
 };
