@@ -436,7 +436,10 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat, const in
 	return image;
 }
 
-void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
+void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAlgorithm::View &view)
+{
+	cv::Mat& image = proxy.getmat();
+
 	// don't try to visualize results while data processing is running
 	if (_tagListLock.try_lock()) {
 		switch (_selectedStage) {
@@ -470,6 +473,8 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat& image, const View& view) {
 	} else {
 		return;
 	}
+
+
 }
 
 void BeesBookImgAnalysisTracker::reset() {

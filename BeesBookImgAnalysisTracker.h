@@ -34,7 +34,7 @@ public:
 	BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent);
 
 	void track(ulong frameNumber, cv::Mat& frame) override;
-	void paint(cv::Mat& image, View const& view = OriginalView) override;
+	void paint(ProxyPaintObject& proxy, View const& view = OriginalView) override;
 	void reset() override;
 
 	std::shared_ptr<QWidget> getParamsWidget() override {
