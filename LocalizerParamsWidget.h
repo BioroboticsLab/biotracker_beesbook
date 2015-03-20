@@ -17,6 +17,9 @@ public:
 	LocalizerParamsWidget(Settings& settings);
 
 private:
+	QWidget     _formWidget;
+	QFormLayout _formLayout;
+
 	SpinBoxWithSlider _binaryThresholdSlider;
 	SpinBoxWithSlider _firstDilationNumIterationsSlider;
 	SpinBoxWithSlider _firstDilationSizeSlider;

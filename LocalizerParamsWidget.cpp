@@ -4,14 +4,20 @@
 using namespace pipeline::settings::Localizer;
 
 LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings) :
-		ParamsSubWidgetBase(settings), _binaryThresholdSlider(this, &_layout,
-				"Binary Threshold", 1, 100, 1, 1), _firstDilationNumIterationsSlider(
-				this, &_layout, "First Dilation Iterations", 1, 20, 1, 1), _firstDilationSizeSlider(
-				this, &_layout, "First Dilation Size", 1, 100, 1, 1), _erosionSizeSlider(
-				this, &_layout, "Erosion Size", 1, 100, 1, 1), _secondDilationSizeSlider(
-				this, &_layout, "Second Dilation Size", 1, 100, 1, 1), _maxTagSizeSlider(
-				this, &_layout, "Maximum Tag Size", 1, 1000, 1, 1), _minBoundingBoxSizeSlider(
-				this, &_layout, "Minimum Bounding Box Size", 1, 1000, 1, 1) {
+		ParamsSubWidgetBase(settings)
+	  , _binaryThresholdSlider(this, &_formLayout, "Binary Threshold", 1, 100, 1, 1)
+	  , _firstDilationNumIterationsSlider(this, &_formLayout, "First Dilation Iterations", 1, 20, 1, 1)
+	  , _firstDilationSizeSlider(this, &_formLayout, "First Dilation Size", 1, 100, 1, 1)
+	  , _erosionSizeSlider(this, &_formLayout, "Erosion Size", 1, 100, 1, 1)
+	  , _secondDilationSizeSlider(this, &_formLayout, "Second Dilation Size", 1, 100, 1, 1)
+	  , _maxTagSizeSlider(this, &_formLayout, "Maximum Tag Size", 1, 1000, 1, 1)
+	  , _minBoundingBoxSizeSlider(this, &_formLayout, "Minimum Bounding Box Size", 1, 1000, 1, 1)
+{
+	_formLayout.setSpacing(3);
+	_formLayout.setMargin(3);
+	_formWidget.setLayout(&_formLayout);
+
+	_layout.addWidget(&_formWidget);
 
 	connectSlider(&_binaryThresholdSlider,
 	              Params::BASE + Params::BINARY_THRESHOLD,

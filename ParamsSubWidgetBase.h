@@ -8,19 +8,22 @@
 #include "Common.h"
 #include "source/settings/Settings.h"
 #include "source/utility/SpinBoxWithSlider.h"
+
 class ParamsSubWidgetBase: public QWidget {
 	Q_OBJECT
 public:
 	// memory is managed by ParamsWidget, therefore initialize QWidget with nullptr
 	ParamsSubWidgetBase(Settings &settings) :
 	    QWidget(nullptr), _layout(this), _settings(settings) {
-		_layout.setMargin(3);
-		_layout.setSpacing(1);
+		_layout.setMargin(0);
+		_layout.setSpacing(0);
 	}
 	virtual ~ParamsSubWidgetBase() {
 	}
 protected:
-	QFormLayout _layout;
+	QVBoxLayout _layout;
+	QWidget _uiWidget;
+
 	Settings& _settings;
 
 	/*template <typename widget, typename parameterType>

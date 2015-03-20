@@ -15,10 +15,4 @@ class GridFitterParamsWidget : public ParamsSubWidgetBase
 	Q_OBJECT
 public:
 	GridFitterParamsWidget(Settings& settings);
-
-
-//	SpinBoxWithSlider _initialStepSizeSlider;
-//	SpinBoxWithSlider _finalStepSizeSlider;
-//	SpinBoxWithSlider _upSpeedSlider;
-//	SpinBoxWithSlider _downSpeedSlider;
 };

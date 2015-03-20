@@ -10,7 +10,8 @@ GridFitterParamsWidget::GridFitterParamsWidget(Settings &settings)
     : ParamsSubWidgetBase(settings)
 {
 	Ui::GridfitterParamsWidget paramsWidget;
-	paramsWidget.setupUi(this);
+	paramsWidget.setupUi(&_uiWidget);
+	_layout.addWidget(&_uiWidget);
 
 	/*
 	 * err function
