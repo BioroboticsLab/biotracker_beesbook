@@ -170,6 +170,20 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 	// taglist holds the tags found by the pipeline
 	_taglist.clear();
 
+	// clear ground truth evaluation data
+	if (_groundTruth.available) {
+		_groundTruth.localizerResults     = LocalizerEvaluationResults();
+		_groundTruth.ellipsefitterResults = EllipseFitterEvaluationResults();
+		_groundTruth.gridfitterResults    = GridFitterEvaluationResults();
+		_groundTruth.decoderResults       = DecoderEvaluationResults();
+
+		_groundTruth.labelNumTruePositives->setText("");
+		_groundTruth.labelNumFalsePositives->setText("");
+		_groundTruth.labelNumFalseNegatives->setText("");
+		_groundTruth.labelNumPrecision->setText("");
+		_groundTruth.labelNumRecall->setText("");
+	}
+
 	// algorithm layer selection cascade
 	if (_selectedStage < BeesBookCommon::Stage::Preprocessor)
 		return;
@@ -185,10 +199,10 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 		_image = _preprocessor.process(frame);
 
 		// set preprocessor views
-		_visualizationData.preprocessorImage            = _image.clone();
-		_visualizationData.preprocessorOptImage         = _preprocessor.getOptsImage();
-		_visualizationData.preprocessorHoneyImage       = _preprocessor.getHoneyImage();
-		_visualizationData.preprocessorThresholdImage   = _preprocessor.getThresholdImage();
+		_visualizationData.preprocessorImage          = _image.clone();
+		_visualizationData.preprocessorOptImage       = _preprocessor.getOptsImage();
+		_visualizationData.preprocessorHoneyImage     = _preprocessor.getHoneyImage();
+		_visualizationData.preprocessorThresholdImage = _preprocessor.getThresholdImage();
 	}
 
 	// end of preprocessor stage
@@ -203,9 +217,9 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 		_taglist = _localizer.process(std::move(frame), std::move(_image));
 
 		// set localizer views
-		_visualizationData.localizerInputImage      =  _image.clone();
-		_visualizationData.localizerBlobImage       = _localizer.getBlob().clone();
-		_visualizationData.localizerThresholdImage  = _localizer.getThresholdImage().clone();
+		_visualizationData.localizerInputImage     =  _image.clone();
+		_visualizationData.localizerBlobImage      = _localizer.getBlob().clone();
+		_visualizationData.localizerThresholdImage = _localizer.getThresholdImage().clone();
 
 		// evaluate localizer
 		if (_groundTruth.available)
@@ -667,9 +681,6 @@ void BeesBookImgAnalysisTracker::evaluateEllipseFitter()
 				// get the score
 				const double score = scoreCandidatePair.first;
 
-				// print the score
-				std::cout << "Score " << score  << std::endl;
-
 				// get the ellipse
 				const pipeline::TagCandidate& candidate = scoreCandidatePair.second;
 
@@ -718,30 +729,43 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 		// get ellipse
 		const pipeline::TagCandidate& bestCandidate = candidateByGrid.second;
 
+		// use the ROI (tag) to lookup the groundtruth grid (the map was build in evaluateLocalizer)
+		// TODO: Workaround, remove this!
+		assert(_groundTruth.localizerResults.gridByTag.count(tag));
+		if (!_groundTruth.localizerResults.gridByTag.count(tag)) continue;
+
+		const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
+
 		// GridFitter should always return a Pipeline for a TagCandidate
 		assert(!bestCandidate.getGridsConst().empty());
-		// if there are grids stored with that ellipse
-		if (!bestCandidate.getGridsConst().empty())
+		bool foundMatch = false;
+		boost::optional<std::pair<double, std::reference_wrapper<const PipelineGrid>>> bestFoundGrid;
+		for (const PipelineGrid& foundGrid : bestCandidate.getGridsConst())
 		{
-			// get the best grid of that ellipse
-			const PipelineGrid& bestFoundGrid = bestCandidate.getGridsConst().at(0);
+			const double score = groundTruthGrid->compare(foundGrid);
 
-			// use the ROI (tag) to lookup the groundtruth grid (the map was build in evaluateLocalizer)
-			// TODO: Workaround, remove this!
-			assert(_groundTruth.localizerResults.gridByTag.count());
-			if (!_groundTruth.localizerResults.gridByTag.count(tag)) continue;
+			// only continue if score is better than the score of the best found grid as of yet
+			if (bestFoundGrid) {
+				if (score <= bestFoundGrid.get().first) {
+					continue;
+				}
+			}
 
-			const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
+			bestFoundGrid = { score, foundGrid };
 
 			// compare ground truth grid to pipeline grid
-			if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
+			if (groundTruthGrid->compare(foundGrid) > 0.4)
 			{
-				_groundTruth.gridfitterResults.truePositives.push_back(bestFoundGrid);
+				_groundTruth.gridfitterResults.truePositives.push_back(foundGrid);
+				foundMatch = true;
+				break;
 			}
-			else
-			{
-				_groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid);
-			}
+		}
+
+		// if no candidate has a acceptable score -> false positive
+		assert(bestFoundGrid);
+		if (!foundMatch) {
+			_groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid.get().second);
 		}
 	}
 
