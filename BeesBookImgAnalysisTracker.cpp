@@ -425,21 +425,11 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 		cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
 	}
 
-	//    if (_groundTruth.available)
-	//    {
-	//        //precision = TP / Positives
-	//        //recall = TP / GroundTruth_N
-	//        unsigned int matches = _groundTruth.gridfitterResults.matches;
-	//        unsigned int mismatches = _groundTruth.gridfitterResults.mismatches;
-
-	//        _groundTruth.labelNumTruePositives->setText(QString::number(matches));
-
-	//        if (_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size() != 0)
-	//            _groundTruth.labelNumRecall->setText( QString::number( 100 * matches / _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size(), 'f', 2) + "%");
-
-	//        if ((matches + mismatches) != 0)
-	//            _groundTruth.labelNumPrecision->setText( QString::number(matches / (matches + mismatches), 'f', 2) + "%");
-	//    }
+	for (const GroundTruthGridSPtr& grid : _groundTruth.gridfitterResults.falseNegatives)
+	{
+		grid->drawContours(image, 0.5);
+		cv::rectangle(image, (grid->getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_ORANGE, thickness, CV_AA);
+	}
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
@@ -706,7 +696,7 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 	assert(_groundTruth.available);
 
 	// iterate over all correctly found ROI / ellipse pairs
-	for (auto& candidateByGrid : _groundTruth.ellipsefitterResults.truePositives)
+	for (auto const& candidateByGrid : _groundTruth.ellipsefitterResults.truePositives)
 	{
 		// get ROI
 		const pipeline::Tag& tag = candidateByGrid.first;
@@ -714,6 +704,8 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 		// get ellipse
 		const pipeline::TagCandidate& bestCandidate = candidateByGrid.second;
 
+		// GridFitter should always return a Pipeline for a TagCandidate
+		assert(!bestCandidate.getGridsConst().empty());
 		// if there are grids stored with that ellipse
 		if (!bestCandidate.getGridsConst().empty())
 		{
@@ -722,6 +714,7 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 
 			// use the ROI (tag) to lookup the groundtruth grid (the map was build in evaluateLocalizer)
 			// TODO: Workaround, remove this!
+			assert(_groundTruth.localizerResults.gridByTag.count());
 			if (!_groundTruth.localizerResults.gridByTag.count(tag)) continue;
 
 			const std::shared_ptr<PipelineGrid> groundTruthGrid = _groundTruth.localizerResults.gridByTag.at(tag);
@@ -729,18 +722,21 @@ void BeesBookImgAnalysisTracker::evaluateGridfitter()
 			// compare ground truth grid to pipeline grid
 			if (groundTruthGrid->compare(bestFoundGrid) > 1.0)
 			{
-				_groundTruth.gridfitterResults.matches++; //ToDo delete
 				_groundTruth.gridfitterResults.truePositives.push_back(bestFoundGrid);
 			}
 			else
 			{
-				_groundTruth.gridfitterResults.mismatches++; //ToDo delete
 				_groundTruth.gridfitterResults.falsePositives.push_back(bestFoundGrid);
 			}
 		}
 	}
-}
 
+	// as long as GridFitter always returns a PipelineGrid for each candidate, false negatives for
+	// GridFitter should be same as for the EllipseFitter
+	_groundTruth.gridfitterResults.falseNegatives.insert(
+				_groundTruth.ellipsefitterResults.falseNegatives.begin(),
+				_groundTruth.ellipsefitterResults.falseNegatives.end());
+}
 
 void BeesBookImgAnalysisTracker::evaluateDecoder()
 {

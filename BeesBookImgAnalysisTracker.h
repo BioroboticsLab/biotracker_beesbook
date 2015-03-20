@@ -94,41 +94,46 @@ private:
 		  ellipsefitterCannyEdge };
 	} _visualizationData;
 
+	typedef std::shared_ptr<PipelineGrid> GroundTruthGridSPtr;
+	typedef std::reference_wrapper<const pipeline::Tag> PipelineTagRef;
+	typedef std::reference_wrapper<const pipeline::TagCandidate> PipelineTagCandidateRef;
+	typedef std::reference_wrapper<const PipelineGrid> PipelineGridRef;
+
 	struct LocalizerEvaluationResults 		{
-		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
-		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
-		std::set<std::reference_wrapper<const pipeline::Tag>> truePositives;
-		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
-		std::map<std::reference_wrapper<const pipeline::Tag>, std::shared_ptr<PipelineGrid>> gridByTag;
+		std::set<GroundTruthGridSPtr>                 taggedGridsOnFrame;
+		std::set<PipelineTagRef>                      falsePositives;
+		std::set<PipelineTagRef>                      truePositives;
+		std::set<GroundTruthGridSPtr>                 falseNegatives;
+		std::map<PipelineTagRef, GroundTruthGridSPtr> gridByTag;
 	};
 
 	struct EllipseFitterEvaluationResults
 	{
-		std::set<std::shared_ptr<PipelineGrid>> taggedGridsOnFrame;
-		std::set<std::reference_wrapper<const pipeline::Tag>> falsePositives;
+		std::set<GroundTruthGridSPtr> taggedGridsOnFrame;
+		std::set<PipelineTagRef> falsePositives;
 
 		//mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
-		std::vector<std::pair<std::reference_wrapper<const pipeline::Tag>, std::reference_wrapper<const pipeline::TagCandidate>>> truePositives;
-		std::set<std::shared_ptr<PipelineGrid>> falseNegatives;
+		std::vector<std::pair<PipelineTagRef, PipelineTagCandidateRef>> truePositives;
+		std::set<GroundTruthGridSPtr> falseNegatives;
 	};
 
 	struct GridFitterEvaluationResults
 	{
-		unsigned int matches        = 0;
-		unsigned int mismatches     = 0;
-		std::vector<std::reference_wrapper<const PipelineGrid>> truePositives;
-		std::vector<std::reference_wrapper<const PipelineGrid>> falsePositives;
+		std::vector<PipelineGridRef>  truePositives;
+		std::vector<PipelineGridRef>  falsePositives;
+		std::set<GroundTruthGridSPtr> falseNegatives;
 	};
 
 	struct DecoderEvaluationResults {
 		typedef struct {
-			cv::Rect boundingBox;
-			int decodedTagId;
+			cv::Rect    boundingBox;
+			int         decodedTagId;
 			std::string decodedTagIdStr;
-			idarray_t groundTruthTagId;
+			idarray_t   groundTruthTagId;
 			std::string groundTruthTagIdStr;
-			int hammingDistance;
+			int         hammingDistance;
 		} result_t;
+
 		std::vector<result_t> evaluationResults;
 	};
 
@@ -148,10 +153,10 @@ private:
 		QLabel* labelNumRecall         = nullptr;
 		QLabel* labelNumPrecision      = nullptr;
 
-		LocalizerEvaluationResults localizerResults;
+		LocalizerEvaluationResults     localizerResults;
 		EllipseFitterEvaluationResults ellipsefitterResults;
-		GridFitterEvaluationResults gridfitterResults;
-		DecoderEvaluationResults decoderResults;
+		GridFitterEvaluationResults    gridfitterResults;
+		DecoderEvaluationResults       decoderResults;
 	} _groundTruth;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
