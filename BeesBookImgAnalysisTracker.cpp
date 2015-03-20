@@ -930,13 +930,7 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 				            image.type());
 			}
 			break;
-
 		case BeesBookCommon::Stage::Localizer:
-			/*if ((view.name == "Sobel Edge")
-			 && (_visualizationData.localizerSobelImage)) {
-			 image = rgbMatFromBwMat(
-			 _visualizationData.localizerSobelImage.get(),
-			 image.type());*/
 			if ((view.name == "Blobs")
 			    && (_visualizationData.localizerBlobImage)) {
 				image = rgbMatFromBwMat(
