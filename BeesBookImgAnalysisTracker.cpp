@@ -413,23 +413,37 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 		return;
 	}
 
-	for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.truePositives)
+	const GridFitterEvaluationResults& results = _groundTruth.gridfitterResults;
+
+	for (const PipelineGrid & pipegrid : results.truePositives)
 	{
 		pipegrid.drawContours(image, 0.5);
 		cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
 	}
 
-	for (const PipelineGrid & pipegrid : _groundTruth.gridfitterResults.falsePositives)
+	for (const PipelineGrid & pipegrid : results.falsePositives)
 	{
 		pipegrid.drawContours(image, 0.5);
 		cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
 	}
 
-	for (const GroundTruthGridSPtr& grid : _groundTruth.gridfitterResults.falseNegatives)
+	for (const GroundTruthGridSPtr& grid : results.falseNegatives)
 	{
 		grid->drawContours(image, 0.5);
 		cv::rectangle(image, (grid->getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_ORANGE, thickness, CV_AA);
 	}
+
+	const float recall = static_cast<float>(results.truePositives.size())
+			/ static_cast<float>(_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size()) * 100.f;
+	const float precision = static_cast<float>(results.truePositives.size())
+			/ static_cast<float>(results.truePositives.size() + results.falsePositives.size()) * 100.f;
+
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
+	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
+	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
+	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
