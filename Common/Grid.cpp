@@ -219,6 +219,13 @@ void Grid::prepare_visualization_data()
 		vec.insert(vec.end(), points_2d._inner_line.crbegin(), points_2d._inner_line.crend());
 	}
 
+	// curved center line
+	{
+		auto &vec = _coordinates2D[INDEX_INNER_LINE];
+
+		vec.insert(vec.end(), points_2d._inner_line.crbegin(), points_2d._inner_line.crend());
+	}
+
 	// cells
 	{
 		for (size_t i = 0; i < NUM_MIDDLE_CELLS; ++i)

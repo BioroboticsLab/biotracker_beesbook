@@ -16,7 +16,8 @@ public:
 	static const size_t INDEX_OUTER_WHITE_RING       = 0;
 	static const size_t INDEX_INNER_WHITE_SEMICIRCLE = 1;
 	static const size_t INDEX_INNER_BLACK_SEMICIRCLE = 2;
-	static const size_t INDEX_MIDDLE_CELLS_BEGIN     = 3;
+	static const size_t INDEX_INNER_LINE             = 3;
+	static const size_t INDEX_MIDDLE_CELLS_BEGIN     = 4;
 	static const size_t INDEX_MIDDLE_CELLS_END       = INDEX_MIDDLE_CELLS_BEGIN + NUM_MIDDLE_CELLS;
 
 	// total number of cells (non-coding and coding)
