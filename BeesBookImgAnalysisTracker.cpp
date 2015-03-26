@@ -786,44 +786,53 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
 		if (it != _groundTruth.localizerResults.gridByTag.end()) {
 			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
-			if (!tag.getCandidates().empty()) {
-				if (!tag.getCandidates()[0].getDecodings().empty()) {
+
+			boost::optional<DecoderEvaluationResults::result_t> bestResult;
+			for (pipeline::TagCandidate const& candidate : tag.getCandidates()) {
+				for (pipeline::decoding_t const& decoding : candidate.getDecodings()) {
 					DecoderEvaluationResults::result_t result;
 
-					result.boundingBox = tag.getBox();
+					result.boundingBox     = tag.getBox();
 
-					// decoder results
-					// TODO: fix bit order in Decoder
-					const pipeline::decoding_t& decoderIds = tag.getCandidates()[0].getDecodings()[0];
-					result.decodedTagId    = decoderIds.to_ulong();
-					result.decodedTagIdStr = decoderIds.to_string();
+					// decoder result
+					result.decodedTagId    = decoding.to_ulong();
+					result.decodedTagIdStr = decoding.to_string();
 
 					// ground truth data
-					const idarray_t& groundTruthIds = grid->getIdArray();
-					result.groundTruthTagId = groundTruthIds;
+					result.groundTruthTagId = grid->getIdArray();
 
-					// correct ground truth data bit order
+					// fix ground truth data bit order
 					std::reverse(result.groundTruthTagId.begin(), result.groundTruthTagId.end());
 
-					assert(decoderIds.size() == Grid::NUM_MIDDLE_CELLS);
+					assert(result.decodedTagId.size() == Grid::NUM_MIDDLE_CELLS);
 					assert(result.groundTruthTagId.size() == Grid::NUM_MIDDLE_CELLS);
 
 					std::stringstream groundTruthIdStr;
-					for (size_t i = 0; i < Grid::NUM_MIDDLE_CELLS; ++i) {
-						groundTruthIdStr << result.groundTruthTagId[i];
+					for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
+						groundTruthIdStr << result.groundTruthTagId[idx];
 					}
 					result.groundTruthTagIdStr = groundTruthIdStr.str();
 
-					// calculate hamming distance
+					// hamming distance calculation
 					result.hammingDistance = 0;
-					for (size_t i = 0; i < Grid::NUM_MIDDLE_CELLS; ++i) {
-						if ((result.groundTruthTagId[i] != decoderIds[Grid::NUM_MIDDLE_CELLS - 1 - i]) && (!boost::indeterminate(result.groundTruthTagId[i]))) {
+					for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
+						if ((result.groundTruthTagId[idx] != decoding[Grid::NUM_MIDDLE_CELLS - idx - 1]) &&
+						    (!boost::indeterminate(result.groundTruthTagId[idx])))
+						{
 							++result.hammingDistance;
 						}
 					}
 
-					results.evaluationResults.push_back(result);
+					if (bestResult) {
+						if (result.hammingDistance >= bestResult.get().hammingDistance) {
+							continue;
+						}
+					}
+					bestResult = result;
 				}
+			}
+			if (bestResult) {
+				results.evaluationResults.push_back(bestResult.get());
 			}
 		}
 	}
