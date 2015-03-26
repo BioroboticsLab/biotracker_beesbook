@@ -1083,8 +1083,6 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	for (QLabel* label : labels) {
 		label->setEnabled(true);
 	}
-
-	emit forceTracking();
 	//TODO: maybe check filehash here
 }
 
