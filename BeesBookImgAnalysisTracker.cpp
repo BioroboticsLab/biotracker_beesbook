@@ -802,19 +802,22 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 					const idarray_t& groundTruthIds = grid->getIdArray();
 					result.groundTruthTagId = groundTruthIds;
 
+					// correct ground truth data bit order
+					std::reverse(result.groundTruthTagId.begin(), result.groundTruthTagId.end());
+
 					assert(decoderIds.size() == Grid::NUM_MIDDLE_CELLS);
-					assert(groundTruthIds.size() == Grid::NUM_MIDDLE_CELLS);
+					assert(result.groundTruthTagId.size() == Grid::NUM_MIDDLE_CELLS);
 
 					std::stringstream groundTruthIdStr;
 					for (size_t i = 0; i < Grid::NUM_MIDDLE_CELLS; ++i) {
-						groundTruthIdStr << groundTruthIds[i];
+						groundTruthIdStr << result.groundTruthTagId[i];
 					}
 					result.groundTruthTagIdStr = groundTruthIdStr.str();
 
 					// calculate hamming distance
 					result.hammingDistance = 0;
 					for (size_t i = 0; i < Grid::NUM_MIDDLE_CELLS; ++i) {
-						if ((decoderIds[i] != groundTruthIds[i]) && (!boost::indeterminate(groundTruthIds[i]))) {
+						if ((result.groundTruthTagId[i] != decoderIds[Grid::NUM_MIDDLE_CELLS - 1 - i]) && (!boost::indeterminate(result.groundTruthTagId[i]))) {
 							++result.hammingDistance;
 						}
 					}
