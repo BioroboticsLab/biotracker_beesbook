@@ -566,6 +566,7 @@ void BeesBookImgAnalysisTracker::evaluateLocalizer()
 		            grid3d->getCenter(), grid3d->getPixelRadius(),
 		            grid3d->getZRotation(), grid3d->getYRotation(),
 		            grid3d->getXRotation());
+		grid->setIdArray(grid3d->getIdArray());
 
 		// insert in set
 		if (grid)
