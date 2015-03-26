@@ -495,7 +495,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 
 	const DecoderEvaluationResults& results = _groundTruth.decoderResults;
 	int matchNum          = 0;
-	int partlyMismatchNum = 0;
+	int partialMismatchNum = 0;
 	int mismatchNum       = 0;
 	int cumulHamming      = 0;
 
@@ -506,8 +506,8 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 		if (result.hammingDistance == 0){ // match
 			++matchNum;
 			color = COLOR_GREEN;
-		} else if (result.hammingDistance <= threshold){ // partly match
-			++partlyMismatchNum;
+		} else if (result.hammingDistance <= threshold){ // partial match
+			++partialMismatchNum;
 			color = COLOR_ORANGE;
 		} else { // mismatch
 			++mismatchNum;
@@ -532,15 +532,15 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	// statistics
 	_groundTruth.labelFalsePositives->setText("Match: ");
 	_groundTruth.labelNumFalsePositives->setText(QString::number(matchNum));
-	_groundTruth.labelTruePositives->setText("partly Mismatch");
-	_groundTruth.labelNumTruePositives->setText(QString::number(partlyMismatchNum));
+	_groundTruth.labelTruePositives->setText("Partial mismatch: ");
+	_groundTruth.labelNumTruePositives->setText(QString::number(partialMismatchNum));
 	_groundTruth.labelFalseNegatives->setText("Mismatch: ");
 	_groundTruth.labelNumFalseNegatives->setText(QString::number(mismatchNum));
-	_groundTruth.labelRecall->setText("average Hamming Distance: ");
+	_groundTruth.labelRecall->setText("Average hamming distance: ");
 	_groundTruth.labelNumRecall->setText(QString::number(static_cast<float> (cumulHamming)/results.evaluationResults.size()));
-	_groundTruth.labelPrecision->setText("Precision (matched, partly): ");
-	_groundTruth.labelNumPrecision ->setText(QString::number(static_cast<float> (matchNum)/results.evaluationResults.size())  + ", "
-	                                         + QString::number((static_cast<float> (matchNum)+partlyMismatchNum)/results.evaluationResults.size()));
+	_groundTruth.labelPrecision->setText("Precision (matched, partial): ");
+	_groundTruth.labelNumPrecision->setText(QString::number(static_cast<float> (matchNum)/results.evaluationResults.size())  + ", "
+	                                        + QString::number((static_cast<float> (matchNum)+partialMismatchNum)/results.evaluationResults.size()));
 
 	return;
 }
@@ -941,6 +941,16 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 	_groundTruth.labelNumTruePositives->setText( QString::number(similarity, 'f', 2));
 
 	if (_tagListLock.try_lock()) {
+		// restore original ground truth labels after they have possibly been
+		// modified by the decoder evaluation
+		if (_selectedStage != BeesBookCommon::Stage::Decoder) {
+			_groundTruth.labelFalsePositives->setText("False positives: ");
+			_groundTruth.labelTruePositives->setText("True positives: ");
+			_groundTruth.labelFalseNegatives->setText("False negatives: ");
+			_groundTruth.labelRecall->setText("Recall: ");
+			_groundTruth.labelPrecision->setText("Precision: ");
+		}
+
 		switch (_selectedStage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			if ((view.name == "Preprocessor Output")
