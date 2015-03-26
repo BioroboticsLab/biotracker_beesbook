@@ -928,7 +928,7 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 		}
 	}
 
-	_interactionGrid.drawContours(image, 0.5, cv::Scalar( (1 - similarity) * 255, similarity*255.0, 0));
+	_interactionGrid.drawContours(image, 0.5, cv::Vec3b(static_cast<uint8_t>((1 - similarity) * 255), static_cast<uint8_t>(similarity*255.0), 0));
 	_groundTruth.labelNumTruePositives->setText( QString::number(similarity, 'f', 2));
 
 	if (_tagListLock.try_lock()) {
