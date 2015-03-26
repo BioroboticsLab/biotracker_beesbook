@@ -7,10 +7,11 @@ PreprocessorParamsWidget::PreprocessorParamsWidget(Settings &settings) :
     ParamsSubWidgetBase(settings)
 
 {
-
 	using namespace pipeline::settings::Preprocessor;
+
 	Ui::PreprocessorParamsWidget paramsWidget;
-	paramsWidget.setupUi(this);
+	paramsWidget.setupUi(&_uiWidget);
+	_layout.addWidget(&_uiWidget);
 
 	/*
 	 * general

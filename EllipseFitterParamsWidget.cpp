@@ -11,7 +11,8 @@ EllipseFitterParamsWidget::EllipseFitterParamsWidget(Settings &settings)
     : ParamsSubWidgetBase(settings)
 {
 	Ui::EllipseFitterParamsWidget paramsWidget;
-	paramsWidget.setupUi(this);
+	paramsWidget.setupUi(&_uiWidget);
+	_layout.addWidget(&_uiWidget);
 
 	/**
 	 * canny
