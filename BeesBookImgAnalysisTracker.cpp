@@ -808,7 +808,7 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 					// fix ground truth data bit order
 					std::reverse(result.groundTruthTagId.begin(), result.groundTruthTagId.end());
 
-					assert(result.decodedTagId.size() == Grid::NUM_MIDDLE_CELLS);
+					assert(decoding.size() == Grid::NUM_MIDDLE_CELLS);
 					assert(result.groundTruthTagId.size() == Grid::NUM_MIDDLE_CELLS);
 
 					std::stringstream groundTruthIdStr;
