@@ -11,12 +11,11 @@ class ParamsWidget : public QWidget
 public:
 	ParamsWidget(QWidget* parent = nullptr)
 	    : QWidget(parent)
-	    , _verticalSpacer(std::make_unique<QSpacerItem>(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding))
 	    , _layout(this)
 	{
 		_layout.setSpacing(0);
 		_layout.setMargin(0);
-		_layout.addSpacerItem(_verticalSpacer.get());
+		_layout.addSpacerItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding));
 	}
 
 	void setParamSubWidget(std::unique_ptr<QWidget>&& subWidget)
@@ -26,7 +25,6 @@ public:
 	}
 
 private:
-	std::unique_ptr<QSpacerItem> _verticalSpacer;
 	std::unique_ptr<QWidget> _paramsSubWidget;
 	QVBoxLayout _layout;
 };
