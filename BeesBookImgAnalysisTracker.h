@@ -46,6 +46,8 @@ public:
 	// return keys that are handled by the tracker
 	std::set<Qt::Key> const& grabbedKeys() const override;
 
+	void setGroundTruthStats(const size_t numGroundTruth, const size_t numTruePositives, const size_t numFalsePositives, const size_t numFalseNegatives) const;
+
 private:
 	// a grid to interact with
 	PipelineGrid          _interactionGrid;

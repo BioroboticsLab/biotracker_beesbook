@@ -280,6 +280,20 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 	}
 }
 
+void BeesBookImgAnalysisTracker::setGroundTruthStats(const size_t numGroundTruth, const size_t numTruePositives, const size_t numFalsePositives, const size_t numFalseNegatives) const
+{
+	const double recall    = numGroundTruth ?
+	            (static_cast<double>(numTruePositives) / static_cast<double>(numGroundTruth)) * 100. : 0.;
+	const double precision = (numTruePositives + numFalsePositives) ?
+	            (static_cast<double>(numTruePositives) / static_cast<double>(numTruePositives + numFalsePositives)) * 100. : 0.;
+
+	_groundTruth.labelNumFalseNegatives->setText(QString::number(numFalseNegatives));
+	_groundTruth.labelNumFalsePositives->setText(QString::number(numFalsePositives));
+	_groundTruth.labelNumTruePositives->setText(QString::number(numTruePositives));
+	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+}
+
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
 {
 	const int thickness = calculateVisualizationThickness();
@@ -318,21 +332,12 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat& image) const
 		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, thickness, CV_AA);
 	}
 
-	// calculate recall / precision
-	const float recall      = static_cast<float>(results.truePositives.size()) /
-	        static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
+	const size_t numGroundTruth    = results.taggedGridsOnFrame.size();
+	const size_t numTruePositives  = results.truePositives.size();
+	const size_t numFalsePositives = results.falsePositives.size();
+	const size_t numFalseNegatives = results.falseNegatives.size();
 
-	const float precision   = static_cast<float>(results.truePositives.size()) /
-	        static_cast<float>(results.truePositives.size() +
-	                           results.falsePositives.size()) * 100.f;
-
-	// set text in statistics labels
-	// ToDo encapsulate in member function
-	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
-	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
-	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
-	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+	setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
 
 void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
@@ -386,21 +391,12 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 		grid->drawContours(image, 1.0);
 	}
 
-	const float recall = static_cast<float>(results.truePositives.size())
-	        / static_cast<float>(results.taggedGridsOnFrame.size()) * 100.f;
-	const float precision = static_cast<float>(results.truePositives.size())
-	        / static_cast<float>(results.truePositives.size()
-	                             + results.falsePositives.size()) * 100.f;
+	const size_t numGroundTruth    = results.taggedGridsOnFrame.size();
+	const size_t numTruePositives  = results.truePositives.size();
+	const size_t numFalsePositives = results.falsePositives.size();
+	const size_t numFalseNegatives = results.falseNegatives.size();
 
-	_groundTruth.labelNumFalseNegatives->setText(
-	            QString::number(results.falseNegatives.size()));
-	_groundTruth.labelNumFalsePositives->setText(
-	            QString::number(results.falsePositives.size()));
-	_groundTruth.labelNumTruePositives->setText(
-	            QString::number(results.truePositives.size()));
-	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-	_groundTruth.labelNumPrecision->setText(
-	            QString::number(precision, 'f', 2) + "%");
+	setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
@@ -448,17 +444,12 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 		cv::rectangle(image, (grid->getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_ORANGE, thickness, CV_AA);
 	}
 
-	const float recall = static_cast<float>(results.truePositives.size())
-			/ static_cast<float>(_groundTruth.ellipsefitterResults.taggedGridsOnFrame.size()) * 100.f;
-	const float precision = static_cast<float>(results.truePositives.size())
-			/ static_cast<float>(results.truePositives.size() + results.falsePositives.size()) * 100.f;
+	const size_t numGroundTruth    = _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size();
+	const size_t numTruePositives  = results.truePositives.size();
+	const size_t numFalsePositives = results.falsePositives.size();
+	const size_t numFalseNegatives = results.falseNegatives.size();
 
-	_groundTruth.labelNumFalseNegatives->setText(QString::number(results.falseNegatives.size()));
-	_groundTruth.labelNumFalsePositives->setText(QString::number(results.falsePositives.size()));
-	_groundTruth.labelNumTruePositives->setText(QString::number(results.truePositives.size()));
-	_groundTruth.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
-
+	setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
@@ -886,7 +877,7 @@ std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBoo
 
 		double res = std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
 
-		std::cout << "Punkt "<< point.x << " " << point.y << " in  Ellipse "<< cen.x << ", " << cen.y <<", " << axis.width << "," << axis.height << " : " << res << std::endl;
+		//std::cout << "Punkt "<< point.x << " " << point.y << " in  Ellipse "<< cen.x << ", " << cen.y <<", " << axis.width << "," << axis.height << " : " << res << std::endl;
 		return res;
 	};
 
