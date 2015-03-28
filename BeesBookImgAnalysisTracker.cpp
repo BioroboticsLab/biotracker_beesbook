@@ -51,6 +51,7 @@ static const cv::Scalar COLOR_GREEN(0, 255, 0);
 static const cv::Scalar COLOR_RED(0, 0, 255);
 static const cv::Scalar COLOR_BLUE(255, 0, 0);
 static const cv::Scalar COLOR_LIGHT_BLUE(255, 200, 150);
+static const cv::Scalar COLOR_GREENISH(13, 255, 182);
 
 class MeasureTimeRAII {
 public:
@@ -461,7 +462,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
-	static const int size          = 3;
+	static const int size          = 2;
 	static const int distance      = 30;
 	static const int textThickness = 2;
 
@@ -508,7 +509,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 			color = COLOR_GREEN;
 		} else if (result.hammingDistance <= threshold){ // partial match
 			++partialMismatchNum;
-			color = COLOR_ORANGE;
+			color = COLOR_GREENISH;
 		} else { // mismatch
 			++mismatchNum;
 			color = COLOR_RED;
@@ -526,8 +527,20 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 		cv::putText(image, result.decodedTagIdStr, cv::Point(xpos, ypos - distance),
 		            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2, color, textThickness, CV_AA);
 		cv::putText(image, result.groundTruthTagIdStr, cv::Point(xpos, ypos),
-		            cv::FONT_HERSHEY_COMPLEX_SMALL, size/2, color, textThickness, CV_AA);
+		            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2, color, textThickness, CV_AA);
 	}
+
+	for (const GroundTruthGridSPtr& grid : _groundTruth.ellipsefitterResults.falseNegatives)
+	{
+		grid->drawContours(image, 0.5);
+		cv::rectangle(image, grid->getBoundingBox(), COLOR_ORANGE, boundingBoxThickness, CV_AA);
+	}
+
+	const size_t numResults = results.evaluationResults.size();
+
+	const double avgHamming = numResults ? static_cast<double>(cumulHamming) / numResults : 0.;
+	const double precMatch  = numResults ? static_cast<double>(matchNum) / numResults * 100.: 0.;
+	const double precPartly = numResults ? static_cast<double>(matchNum + partialMismatchNum) / numResults * 100. : 0.;
 
 	// statistics
 	_groundTruth.labelFalsePositives->setText("Match: ");
@@ -537,10 +550,10 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	_groundTruth.labelFalseNegatives->setText("Mismatch: ");
 	_groundTruth.labelNumFalseNegatives->setText(QString::number(mismatchNum));
 	_groundTruth.labelRecall->setText("Average hamming distance: ");
-	_groundTruth.labelNumRecall->setText(QString::number(static_cast<float> (cumulHamming)/results.evaluationResults.size()));
+	_groundTruth.labelNumRecall->setText(QString::number(avgHamming));
 	_groundTruth.labelPrecision->setText("Precision (matched, partial): ");
-	_groundTruth.labelNumPrecision->setText(QString::number(static_cast<float> (matchNum)/results.evaluationResults.size())  + ", "
-	                                        + QString::number((static_cast<float> (matchNum)+partialMismatchNum)/results.evaluationResults.size()));
+	_groundTruth.labelNumPrecision->setText(QString::number(precMatch, 'f', 2) + "%, " +
+	                                        QString::number(precPartly, 'f', 2) + "%");
 
 	return;
 }
@@ -792,7 +805,7 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 				for (pipeline::decoding_t const& decoding : candidate.getDecodings()) {
 					DecoderEvaluationResults::result_t result;
 
-					result.boundingBox     = tag.getBox();
+					result.boundingBox     = grid->getBoundingBox();
 
 					// decoder result
 					result.decodedTagId    = decoding.to_ulong();
