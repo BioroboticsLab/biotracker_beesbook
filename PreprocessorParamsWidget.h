@@ -1,13 +1,6 @@
 #pragma once
 
-#include <memory>
-
-#include <QFormLayout>
-#include <QWidget>
-#include <QCheckBox>
-
 #include "ParamsSubWidgetBase.h"
-#include "source/utility/SpinBoxWithSlider.h"
 
 class Settings;
 

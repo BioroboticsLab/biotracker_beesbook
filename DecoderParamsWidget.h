@@ -1,10 +1,5 @@
 #pragma once
 
-#include <memory>
-
-#include <QFormLayout>
-#include <QWidget>
-
 #include "ParamsSubWidgetBase.h"
 
 class Settings;

@@ -10,7 +10,6 @@
 #include <QtWidgets/QLabel>
 
 #include <boost/optional.hpp>
-#include <boost/variant.hpp>
 
 #include "Common.h"
 #include "ParamsWidget.h"
@@ -21,7 +20,6 @@
 #include "pipeline/Decoder.h"
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
-#include "utility/stdext.h"
 
 #include "source/tracking/serialization/SerializationData.h"
 
