@@ -5,7 +5,6 @@
 
 #include <cstddef>
 #include <array>
-#include <numeric>
 
 class Grid {
 public:
