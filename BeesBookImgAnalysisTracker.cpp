@@ -881,26 +881,28 @@ std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBoo
 		return res;
 	};
 
-	pipeline::TagCandidate const* bestCandidate = nullptr;
-	const std::vector<cv::Point> outerPoints =
-	        grid->getOuterRingEdgeCoordinates();
+	const std::vector<cv::Point> outerPoints = grid->getOuterRingEdgeCoordinates();
+	boost::optional<PipelineTagCandidateRef> bestCandidate;
 	double bestDeviation = std::numeric_limits<double>::max();
-	for (pipeline::TagCandidate const& candidate : detectedTag.getCandidates()) {
+
+	for (pipeline::TagCandidate const& candidate : detectedTag.getCandidatesConst()) {
 		double sumDeviation = 0.;
 		const pipeline::Ellipse& ellipse = candidate.getEllipse();
+
 		for (cv::Point const& point : outerPoints) {
 			cv::Point rel_point = cv::Point(point.x -detectedTag.getBox().x,point.y -detectedTag.getBox().y);
 			sumDeviation += deviation(ellipse.getCen(), ellipse.getAxis(),
 			                          ellipse.getAngle(), rel_point);
 		}
 		const double deviation = sumDeviation / outerPoints.size();
+
 		if (deviation < bestDeviation) {
 			bestDeviation = deviation;
-			bestCandidate = &candidate;
+			bestCandidate = candidate;
 		}
 	}
 	assert(bestCandidate);
-	return {bestDeviation, *bestCandidate};
+	return {bestDeviation, bestCandidate.get()};
 }
 
 cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
