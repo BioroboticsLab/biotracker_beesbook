@@ -470,6 +470,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 					const pipeline::decoding_t& decoding = candidate.getDecodings()[0];
 					const std::string idString = decoding.to_string();
 
+					grid.drawContours(image, 0.5);
 					cv::rectangle(image, (grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10),
 					              COLOR_LIGHT_BLUE, boundingBoxThickness, CV_AA);
 					cv::putText(image, std::to_string(decoding.to_ulong()),
@@ -509,6 +510,8 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 
 		cv::rectangle(image, result.boundingBox, color, boundingBoxThickness, CV_AA);
 
+		result.pipelineGrid.get().drawContours(image, 0.5);
+
 		const int xpos = result.boundingBox.tl().x;
 		const int ypos = result.boundingBox.tl().y;
 		// paint text on image
@@ -530,8 +533,8 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	const size_t numResults = results.evaluationResults.size();
 
 	const double avgHamming = numResults ? static_cast<double>(cumulHamming) / numResults : 0.;
-	const double precMatch  = numResults ? static_cast<double>(matchNum) / numResults * 100.: 0.;
-	const double precPartly = numResults ? static_cast<double>(matchNum + partialMismatchNum) / numResults * 100. : 0.;
+	const double precMatch  = numResults ? (static_cast<double>(matchNum) / static_cast<double>(numResults)) * 100.: 0.;
+	const double precPartly = numResults ? (static_cast<double>(matchNum + partialMismatchNum) / static_cast<double>(numResults)) * 100. : 0.;
 
 	// statistics
 	_groundTruth.labelFalsePositives->setText("Match: ");
@@ -784,58 +787,59 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 	assert(_groundTruth.available);
 	DecoderEvaluationResults results;
 
-	for (pipeline::Tag& tag : _taglist) {
-		auto it = _groundTruth.localizerResults.gridByTag.find(tag);
-		if (it != _groundTruth.localizerResults.gridByTag.end()) {
-			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
+	for (const auto gridTagPair : _groundTruth.localizerResults.gridByTag) {
 
-			boost::optional<DecoderEvaluationResults::result_t> bestResult;
-			for (pipeline::TagCandidate const& candidate : tag.getCandidates()) {
-				for (pipeline::decoding_t const& decoding : candidate.getDecodings()) {
-					DecoderEvaluationResults::result_t result;
+		pipeline::Tag const& tag = gridTagPair.first;
+		GroundTruthGridSPtr const& groundTruthGrid = gridTagPair.second;
+		if (tag.getCandidatesConst().empty()) continue;
 
-					result.boundingBox     = grid->getBoundingBox();
+		boost::optional<DecoderEvaluationResults::result_t> bestResult;
+		for (pipeline::TagCandidate const& gridCandidate : tag.getCandidatesConst()) {
+			assert(!gridCandidate.getDecodings().empty());
+			assert(gridCandidate.getDecodings().size() == gridCandidate.getGridsConst().size());
+			if (gridCandidate.getDecodings().empty()) continue;
 
-					// decoder result
-					result.decodedTagId    = decoding.to_ulong();
-					result.decodedTagIdStr = decoding.to_string();
+			for (size_t idx = 0; idx < gridCandidate.getDecodings().size(); ++idx) {
+				const pipeline::decoding_t decoding = gridCandidate.getDecodings()[idx];
+				const PipelineGridRef pipelineGrid  = gridCandidate.getGridsConst()[idx];
 
-					// ground truth data
-					result.groundTruthTagId = grid->getIdArray();
+				DecoderEvaluationResults::result_t result(pipelineGrid);
 
-					// fix ground truth data bit order
-					std::reverse(result.groundTruthTagId.begin(), result.groundTruthTagId.end());
+				result.boundingBox     = groundTruthGrid->getBoundingBox();
 
-					assert(decoding.size() == Grid::NUM_MIDDLE_CELLS);
-					assert(result.groundTruthTagId.size() == Grid::NUM_MIDDLE_CELLS);
+				result.decodedTagId    = decoding.to_ulong();
+				result.decodedTagIdStr = decoding.to_string();
 
-					std::stringstream groundTruthIdStr;
-					for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
-						groundTruthIdStr << result.groundTruthTagId[idx];
+				result.groundTruthTagId = groundTruthGrid->getIdArray();
+
+				std::stringstream groundTruthIdStr;
+				for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
+					groundTruthIdStr << result.groundTruthTagId[idx];
+				}
+				result.groundTruthTagIdStr = groundTruthIdStr.str();
+
+				// hamming distance calculation
+				result.hammingDistance = 0;
+				for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
+					if ((result.groundTruthTagId[idx] != decoding[idx]) &&
+					    (!boost::indeterminate(result.groundTruthTagId[idx])))
+					{
+						++result.hammingDistance;
 					}
-					result.groundTruthTagIdStr = groundTruthIdStr.str();
+				}
 
-					// hamming distance calculation
-					result.hammingDistance = 0;
-					for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
-						if ((result.groundTruthTagId[idx] != decoding[Grid::NUM_MIDDLE_CELLS - idx - 1]) &&
-						    (!boost::indeterminate(result.groundTruthTagId[idx])))
-						{
-							++result.hammingDistance;
-						}
-					}
-
-					if (bestResult) {
-						if (result.hammingDistance >= bestResult.get().hammingDistance) {
-							continue;
-						}
-					}
+				if (!bestResult) {
 					bestResult = result;
+				} else {
+					if (bestResult.get().hammingDistance > result.hammingDistance) {
+						bestResult = result;
+					}
 				}
 			}
-			if (bestResult) {
-				results.evaluationResults.push_back(bestResult.get());
-			}
+		}
+
+		if (bestResult) {
+			results.evaluationResults.push_back(bestResult.get());
 		}
 	}
 

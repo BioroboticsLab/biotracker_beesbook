@@ -125,14 +125,17 @@ private:
 	};
 
 	struct DecoderEvaluationResults {
-		typedef struct {
-			cv::Rect    boundingBox;
-			int         decodedTagId;
-			std::string decodedTagIdStr;
-			idarray_t   groundTruthTagId;
-			std::string groundTruthTagIdStr;
-			int         hammingDistance;
-		} result_t;
+		struct result_t {
+			cv::Rect            boundingBox;
+			int                 decodedTagId;
+			std::string         decodedTagIdStr;
+			idarray_t           groundTruthTagId;
+			std::string         groundTruthTagIdStr;
+			int                 hammingDistance;
+			PipelineGridRef     pipelineGrid;
+
+			result_t(const PipelineGridRef grid) : pipelineGrid(grid) {}
+		};
 
 		std::vector<result_t> evaluationResults;
 	};
