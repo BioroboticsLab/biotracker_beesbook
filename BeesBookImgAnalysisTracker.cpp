@@ -346,9 +346,9 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
+			if (!tag.getCandidatesConst().empty()) {
 				// get best candidate
-				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+				const pipeline::TagCandidate& candidate = tag.getCandidatesConst()[0];
 				const pipeline::Ellipse& ellipse = candidate.getEllipse();
 				cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
 				            ellipse.getAxis(), ellipse.getAngle(), 0, 360,
@@ -376,9 +376,9 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 
 	for (const pipeline::Tag& tag : results.falsePositives) {
 		//TODO: should use ellipse with best score
-		if (tag.getCandidates().size()) {
+		if (tag.getCandidatesConst().size()) {
 			const pipeline::Ellipse& ellipse =
-			        tag.getCandidates().at(0).getEllipse();
+			        tag.getCandidatesConst().at(0).getEllipse();
 			cv::ellipse(image, tag.getBox().tl() + ellipse.getCen(),
 			            ellipse.getAxis(), ellipse.getAngle(), 0, 360, COLOR_RED,
 			            thickness);
@@ -405,12 +405,12 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
+			if (!tag.getCandidatesConst().empty()) {
 
-				if (! tag.getCandidates().empty())
+				if (! tag.getCandidatesConst().empty())
 				{
 					// get best candidate
-					const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+					const pipeline::TagCandidate& candidate = tag.getCandidatesConst()[0];
 
 					if (! candidate.getGridsConst().empty())
 					{
@@ -461,8 +461,8 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
-			if (!tag.getCandidates().empty()) {
-				const pipeline::TagCandidate& candidate = tag.getCandidates()[0];
+			if (!tag.getCandidatesConst().empty()) {
+				const pipeline::TagCandidate& candidate = tag.getCandidatesConst()[0];
 				if (candidate.getDecodings().size()) {
 					assert(candidate.getGridsConst().size());
 
@@ -486,10 +486,10 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	}
 
 	const DecoderEvaluationResults& results = _groundTruth.decoderResults;
-	int matchNum          = 0;
+	int matchNum           = 0;
 	int partialMismatchNum = 0;
-	int mismatchNum       = 0;
-	int cumulHamming      = 0;
+	int mismatchNum        = 0;
+	int cumulHamming       = 0;
 
 	for (const DecoderEvaluationResults::result_t& result : results.evaluationResults) {
 		// calculate stats
@@ -545,8 +545,6 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 	_groundTruth.labelPrecision->setText("Precision (matched, partial): ");
 	_groundTruth.labelNumPrecision->setText(QString::number(precMatch, 'f', 2) + "%, " +
 	                                        QString::number(precPartly, 'f', 2) + "%");
-
-	return;
 }
 
 void BeesBookImgAnalysisTracker::evaluateLocalizer()
@@ -676,7 +674,7 @@ void BeesBookImgAnalysisTracker::evaluateEllipseFitter()
 			const std::shared_ptr<PipelineGrid>& grid = (*it).second;
 
 			// if the pipeline ROI has ellipses
-			if (!tag.getCandidates().empty())
+			if (!tag.getCandidatesConst().empty())
 			{
 				// calculate similarity score (or distance measure?)
 				// and store it in std::pair with the
@@ -704,7 +702,7 @@ void BeesBookImgAnalysisTracker::evaluateEllipseFitter()
 		// there is no ground truth data for the specified ROI
 		// --> also count it as a false detection
 		else
-			if (tag.getCandidates().size())
+			if (tag.getCandidatesConst().size())
 			{
 				results.falsePositives.insert(tag);
 			}
@@ -842,7 +840,6 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 	}
 
 	_groundTruth.decoderResults = std::move(results);
-
 }
 
 int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
@@ -864,7 +861,7 @@ int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
 std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBookImgAnalysisTracker::compareGrids(
         const pipeline::Tag &detectedTag,
         const std::shared_ptr<PipelineGrid> &grid) const {
-	assert(!detectedTag.getCandidates().empty());
+	assert(!detectedTag.getCandidatesConst().empty());
 	auto deviation =
 	        [](cv::Point2i const& cen, cv::Size const& axis, double angle, cv::Point const& point)
 	{
