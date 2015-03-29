@@ -1107,6 +1107,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	            _settings).getPTree();
 	BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
 	BeesBookCommon::getEllipseFitterSettings(_settings).addToPTree(pt);
+	BeesBookCommon::getGridfitterSettings(_settings).addToPTree(pt);
 
 	try {
 		boost::property_tree::write_json(
