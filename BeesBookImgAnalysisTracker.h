@@ -191,7 +191,7 @@ private:
 	void mouseMoveEvent    (QMouseEvent * e) override;
 	void mousePressEvent   (QMouseEvent * e) override;
 
-	int findGridInGroundTruth(PipelineGrid & templateGrid);
+	int findGridInGroundTruth();
 
 protected:
 	bool event(QEvent* event) override;

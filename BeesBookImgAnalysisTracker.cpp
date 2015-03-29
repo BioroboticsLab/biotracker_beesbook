@@ -877,7 +877,6 @@ std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBoo
 
 		double res = std::abs((x * x) / (a * a) + (y * y) / (b * b) - (cosa * cosa) - (sina * sina)) + cv::norm(cen - point);
 
-		//std::cout << "Punkt "<< point.x << " " << point.y << " in  Ellipse "<< cen.x << ", " << cen.y <<", " << axis.width << "," << axis.height << " : " << res << std::endl;
 		return res;
 	};
 
@@ -921,7 +920,7 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 	// don't try to visualize results while data processing is running
 	double similarity = 0;
 
-	int i = findGridInGroundTruth(_interactionGrid);
+	int i = findGridInGroundTruth();
 
 	if ( i >= 0)
 	{
@@ -1186,14 +1185,9 @@ const std::set<Qt::Key> &BeesBookImgAnalysisTracker::grabbedKeys() const
 {
 	static const std::set<Qt::Key> keys {
 		Qt::Key_W, Qt::Key_A,
-		        Qt::Key_S, Qt::Key_D,
-		        Qt::Key_Q, Qt::Key_E,
-		        Qt::Key_R,
-		        //                                                  Qt::Key_F,
-		        //	                                      Qt::Key_CapsLock,
-		        //	                                      Qt::Key_0, Qt::Key_1, Qt::Key_2, Qt::Key_3,
-		        //	                                      Qt::Key_4, Qt::Key_5, Qt::Key_6, Qt::Key_7,
-		        //	                                      Qt::Key_8, Qt::Key_9
+		Qt::Key_S, Qt::Key_D,
+		Qt::Key_Q, Qt::Key_E,
+		Qt::Key_R,
 	};
 	return keys;
 }
@@ -1241,7 +1235,7 @@ void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
 	}
 	case Qt::Key_R:
 	{
-		int i = findGridInGroundTruth(_interactionGrid);
+		int i = findGridInGroundTruth();
 
 		if ( i >= 0)
 		{
@@ -1301,7 +1295,7 @@ void BeesBookImgAnalysisTracker::mouseMoveEvent(QMouseEvent * e)
 	}
 }
 
-int BeesBookImgAnalysisTracker::findGridInGroundTruth(PipelineGrid & templateGrid)
+int BeesBookImgAnalysisTracker::findGridInGroundTruth()
 {
 	if(_groundTruth.available)
 	{
@@ -1323,7 +1317,6 @@ int BeesBookImgAnalysisTracker::findGridInGroundTruth(PipelineGrid & templateGri
 				if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
 				{
 					return i;
-
 				}
 			}
 		}
