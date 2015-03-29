@@ -1113,7 +1113,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 		            dir.toStdString() + "/" + filename.toStdString() + ".json", pt);
 		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
 	} catch (std::exception &e) {
-		emit notifyGUI("config export failed", MSGS::FAIL);
+		emit notifyGUI("config export failed (" + std::string(e.what()) + ")", MSGS::FAIL);
 	}
 
 	return;
