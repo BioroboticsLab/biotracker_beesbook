@@ -515,9 +515,9 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 		cv::putText(image, std::to_string(result.decodedTagId) + ", d=" + std::to_string(result.hammingDistance),
 		            cv::Point(xpos, ypos - (distance * 2)), cv::FONT_HERSHEY_COMPLEX_SMALL,
 		            size, color, textThickness, CV_AA);
-		cv::putText(image, result.decodedTagIdStr, cv::Point(xpos, ypos - distance),
+		cv::putText(image, "rs: " + result.decodedTagIdStr, cv::Point(xpos, ypos - distance),
 		            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2, color, textThickness, CV_AA);
-		cv::putText(image, result.groundTruthTagIdStr, cv::Point(xpos, ypos),
+		cv::putText(image, "gt: " + result.groundTruthTagIdStr, cv::Point(xpos, ypos),
 		            cv::FONT_HERSHEY_COMPLEX_SMALL, size / 2, color, textThickness, CV_AA);
 	}
 
