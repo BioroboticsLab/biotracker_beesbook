@@ -3,6 +3,7 @@
 
 #include <array>
 #include <mutex>
+#include <QPainter>
 
 #include <opencv2/opencv.hpp>
 
@@ -20,6 +21,7 @@
 #include "pipeline/Decoder.h"
 #include "source/settings/Settings.h"
 #include "source/tracking/TrackingAlgorithm.h"
+#include "source/utility/CvHelper.h"
 
 #include "source/tracking/serialization/SerializationData.h"
 
@@ -32,6 +34,7 @@ public:
 
 	void track(ulong frameNumber, cv::Mat& frame) override;
 	void paint(ProxyPaintObject& proxy, View const& view = OriginalView) override;
+    void paintOverlay(QPainter *painter) override;
 	void reset() override;
 
 	std::shared_ptr<QWidget> getParamsWidget() override {
@@ -163,10 +166,15 @@ private:
 	} _groundTruth;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
+    void visualizePreprocessorOutputOverlay(QPainter *painter) const;
 	void visualizeLocalizerOutput(cv::Mat& image) const;
+    void visualizeLocalizerOutputOverlay(QPainter *painter) const;
 	void visualizeEllipseFitterOutput(cv::Mat& image) const;
+    void visualizeEllipseFitterOutputOverlay(QPainter *painter) const;
 	void visualizeGridFitterOutput(cv::Mat& image) const;
+    void visualizeGridFitterOutputOverlay(QPainter *painter) const;
 	void visualizeDecoderOutput(cv::Mat& image) const;
+    void visualizeDecoderOutputOverlay(QPainter *painter) const;
 
 	void evaluateLocalizer();
 	void evaluateEllipseFitter();
