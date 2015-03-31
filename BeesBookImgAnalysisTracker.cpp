@@ -21,7 +21,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
 
 #include "Common.h"
 #include "DecoderParamsWidget.h"
@@ -527,8 +527,8 @@ BeesBookImgAnalysisTracker::taglist_t BeesBookImgAnalysisTracker::loadSerialized
 	taglist_t taglist;
 
 	std::ifstream ifs(path);
-	boost::archive::text_iarchive ia(ifs);
-	ia & taglist;
+	boost::archive::xml_iarchive ia(ifs);
+	ia & BOOST_SERIALIZATION_NVP(taglist);
 
 	return taglist;
 }
