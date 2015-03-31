@@ -1324,7 +1324,12 @@ void BeesBookImgAnalysisTracker::loadTaglist()
 	try {
 		_taglist = loadSerializedTaglist(path.toStdString());
 
-		_groundTruth.available = false;
+		if (_groundTruth.available) {
+			evaluateLocalizer();
+			evaluateEllipseFitter();
+			evaluateGridfitter();
+			evaluateDecoder();
+		}
 
 		emit update();
 	} catch (std::exception const& e) {
