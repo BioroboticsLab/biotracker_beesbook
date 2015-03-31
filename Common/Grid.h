@@ -70,7 +70,7 @@ public:
 
 protected:
 	/* only use for deserialization purposes! */
-	explicit Grid() {}
+	explicit Grid() : _coordinates2D(NUM_CELLS) {}
 
 	enum RingIndex {
 		INNER_RING = 0,
