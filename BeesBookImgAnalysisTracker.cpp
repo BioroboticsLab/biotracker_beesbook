@@ -398,11 +398,12 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(
 
 				//get ellipse definition
 				QPoint center = CvHelper::toQt(ellipse.getCen());
-				qreal rx = static_cast<qreal>(ellipse.getAxis().width/2);
-				qreal ry = static_cast<qreal>(ellipse.getAxis().height/2);
+				qreal rx = static_cast<qreal>(ellipse.getAxis().width);
+				qreal ry = static_cast<qreal>(ellipse.getAxis().height);
 
 				//draw ellipse
 				painter->save();
+				painter->translate(tag.getBox().x,tag.getBox().y);
 				painter->translate(center.x(),center.y());
 				painter->rotate(-ellipse.getAngle());
 				painter->drawEllipse(QPointF(0,0),rx,ry);
