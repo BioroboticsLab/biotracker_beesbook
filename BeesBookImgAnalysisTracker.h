@@ -49,6 +49,7 @@ public:
 
 	void setGroundTruthStats(const size_t numGroundTruth, const size_t numTruePositives, const size_t numFalsePositives, const size_t numFalseNegatives) const;
 
+	QPen getDefaultPen(QPainter *painter) const;
 private:
 	// a grid to interact with
 	PipelineGrid          _interactionGrid;
@@ -167,7 +168,6 @@ private:
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
     void visualizePreprocessorOutputOverlay(QPainter *painter) const;
-	void visualizeLocalizerOutput(cv::Mat& image) const;
     void visualizeLocalizerOutputOverlay(QPainter *painter) const;
 	void visualizeEllipseFitterOutput(cv::Mat& image) const;
     void visualizeEllipseFitterOutputOverlay(QPainter *painter) const;
@@ -181,7 +181,8 @@ private:
 	void evaluateGridfitter();
 	void evaluateDecoder();
 
-	int calculateVisualizationThickness() const;
+	void drawBox(const cv::Rect& box, QPainter *painter, QPen &pen) const;
+	void drawEllipse(const pipeline::Tag& tag, QPen &pen, QPainter *painter, const pipeline::Ellipse& ellipse) const;
 
 	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<PipelineGrid> const& grid) const;
 	int compareDecodings(pipeline::Tag &detectedTag, const std::shared_ptr<PipelineGrid> &grid) const;

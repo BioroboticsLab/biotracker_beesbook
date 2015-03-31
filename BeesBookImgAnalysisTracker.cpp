@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <QFileDialog>
+#include <QFontDatabase>
 #include <QInputDialog>
 
 #include <opencv2/core/core.hpp>
@@ -302,14 +303,44 @@ void BeesBookImgAnalysisTracker::setGroundTruthStats(const size_t numGroundTruth
 	_groundTruth.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
 }
 
-void BeesBookImgAnalysisTracker::visualizeLocalizerOutput(cv::Mat&) const
+void BeesBookImgAnalysisTracker::drawEllipse(const pipeline::Tag& tag, QPen& pen, QPainter *painter, const pipeline::Ellipse& ellipse) const
 {
+	static const QPoint offset(20, -20);
+
+	cv::RotatedRect ellipseBox(ellipse.getCen(), ellipse.getAxis(), ellipse.getAngle());
+
+	//get ellipse definition
+	QPoint center = CvHelper::toQt(ellipse.getCen());
+	qreal rx = static_cast<qreal>(ellipse.getAxis().width);
+	qreal ry = static_cast<qreal>(ellipse.getAxis().height);
+
+	//draw ellipse
+	painter->save();
+	painter->translate(tag.getBox().x,tag.getBox().y);
+	painter->translate(center.x(),center.y());
+	painter->rotate(-ellipse.getAngle());
+	painter->drawEllipse(QPointF(0,0),rx,ry);
+	painter->restore();
+
+	//draw score
+	painter->setPen(pen);
+	painter->save();
+	painter->translate(tag.getBox().x,tag.getBox().y);
+	painter->drawText(CvHelper::toQt(ellipseBox.boundingRect().tl()) + offset,
+	                  "Score: " + QString::number(ellipse.getVote()));
+	painter->restore();
+}
+
+void BeesBookImgAnalysisTracker::drawBox(const cv::Rect &box, QPainter* painter, QPen& pen) const
+{
+	const QRect qbox = CvHelper::toQt(box);
+	painter->setPen(pen);
+	painter->drawRect(qbox);
 }
 
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *painter) const
 {
-	const int thickness = calculateVisualizationThickness();
-	QPen pen;
+	QPen pen = getDefaultPen(painter);
 
 	// if there is no ground truth, draw all
 	// pipeline ROIs in blue and return
@@ -317,11 +348,8 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *paint
 	{
 		for (const pipeline::Tag& tag : _taglist)
 		{
-			const QRect& box = CvHelper::toQt(tag.getBox());
-			pen.setWidth(thickness);
 			pen.setColor(QCOLOR_LIGHT_BLUE);
-			painter->setPen(pen);
-			painter->drawRect(box);
+			drawBox(tag.getBox(), painter, pen);
 		}
 		return;
 	}
@@ -333,28 +361,22 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *paint
 	// correctly found
 	for (const pipeline::Tag& tag : results.truePositives)
 	{
-		const QRect& box = CvHelper::toQt(tag.getBox());
 		pen.setColor(QCOLOR_GREEN);
-		painter->setPen(pen);
-		painter->drawRect(box);
+		drawBox(tag.getBox(), painter, pen);
 	}
 
 	// false detections
 	for (const pipeline::Tag& tag : results.falsePositives)
 	{
-		const QRect& box = CvHelper::toQt(tag.getBox());
 		pen.setColor(QCOLOR_RED);
-		painter->setPen(pen);
-		painter->drawRect(box);
+		drawBox(tag.getBox(), painter, pen);
 	}
 
 	// missing detections
 	for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives)
 	{
-		const QRect& box = CvHelper::toQt(grid->getBoundingBox());
 		pen.setColor(QCOLOR_ORANGE);
-		painter->setPen(pen);
-		painter->drawRect(box);
+		drawBox(grid->getBoundingBox(), painter, pen);
 	}
 
 	const size_t numGroundTruth    = results.taggedGridsOnFrame.size();
@@ -364,7 +386,6 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *paint
 
 	setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
-
 
 void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
         cv::Mat& image) const {
@@ -378,12 +399,7 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(
 
 void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(
         QPainter *painter) const {
-	const int thickness = calculateVisualizationThickness();
-	const int textThickness = 2;
-	QPen pen;
-	QFont font=painter->font() ;
-	font.setPointSize (10);
-	painter->setFont(font);
+	QPen pen = getDefaultPen(painter);
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
@@ -392,28 +408,10 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(
 				const pipeline::TagCandidate& candidate = tag.getCandidatesConst()[0];
 				const pipeline::Ellipse& ellipse = candidate.getEllipse();
 
-				pen.setWidth(thickness);
 				pen.setColor(QCOLOR_LIGHT_BLUE);
 				painter->setPen(pen);
 
-				//get ellipse definition
-				QPoint center = CvHelper::toQt(ellipse.getCen());
-				qreal rx = static_cast<qreal>(ellipse.getAxis().width);
-				qreal ry = static_cast<qreal>(ellipse.getAxis().height);
-
-				//draw ellipse
-				painter->save();
-				painter->translate(tag.getBox().x,tag.getBox().y);
-				painter->translate(center.x(),center.y());
-				painter->rotate(-ellipse.getAngle());
-				painter->drawEllipse(QPointF(0,0),rx,ry);
-				painter->restore();
-
-				//draw score
-				pen.setWidth(textThickness);
-				painter->setPen(pen);
-				painter->drawText(QPoint(tag.getBox().x, tag.getBox().y )+QPoint(80, 80),
-				                  "Score: " + QString::number(ellipse.getVote()));
+				drawEllipse(tag, pen, painter, ellipse);
 			}
 		}
 		return;
@@ -426,22 +424,10 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(
 		const pipeline::TagCandidate& candidate = tagCandidatePair.second;
 		const pipeline::Ellipse& ellipse = candidate.getEllipse();
 
-		pen.setWidth(thickness);
 		pen.setColor(QCOLOR_GREEN);
 		painter->setPen(pen);
 
-		//get ellipse definition
-		QPoint center = CvHelper::toQt(ellipse.getCen());
-		qreal rx = static_cast<qreal>(ellipse.getAxis().width);
-		qreal ry = static_cast<qreal>(ellipse.getAxis().height);
-
-		//draw ellipse
-		painter->save();
-		painter->translate(tag.getBox().x,tag.getBox().y);
-		painter->translate(center.x(),center.y());
-		painter->rotate(-ellipse.getAngle());
-		painter->drawEllipse(QPointF(0,0),rx,ry);
-		painter->restore();
+		drawEllipse(tag, pen, painter, ellipse);
 	}
 
 	for (const pipeline::Tag& tag : results.falsePositives) {
@@ -450,32 +436,17 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(
 			const pipeline::Ellipse& ellipse =
 			        tag.getCandidatesConst().at(0).getEllipse();
 
-			pen.setWidth(thickness);
 			pen.setColor(QCOLOR_RED);
 			painter->setPen(pen);
 
-			//get ellipse definition
-			QPoint center = CvHelper::toQt(ellipse.getCen());
-			qreal rx = static_cast<qreal>(ellipse.getAxis().width);
-			qreal ry = static_cast<qreal>(ellipse.getAxis().height);
-
-			//draw ellipse
-			painter->save();
-			painter->translate(tag.getBox().x,tag.getBox().y);
-			painter->translate(center.x(),center.y());
-			painter->rotate(-ellipse.getAngle());
-			painter->drawEllipse(QPointF(0,0),rx,ry);
-			painter->restore();
-
+			drawEllipse(tag, pen, painter, ellipse);
 		}
 	}
 
 	for (const std::shared_ptr<PipelineGrid>& grid : results.falseNegatives) {
-		QRect boundingBox = CvHelper::toQt(grid->getBoundingBox());
-		pen.setWidth(thickness);
 		pen.setColor(QCOLOR_ORANGE);
-		painter->setPen(pen);
-		painter->drawRect(boundingBox);
+
+		drawBox(grid->getBoundingBox(), painter, pen);
 	}
 
 	const size_t numGroundTruth    = results.taggedGridsOnFrame.size();
@@ -488,8 +459,6 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 {
-	//const int thickness = calculateVisualizationThickness();
-
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
 			if (!tag.getCandidatesConst().empty()) {
@@ -502,7 +471,6 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 					if (! candidate.getGridsConst().empty())
 					{
 						const PipelineGrid& grid = candidate.getGridsConst()[0];
-						//cv::rectangle(image, grid.getBoundingBox(), COLOR_LIGHT_BLUE, thickness, CV_AA);
 						grid.drawContours(image, 0.5);
 					}
 				}
@@ -516,33 +484,34 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat& image) const
 	for (const PipelineGrid & pipegrid : results.truePositives)
 	{
 		pipegrid.drawContours(image, 0.5);
-		//cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_GREEN, thickness, CV_AA);
 	}
 
 	for (const PipelineGrid & pipegrid : results.falsePositives)
 	{
 		pipegrid.drawContours(image, 0.5);
-		//cv::rectangle(image, (pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_RED, thickness, CV_AA);
 	}
 
 	for (const GroundTruthGridSPtr& grid : results.falseNegatives)
 	{
 		grid->drawContours(image, 0.5);
-		//cv::rectangle(image, (grid->getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), COLOR_ORANGE, thickness, CV_AA);
 	}
-	/*
-	const size_t numGroundTruth    = _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size();
-	const size_t numTruePositives  = results.truePositives.size();
-	const size_t numFalsePositives = results.falsePositives.size();
-	const size_t numFalseNegatives = results.falseNegatives.size();
-
-	setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
-*/
 }
+
+QPen BeesBookImgAnalysisTracker::getDefaultPen(QPainter *painter) const
+{
+	QFont font(QFontDatabase::systemFont(QFontDatabase::FixedFont));
+	font.setPointSize(10);
+	painter->setFont(font);
+
+	QPen pen = painter->pen();
+	pen.setCosmetic(true);
+
+	return pen;
+}
+
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *painter) const
 {
-	const int thickness = calculateVisualizationThickness();
-	QPen pen;
+	QPen pen = getDefaultPen(painter);
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
@@ -556,12 +525,9 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *pain
 					if (! candidate.getGridsConst().empty())
 					{
 						const PipelineGrid& grid = candidate.getGridsConst()[0];
-						QRect boundingBox = CvHelper::toQt(grid.getBoundingBox());
-						pen.setWidth(thickness);
 						pen.setColor(QCOLOR_LIGHT_BLUE);
-						painter->setPen(pen);
-						painter->drawRect(boundingBox);
 
+						drawBox(grid.getBoundingBox(), painter, pen);
 					}
 				}
 			}
@@ -573,29 +539,23 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *pain
 
 	for (const PipelineGrid & pipegrid : results.truePositives)
 	{
-		QRect boundingBox = CvHelper::toQt((pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10));
-		pen.setWidth(thickness);
 		pen.setColor(QCOLOR_GREEN);
-		painter->setPen(pen);
-		painter->drawRect(boundingBox);
+
+		drawBox((pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), painter, pen);
 	}
 
 	for (const PipelineGrid & pipegrid : results.falsePositives)
 	{
-		QRect boundingBox = CvHelper::toQt((pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10));
-		pen.setWidth(thickness);
 		pen.setColor(QCOLOR_RED);
-		painter->setPen(pen);
-		painter->drawRect(boundingBox);
+
+		drawBox((pipegrid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), painter, pen);
 	}
 
 	for (const GroundTruthGridSPtr& grid : results.falseNegatives)
 	{
-		QRect boundingBox = CvHelper::toQt((grid->getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10));
-		pen.setWidth(thickness);
 		pen.setColor(QCOLOR_ORANGE);
-		painter->setPen(pen);
-		painter->drawRect(boundingBox);
+
+		drawBox((grid->getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), painter, pen);
 	}
 
 	const size_t numGroundTruth    = _groundTruth.ellipsefitterResults.taggedGridsOnFrame.size();
@@ -607,8 +567,6 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *pain
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
-
-
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
 			if (!tag.getCandidatesConst().empty()) {
@@ -617,7 +575,6 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 					assert(candidate.getGridsConst().size());
 					const PipelineGrid& grid = candidate.getGridsConst()[0];
 					grid.drawContours(image, 0.5);
-
 				}
 			}
 		}
@@ -626,29 +583,20 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat& image) const {
 
 	const DecoderEvaluationResults& results = _groundTruth.decoderResults;
 
-
 	for (const DecoderEvaluationResults::result_t& result : results.evaluationResults) {
-
 		result.pipelineGrid.get().drawContours(image, 0.5);
-
 	}
 
 	for (const GroundTruthGridSPtr& grid : _groundTruth.ellipsefitterResults.falseNegatives)
 	{
 		grid->drawContours(image, 0.5);
-
 	}
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter) const {
 	static const int distance      = 10;
-	static const int textThickness = 2;
-	QFont font=painter->font() ;
-	font.setPointSize ( 8 );
-	painter->setFont(font);
 
-	QPen pen;
-	const int boundingBoxThickness = calculateVisualizationThickness();
+	QPen pen = getDefaultPen(painter);
 
 	if (!_groundTruth.available) {
 		for (const pipeline::Tag& tag : _taglist) {
@@ -661,14 +609,10 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
 					const pipeline::decoding_t& decoding = candidate.getDecodings()[0];
 					const QString idString = QString::fromStdString(decoding.to_string());
 
-
-					QRect boundingBox = CvHelper::toQt((grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10));
-					pen.setWidth(boundingBoxThickness);
 					pen.setColor(QCOLOR_LIGHT_BLUE);
-					painter->setPen(pen);
-					painter->drawRect(boundingBox);
 
-					pen.setWidth(textThickness);
+					drawBox((grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), painter, pen);
+
 					painter->setPen(pen);
 					painter->drawText(QPoint(tag.getBox().x, tag.getBox().y - distance -5),
 					                  QString::number(decoding.to_ulong()));
@@ -702,18 +646,13 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
 		}
 		cumulHamming = cumulHamming + result.hammingDistance;
 
-
-		QRect boundingBox = CvHelper::toQt(result.boundingBox);
-		pen.setWidth(boundingBoxThickness);
 		pen.setColor(color);
-		painter->setPen(pen);
-		painter->drawRect(boundingBox);
-
+		drawBox(result.boundingBox, painter, pen);
 
 		const int xpos = result.boundingBox.tl().x;
 		const int ypos = result.boundingBox.tl().y;
 		// paint text on image
-		pen.setWidth(textThickness);
+
 		painter->setPen(pen);
 		painter->drawText(QPoint(xpos, ypos - (distance * 2)-5),
 		                  QString::number(result.decodedTagId)+", d=" + QString::number(result.hammingDistance));
@@ -725,11 +664,8 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
 
 	for (const GroundTruthGridSPtr& grid : _groundTruth.ellipsefitterResults.falseNegatives)
 	{
-		QRect boundingBox = CvHelper::toQt(grid->getBoundingBox());
-		pen.setWidth(boundingBoxThickness);
 		pen.setColor(QCOLOR_ORANGE);
-		painter->setPen(pen);
-		painter->drawRect(boundingBox);
+		drawBox(grid->getBoundingBox(), painter, pen);
 	}
 
 	const size_t numResults = results.evaluationResults.size();
@@ -1015,7 +951,7 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 				result.groundTruthTagId = groundTruthGrid->getIdArray();
 
 				std::stringstream groundTruthIdStr;
-				for (size_t idx = 0; idx < Grid::NUM_MIDDLE_CELLS; ++idx) {
+				for (int64_t idx = Grid::NUM_MIDDLE_CELLS - 1; idx >= 0; --idx) {
 					groundTruthIdStr << result.groundTruthTagId[idx];
 				}
 				result.groundTruthTagIdStr = groundTruthIdStr.str();
@@ -1046,22 +982,6 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 	}
 
 	_groundTruth.decoderResults = std::move(results);
-}
-
-int BeesBookImgAnalysisTracker::calculateVisualizationThickness() const
-{
-	const int radius = _settings.getValueOfParam<int>(
-	            pipeline::settings::Localizer::Params::BASE
-	            + pipeline::settings::Localizer::Params::MIN_BOUNDING_BOX_SIZE)
-	        / 2;
-	// calculate actual pixel size of grid based on current zoom level
-	double displayTagSize = radius / getCurrentZoomLevel();
-	displayTagSize = displayTagSize > 50. ? 50 : displayTagSize;
-	// thickness of rectangle of grid is based on actual pixel size
-	// of the grid. if the radius is 50px or more, the rectangle has
-	// a thickness of 1px.
-	const int thickness = static_cast<int>(1. / (displayTagSize / 50.));
-	return thickness;
 }
 
 std::pair<double, std::reference_wrapper<const pipeline::TagCandidate> > BeesBookImgAnalysisTracker::compareGrids(
@@ -1203,7 +1123,6 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 				            _visualizationData.localizerThresholdImage.get(),
 				            image.type());
 			}
-			visualizeLocalizerOutput(image);
 			break;
 		case BeesBookCommon::Stage::EllipseFitter:
 			if ((view.name == "Canny Edge")
