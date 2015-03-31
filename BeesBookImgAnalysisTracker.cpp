@@ -41,6 +41,10 @@
 
 #include "ui_ToolWidget.h"
 
+/* shift decoded bits so that bit index 0 is the first bit on the "left side"
+ * of the white semicircle */
+#define SHIFT_DECODED_BITS
+
 namespace {
 auto _ = Algorithms::Registry::getInstance().register_tracker_type<
         BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
@@ -626,7 +630,12 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
 					assert(candidate.getGridsConst().size());
 
 					const PipelineGrid& grid = candidate.getGridsConst()[0];
-					const pipeline::decoding_t& decoding = candidate.getDecodings()[0];
+					pipeline::decoding_t decoding = candidate.getDecodings()[0];
+
+#ifdef SHIFT_DECODED_BITS
+					util::rotateBitset(decoding, 3);
+#endif
+
 					const QString idString = QString::fromStdString(decoding.to_string());
 
 					pen.setColor(QCOLOR_LIGHT_BLUE);
@@ -958,17 +967,27 @@ void BeesBookImgAnalysisTracker::evaluateDecoder()
 			if (gridCandidate.getDecodings().empty()) continue;
 
 			for (size_t idx = 0; idx < gridCandidate.getDecodings().size(); ++idx) {
-				const pipeline::decoding_t decoding = gridCandidate.getDecodings()[idx];
+				pipeline::decoding_t decoding = gridCandidate.getDecodings()[idx];
 				const PipelineGridRef pipelineGrid  = gridCandidate.getGridsConst()[idx];
 
 				DecoderEvaluationResults::result_t result(pipelineGrid);
 
 				result.boundingBox     = groundTruthGrid->getBoundingBox();
 
+#ifdef SHIFT_DECODED_BITS
+				util::rotateBitset(decoding, 3);
+#endif
+
 				result.decodedTagId    = decoding.to_ulong();
 				result.decodedTagIdStr = decoding.to_string();
 
 				result.groundTruthTagId = groundTruthGrid->getIdArray();
+
+#ifdef SHIFT_DECODED_BITS
+				std::rotate(result.groundTruthTagId.begin(),
+				            result.groundTruthTagId.begin() + Grid::NUM_MIDDLE_CELLS - 3,
+				            result.groundTruthTagId.end());
+#endif
 
 				std::stringstream groundTruthIdStr;
 				for (int64_t idx = Grid::NUM_MIDDLE_CELLS - 1; idx >= 0; --idx) {
