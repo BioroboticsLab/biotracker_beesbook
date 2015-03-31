@@ -66,11 +66,12 @@ private:
 	pipeline::Decoder       _decoder;
 
 	cv::Mat _image;
-	std::vector<pipeline::Tag> _taglist;
 	std::mutex _tagListLock;
 
-	static const size_t NUM_MIDDLE_CELLS = 12;
-	typedef std::array<boost::tribool, NUM_MIDDLE_CELLS> idarray_t;
+	typedef std::vector<pipeline::Tag> taglist_t;
+	std::vector<pipeline::Tag> _taglist;
+
+	taglist_t loadSerializedTaglist(std::string const& path);
 
 	struct
 	{
@@ -133,7 +134,7 @@ private:
 			cv::Rect            boundingBox;
 			int                 decodedTagId;
 			std::string         decodedTagIdStr;
-			idarray_t           groundTruthTagId;
+			Grid::idarray_t     groundTruthTagId;
 			std::string         groundTruthTagIdStr;
 			int                 hammingDistance;
 			PipelineGridRef     pipelineGrid;
@@ -213,6 +214,7 @@ private slots:
 	void settingsChanged(const BeesBookCommon::Stage stage);
 	void loadGroundTruthData();
 	void exportConfiguration();
+	void loadTaglist();
 };
 
 #endif

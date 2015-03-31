@@ -9,6 +9,7 @@
 #include <QFileDialog>
 #include <QFontDatabase>
 #include <QInputDialog>
+#include <QMessageBox>
 
 #include <opencv2/core/core.hpp>
 
@@ -18,6 +19,9 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/stream.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 #include "Common.h"
 #include "DecoderParamsWidget.h"
@@ -28,8 +32,10 @@
 #include "pipeline/datastructure/Tag.h"
 #include "pipeline/datastructure/TagCandidate.h"
 #include "pipeline/datastructure/PipelineGrid.h"
+#include "pipeline/datastructure/serialization.hpp"
 #include "source/tracking/algorithm/algorithms.h"
 #include "source/utility/CvHelper.h"
+#include "source/utility/util.h"
 
 #include "Grid3D.h"
 
@@ -152,6 +158,9 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 
 	QObject::connect(uiTools.save_config, &QPushButton::pressed, this,
 	                 &BeesBookImgAnalysisTracker::exportConfiguration);
+
+	QObject::connect(uiTools.pushButtonLoadTaglist, &QPushButton::pressed, this,
+	                 &BeesBookImgAnalysisTracker::loadTaglist);
 
 	// load settings from config file
 	_preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
@@ -507,6 +516,17 @@ QPen BeesBookImgAnalysisTracker::getDefaultPen(QPainter *painter) const
 	pen.setCosmetic(true);
 
 	return pen;
+}
+
+BeesBookImgAnalysisTracker::taglist_t BeesBookImgAnalysisTracker::loadSerializedTaglist(const std::string &path)
+{
+	taglist_t taglist;
+
+	std::ifstream ifs(path);
+	boost::archive::text_iarchive ia(ifs);
+	ia & taglist;
+
+	return taglist;
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *painter) const
@@ -1273,6 +1293,28 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	}
 
 	return;
+}
+
+void BeesBookImgAnalysisTracker::loadTaglist()
+{
+	QString path = QFileDialog::getOpenFileName(nullptr, tr("Load taglist data"), "", tr("Data Files (*.dat)"));
+
+	if (path.isEmpty())
+		return;
+
+	try {
+		_taglist = loadSerializedTaglist(path.toStdString());
+
+		_groundTruth.available = false;
+
+		emit update();
+	} catch (std::exception const& e) {
+		std::stringstream msg;
+		msg << "Unable to load tracking data." << std::endl << std::endl;
+		msg << "Error: " << e.what() << std::endl;
+		QMessageBox::warning(QApplication::activeWindow(), "Unable to load tracking data",
+		                     QString::fromStdString(e.what()));
+	}
 }
 
 void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage stage, bool checked)
