@@ -1277,6 +1277,13 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	for (QLabel* label : labels) {
 		label->setEnabled(true);
 	}
+
+	if (!_taglist.empty()) {
+		evaluateLocalizer();
+		evaluateEllipseFitter();
+		evaluateGridfitter();
+		evaluateDecoder();
+	}
 	//TODO: maybe check filehash here
 }
 
