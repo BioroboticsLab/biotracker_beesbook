@@ -1346,6 +1346,8 @@ void BeesBookImgAnalysisTracker::loadTaglist()
 		QMessageBox::warning(QApplication::activeWindow(), "Unable to load tracking data",
 		                     QString::fromStdString(e.what()));
 	}
+
+	notifyGUI("import of serialized taglist data finished");
 }
 
 void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage stage, bool checked)
