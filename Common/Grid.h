@@ -69,6 +69,9 @@ public:
 	cv::Rect getOriginBoundingBox() const {	return _boundingBox; }
 
 protected:
+	/* only use for deserialization purposes! */
+	explicit Grid() {}
+
 	enum RingIndex {
 		INNER_RING = 0,
 		MIDDLE_RING,
