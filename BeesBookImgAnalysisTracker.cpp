@@ -320,7 +320,7 @@ void BeesBookImgAnalysisTracker::drawEllipse(const pipeline::Tag& tag, QPen& pen
 {
 	static const QPoint offset(20, -20);
 
-	cv::RotatedRect ellipseBox(ellipse.getCen(), ellipse.getAxis(), ellipse.getAngle());
+    cv::RotatedRect ellipseBox(ellipse.getCen(), ellipse.getAxis(), static_cast<float>(ellipse.getAngle()));
 
 	//get ellipse definition
 	QPoint center = CvHelper::toQt(ellipse.getCen());
@@ -329,8 +329,7 @@ void BeesBookImgAnalysisTracker::drawEllipse(const pipeline::Tag& tag, QPen& pen
 
 	//draw ellipse
 	painter->save();
-	painter->translate(tag.getBox().x,tag.getBox().y);
-	painter->translate(center.x(),center.y());
+    painter->translate(tag.getBox().x +center.x() ,tag.getBox().y+center.y());
 	painter->rotate(-ellipse.getAngle());
 	painter->drawEllipse(QPointF(0,0),rx,ry);
 	painter->restore();
