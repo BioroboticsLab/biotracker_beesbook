@@ -13,6 +13,7 @@
 #include <boost/optional.hpp>
 
 #include "Common.h"
+#include "GroundTruthEvaluator.h"
 #include "ParamsWidget.h"
 #include "pipeline/Preprocessor.h"
 #include "pipeline/Localizer.h"
@@ -69,7 +70,7 @@ private:
 	std::mutex _tagListLock;
 
 	typedef std::vector<pipeline::Tag> taglist_t;
-	std::vector<pipeline::Tag> _taglist;
+	taglist_t _taglist;
 
 	taglist_t loadSerializedTaglist(std::string const& path);
 
@@ -99,73 +100,22 @@ private:
 		  ellipsefitterCannyEdge };
 	} _visualizationData;
 
-	typedef std::shared_ptr<PipelineGrid> GroundTruthGridSPtr;
-	typedef std::reference_wrapper<const pipeline::Tag> PipelineTagRef;
-	typedef std::reference_wrapper<const pipeline::TagCandidate> PipelineTagCandidateRef;
-	typedef std::reference_wrapper<const PipelineGrid> PipelineGridRef;
+	boost::optional<GroundTruthEvaluation> _groundTruthEvaluation;
 
-	struct LocalizerEvaluationResults 		{
-		std::set<GroundTruthGridSPtr>                 taggedGridsOnFrame;
-		std::set<PipelineTagRef>                      falsePositives;
-		std::set<PipelineTagRef>                      truePositives;
-		std::set<GroundTruthGridSPtr>                 falseNegatives;
-		std::map<PipelineTagRef, GroundTruthGridSPtr> gridByTag;
-	};
-
-	struct EllipseFitterEvaluationResults
+	struct
 	{
-		std::set<GroundTruthGridSPtr> taggedGridsOnFrame;
-		std::set<PipelineTagRef> falsePositives;
+		QLabel* labelNumFalsePositives;
+		QLabel* labelNumFalseNegatives;
+		QLabel* labelNumTruePositives;
+		QLabel* labelNumRecall;
+		QLabel* labelNumPrecision;
 
-		//mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
-		std::vector<std::pair<PipelineTagRef, PipelineTagCandidateRef>> truePositives;
-		std::set<GroundTruthGridSPtr> falseNegatives;
-	};
-
-	struct GridFitterEvaluationResults
-	{
-		std::vector<PipelineGridRef>  truePositives;
-		std::vector<PipelineGridRef>  falsePositives;
-		std::set<GroundTruthGridSPtr> falseNegatives;
-	};
-
-	struct DecoderEvaluationResults {
-		struct result_t {
-			cv::Rect            boundingBox;
-			int                 decodedTagId;
-			std::string         decodedTagIdStr;
-			Grid::idarray_t     groundTruthTagId;
-			std::string         groundTruthTagIdStr;
-			int                 hammingDistance;
-			PipelineGridRef     pipelineGrid;
-
-			result_t(const PipelineGridRef grid) : pipelineGrid(grid) {}
-		};
-
-		std::vector<result_t> evaluationResults;
-	};
-
-	struct {
-		bool available = false;
-		Serialization::Data data;
-
-		QLabel* labelFalsePositives = nullptr;
-		QLabel* labelFalseNegatives = nullptr;
-		QLabel* labelTruePositives  = nullptr;
-		QLabel* labelRecall         = nullptr;
-		QLabel* labelPrecision      = nullptr;
-
-		QLabel* labelNumFalsePositives = nullptr;
-		QLabel* labelNumFalseNegatives = nullptr;
-		QLabel* labelNumTruePositives  = nullptr;
-		QLabel* labelNumRecall         = nullptr;
-		QLabel* labelNumPrecision      = nullptr;
-
-		LocalizerEvaluationResults     localizerResults;
-		EllipseFitterEvaluationResults ellipsefitterResults;
-		GridFitterEvaluationResults    gridfitterResults;
-		DecoderEvaluationResults       decoderResults;
-	} _groundTruth;
+		QLabel* labelFalsePositives;
+		QLabel* labelFalseNegatives;
+		QLabel* labelTruePositives;
+		QLabel* labelRecall;
+		QLabel* labelPrecision;
+	} _groundTruthWidgets;
 
 	void visualizePreprocessorOutput(cv::Mat& image) const;
     void visualizePreprocessorOutputOverlay(QPainter *painter) const;
@@ -176,11 +126,6 @@ private:
     void visualizeGridFitterOutputOverlay(QPainter *painter) const;
 	void visualizeDecoderOutput(cv::Mat& image) const;
     void visualizeDecoderOutputOverlay(QPainter *painter) const;
-
-	void evaluateLocalizer();
-	void evaluateEllipseFitter();
-	void evaluateGridfitter();
-	void evaluateDecoder();
 
 	void drawBox(const cv::Rect& box, QPainter *painter, QPen &pen) const;
 	void drawEllipse(const pipeline::Tag& tag, QPen &pen, QPainter *painter, const pipeline::Ellipse& ellipse) const;
