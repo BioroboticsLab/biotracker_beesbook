@@ -975,7 +975,9 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 
 void BeesBookImgAnalysisTracker::loadTaglist()
 {
-	QString path = QFileDialog::getOpenFileName(nullptr, tr("Load taglist data"), "", tr("Data Files (*.dat)"));
+	QString path = QFileDialog::getOpenFileName(QApplication::activeWindow(),
+												tr("Load taglist data"), "",
+												tr("Data Files (*.dat)"));
 
 	if (path.isEmpty())
 		return;
