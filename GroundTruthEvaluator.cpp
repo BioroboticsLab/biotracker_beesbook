@@ -345,3 +345,12 @@ GroundTruthEvaluation::gridcomparison_t GroundTruthEvaluation::compareGrids(cons
 	return {bestDeviation, bestCandidate.get()};
 }
 
+
+
+void GroundTruthEvaluation::reset()
+{
+	_localizerResults     = GroundTruth::LocalizerEvaluationResults();
+	_ellipsefitterResults = GroundTruth::EllipseFitterEvaluationResults();
+	_gridfitterResults    = GroundTruth::GridFitterEvaluationResults();
+	_decoderResults       = GroundTruth::DecoderEvaluationResults();
+}

@@ -80,6 +80,8 @@ public:
 	void evaluateGridFitter();
 	void evaluateDecoder();
 
+	void reset();
+
 	GroundTruth::LocalizerEvaluationResults const& getLocalizerResults() const { return _localizerResults; }
 	GroundTruth::EllipseFitterEvaluationResults const& getEllipsefitterResults() const { return _ellipsefitterResults; }
 	GroundTruth::GridFitterEvaluationResults const& getGridfitterResults() const { return _gridfitterResults; }
