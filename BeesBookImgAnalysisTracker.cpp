@@ -902,7 +902,7 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 }
 
 void BeesBookImgAnalysisTracker::loadGroundTruthData() {
-	QString filename = QFileDialog::getOpenFileName(nullptr,
+	QString filename = QFileDialog::getOpenFileName(QApplication::activeWindow(),
 	                                                tr("Load tracking data"), "", tr("Data Files (*.tdat)"));
 
 	if (filename.isEmpty())
