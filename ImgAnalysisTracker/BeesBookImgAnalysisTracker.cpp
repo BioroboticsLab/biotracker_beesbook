@@ -29,15 +29,15 @@
 #include "LocalizerParamsWidget.h"
 #include "EllipseFitterParamsWidget.h"
 #include "PreprocessorParamsWidget.h"
+#include "pipeline/util/CvHelper.h"
+#include "pipeline/util/Util.h"
 #include "pipeline/datastructure/Tag.h"
 #include "pipeline/datastructure/TagCandidate.h"
 #include "pipeline/datastructure/PipelineGrid.h"
 #include "pipeline/datastructure/serialization.hpp"
-#include "source/tracking/algorithm/algorithms.h"
-#include "source/utility/CvHelper.h"
-#include "source/utility/util.h"
-
 #include "legacy/Grid3D.h"
+
+#include "source/tracking/algorithm/algorithms.h"
 
 #include "ui_ToolWidget.h"
 
@@ -627,7 +627,7 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
 					pipeline::decoding_t decoding = candidate.getDecodings()[0];
 
 #ifdef SHIFT_DECODED_BITS
-					util::rotateBitset(decoding, 3);
+					Util::rotateBitset(decoding, 3);
 #endif
 
 					const QString idString = QString::fromStdString(decoding.to_string());
@@ -916,7 +916,7 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	Serialization::Data data;
 	ar(data);
 
-	_groundTruthEvaluation = GroundTruthEvaluation(std::move(data));
+	_groundTruthEvaluation.emplace(std::move(data));
 
 	const std::array<QLabel*, 10> labels { _groundTruthWidgets.labelFalsePositives,
 		        _groundTruthWidgets.labelFalseNegatives, _groundTruthWidgets.labelTruePositives,
@@ -1206,5 +1206,10 @@ int BeesBookImgAnalysisTracker::findGridInGroundTruth()
 //		}
 //	}
 	return -1;
+}
+
+void BeesBookImgAnalysisTracker::resetViews()
+{
+	emit registerViews({});
 }
 

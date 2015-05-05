@@ -1,7 +1,6 @@
 #include "GroundTruthEvaluator.h"
 
-#include "utility/util.h"
-
+#include "pipeline/util/Util.h"
 #include "pipeline/datastructure/PipelineGrid.h"
 #include "pipeline/datastructure/PipelineGrid.impl.h"
 #include "pipeline/datastructure/Tag.h"
@@ -255,7 +254,7 @@ void GroundTruthEvaluation::evaluateDecoder()
 				result.boundingBox     = groundTruthGrid->getBoundingBox();
 
 #ifdef SHIFT_DECODED_BITS
-				util::rotateBitset(decoding, 3);
+				Util::rotateBitset(decoding, 3);
 #endif
 
 				result.decodedTagId    = decoding.to_ulong();

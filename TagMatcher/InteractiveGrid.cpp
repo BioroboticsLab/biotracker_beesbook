@@ -3,6 +3,7 @@
 #include <numeric>
 
 #include "utility/CvHelper.h"
+#include "source/tracking/algorithm/BeesBook/ImgAnalysisTracker/pipeline/util/CvHelper.h"
 
 #include <source/tracking/serialization/types.hpp>
 #include <cereal/types/vector.hpp>

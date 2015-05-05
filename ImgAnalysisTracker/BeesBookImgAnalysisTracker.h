@@ -151,6 +151,8 @@ private:
 
 	int findGridInGroundTruth();
 
+	void resetViews();
+
 protected:
 	bool event(QEvent* event) override;
 

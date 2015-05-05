@@ -7,7 +7,7 @@
 
 #include "source/tracking/serialization/SerializationData.h"
 
-#include "../Common/Grid.h"
+#include "pipeline/common/Grid.h"
 
 /* shift decoded bits so that bit index 0 is the first bit on the "left side"
  * of the white semicircle */
