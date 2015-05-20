@@ -137,4 +137,3 @@ pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSetti
 
 	return preprocessorSettings;
 }
-

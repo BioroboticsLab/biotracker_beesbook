@@ -189,9 +189,9 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 	// taglist holds the tags found by the pipeline
 	_taglist.clear();
 
-	// clear ground truth evaluation data
+	// clear ground truth evaluation results
 	if (_groundTruthEvaluation) {
-		_groundTruthEvaluation.reset();
+		_groundTruthEvaluation.get().reset();
 
 		_groundTruthWidgets.labelNumTruePositives->setText("");
 		_groundTruthWidgets.labelNumFalsePositives->setText("");
