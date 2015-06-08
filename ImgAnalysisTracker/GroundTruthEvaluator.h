@@ -66,6 +66,16 @@ struct DecoderEvaluationResults {
 		result_t(const PipelineGridRef grid) : pipelineGrid(grid) {}
 	};
 
+	boost::optional<double> getAverageHammingDistanceNormalized() const {
+		if (!evaluationResults.empty()) {
+			double sum = 0.;
+			for (const result_t& result : evaluationResults) {
+				sum += (static_cast<double>(result.hammingDistance) / Grid::NUM_MIDDLE_CELLS);
+			}
+			return (sum / evaluationResults.size());
+		} else return boost::optional<double>();
+	}
+
 	std::vector<result_t> evaluationResults;
 };
 }
