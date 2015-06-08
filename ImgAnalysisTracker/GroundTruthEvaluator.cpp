@@ -340,7 +340,9 @@ GroundTruthEvaluation::gridcomparison_t GroundTruthEvaluation::compareGrids(cons
 			bestCandidate = candidate;
 		}
 	}
+
 	assert(bestCandidate);
+	#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 	return {bestDeviation, bestCandidate.get()};
 }
 
