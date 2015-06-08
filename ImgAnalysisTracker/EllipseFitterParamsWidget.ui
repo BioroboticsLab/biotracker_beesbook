@@ -263,7 +263,7 @@
        <item row="2" column="1">
         <widget class="QSpinBox" name="threshold_vote">
          <property name="maximum">
-          <number>3000</number>
+          <number>10000</number>
          </property>
         </widget>
        </item>
@@ -277,7 +277,7 @@
        <item row="3" column="1">
         <widget class="QSpinBox" name="threshold_best_vote">
          <property name="maximum">
-          <number>3000</number>
+          <number>10000</number>
          </property>
         </widget>
        </item>
