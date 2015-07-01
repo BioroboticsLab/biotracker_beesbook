@@ -342,7 +342,9 @@ GroundTruthEvaluation::gridcomparison_t GroundTruthEvaluation::compareGrids(cons
 	}
 
 	assert(bestCandidate);
+#ifndef __APPLE__
 	#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
 	return {bestDeviation, bestCandidate.get()};
 }
 

@@ -37,7 +37,7 @@ BeesBookTagMatcher::BeesBookTagMatcher(Settings & settings, QWidget *parent)
 BeesBookTagMatcher::~BeesBookTagMatcher()
 {}
 
-void BeesBookTagMatcher::track(ulong /* frameNumber */, cv::Mat & img/* frame */)
+void BeesBookTagMatcher::track(ulong /* frameNumber */,const cv::Mat & img/* frame */)
 {
     _imgRect = cv::Rect( cv::Point(0,0), img.size() );
     updateValidRect();
