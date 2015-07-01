@@ -169,7 +169,7 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 	_gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(_settings));
 }
 
-void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
+void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& frame)
 {
 	// notify lambda function
 	const auto notify =
@@ -230,7 +230,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, cv::Mat& frame)
 		MeasureTimeRAII measure("Localizer", notify);
 
 		// process image, find ROIs with tags
-		_taglist = _localizer.process(std::move(frame), std::move(_image));
+		_taglist = _localizer.process(cv::Mat(frame), std::move(_image));
 
 		// set localizer views
 		_visualizationData.localizerInputImage     =  _image.clone();
