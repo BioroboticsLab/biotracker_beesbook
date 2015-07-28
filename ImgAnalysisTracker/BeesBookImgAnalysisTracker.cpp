@@ -37,13 +37,13 @@
 #include "pipeline/datastructure/serialization.hpp"
 #include "legacy/Grid3D.h"
 
-#include "source/tracking/algorithm/algorithms.h"
+//#include "source/tracking/algorithm/algorithms.h"
 
 #include "ui_ToolWidget.h"
 
 namespace {
-auto _ = Algorithms::Registry::getInstance().register_tracker_type<
-        BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
+//auto _ = Algorithms::Registry::getInstance().register_tracker_type<
+//        BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
 
 struct CursorOverrideRAII {
 	CursorOverrideRAII(Qt::CursorShape shape) {
@@ -171,7 +171,10 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 
 void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& frame)
 {
-	// notify lambda function
+    cv::Mat frameGray;
+    cv::cvtColor(frame, frameGray, CV_BGR2GRAY);
+
+    // notify lambda function
 	const auto notify =
 	        [&](std::string const& message) {emit notifyGUI(message, MSGS::NOTIFICATION);};
 
@@ -212,7 +215,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 
 		// process current frame and store result frame in _image
 		// as of now this is a sobel filtered image further processed
-		_image = _preprocessor.process(frame);
+        _image = _preprocessor.process(frameGray);
 
 		// set preprocessor views
 		_visualizationData.preprocessorImage          = _image.clone();
@@ -230,7 +233,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 		MeasureTimeRAII measure("Localizer", notify);
 
 		// process image, find ROIs with tags
-		_taglist = _localizer.process(cv::Mat(frame), std::move(_image));
+        _taglist = _localizer.process(cv::Mat(frameGray), std::move(_image));
 
 		// set localizer views
 		_visualizationData.localizerInputImage     =  _image.clone();
@@ -255,7 +258,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 
 		// set ellipsefitter views
 		// TODO: maybe only visualize areas with ROIs
-		_visualizationData.ellipsefitterCannyEdge = _ellipsefitter.computeCannyEdgeMap(frame);
+        _visualizationData.ellipsefitterCannyEdge = _ellipsefitter.computeCannyEdgeMap(frameGray);
 
 		// evaluate ellipsefitter
 		if (_groundTruthEvaluation)

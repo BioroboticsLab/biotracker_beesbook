@@ -1,5 +1,4 @@
-#ifndef BeesBookImgAnalysisTracker_H
-#define BeesBookImgAnalysisTracker_H
+#pragma once
 
 #include <array>
 #include <mutex>
@@ -163,5 +162,3 @@ private slots:
 	void exportConfiguration();
 	void loadTaglist();
 };
-
-#endif
