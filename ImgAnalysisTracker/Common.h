@@ -1,11 +1,14 @@
 #pragma once
 
-
 #include "pipeline/Localizer.h"
 #include "pipeline/EllipseFitter.h"
 #include "pipeline/GridFitter.h"
 #include "pipeline/Preprocessor.h"
-#include "pipeline/datastructure/settings.h"
+
+#include "pipeline/settings/LocalizerSettings.h"
+#include "pipeline/settings/EllipseFitterSettings.h"
+#include "pipeline/settings/GridFitterSettings.h"
+#include "pipeline/settings/PreprocessorSettings.h"
 
 class Settings;
 

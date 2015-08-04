@@ -4,8 +4,21 @@
 
 #include "LocalizerParamsWidget.h"
 #include "pipeline/Localizer.h"
-#include "pipeline/datastructure/settings.h"
 #include "source/settings/Settings.h"
+
+namespace {
+template <typename T>
+void loadValue(Settings& settings, std::string const& base, pipeline::settings::setting_entry& entry) {
+    const boost::optional<T> param =
+            settings.maybeGetValueOfParam<T>(base + entry.setting_name);
+
+    if (param) {
+        entry.field = boost::get<T>(param);
+    } else {
+        settings.setParam(base + entry.setting_name, boost::get<T>(entry.field));
+    }
+}
+}
 
 /**
  * try to lad all setting-entries from the general biotracker-settings into the specific pipeline-setting object.
@@ -23,66 +36,13 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
 		setting_entry& entry = it->second;
 
 		switch (entry.type) {
-		case (setting_entry_type::INT): {
-			const boost::optional<int> param =
-			        settings.maybeGetValueOfParam<int>(
-			            base + entry.setting_name);
-			if (param) {
-				entry.field = boost::get<int>(param);
-			} else {
-				settings.setParam(base + entry.setting_name,
-				                  boost::get<int>(entry.field));
-			}
-
-			break;
+        case (setting_entry_type::INT): { loadValue<int>(settings, base, entry); break; }
+        case (setting_entry_type::BOOL): { loadValue<bool>(settings, base, entry); break; }
+        case (setting_entry_type::DOUBLE): { loadValue<double>(settings, base, entry); break; }
+        case (setting_entry_type::U_INT): { loadValue<unsigned int>(settings, base, entry); break; }
+        case (setting_entry_type::SIZE_T): { loadValue<size_t>(settings, base, entry); break; }
+        case (setting_entry_type::STRING): { loadValue<std::string>(settings, base, entry); break; }
 		}
-		case (setting_entry_type::DOUBLE): {
-			const boost::optional<double> param = settings.maybeGetValueOfParam<
-			        double>(base + entry.setting_name);
-			if (param) {
-				entry.field = boost::get<double>(param);
-			} else {
-				settings.setParam(base + entry.setting_name,
-				                  boost::get<double>(entry.field));
-			}
-			break;
-		}
-		case (setting_entry_type::BOOL): {
-			const boost::optional<bool> param = settings.maybeGetValueOfParam<
-			        bool>(base + entry.setting_name);
-			if (param) {
-				entry.field = boost::get<bool>(param);
-			} else {
-				settings.setParam(base + entry.setting_name,
-				                  boost::get<bool>(entry.field));
-			}
-			break;
-		}
-		case (setting_entry_type::U_INT): {
-			const boost::optional<unsigned int> param =
-			        settings.maybeGetValueOfParam<unsigned int>(
-			            base + entry.setting_name);
-			if (param) {
-				entry.field = boost::get<unsigned int>(param);
-			} else {
-				settings.setParam(base + entry.setting_name,
-				                  boost::get<unsigned int>(entry.field));
-			}
-			break;
-		}
-		case (setting_entry_type::SIZE_T): {
-			const boost::optional<size_t> param = settings.maybeGetValueOfParam<
-			        size_t>(base + entry.setting_name);
-			if (param) {
-				entry.field = boost::get<size_t>(param);
-			} else {
-				settings.setParam(base + entry.setting_name,
-				                  boost::get<size_t>(entry.field));
-			}
-			break;
-		}
-		}
-
 	}
 }
 /**
