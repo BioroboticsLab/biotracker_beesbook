@@ -30,6 +30,12 @@ LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings) :
     connectSettingsWidget(paramsWidget.tag_size,
                           Params::BASE + Params::TAG_SIZE,
                           BeesBookCommon::Stage::Localizer);
+    connectSettingsWidget(paramsWidget.min_num_pixels,
+                          Params::BASE + Params::MIN_NUM_PIXELS,
+                          BeesBookCommon::Stage::Localizer);
+    connectSettingsWidget(paramsWidget.max_num_pixels,
+                          Params::BASE + Params::MAX_NUM_PIXELS,
+                          BeesBookCommon::Stage::Localizer);
 
     connectSettingsWidget(paramsWidget.use_deeplocalizer_filter,
                           Params::BASE + Params::DEEPLOCALIZER_FILTER,
