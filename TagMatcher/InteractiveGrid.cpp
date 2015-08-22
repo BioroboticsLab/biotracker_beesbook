@@ -2,8 +2,8 @@
 
 #include <numeric>
 
-#include "utility/CvHelper.h"
-#include "source/tracking/algorithm/BeesBook/ImgAnalysisTracker/pipeline/util/CvHelper.h"
+#include "source/utility/CvHelper.h"
+#include "source/tracking/algorithm/BeesBook/pipeline/util/CvHelper.h"
 
 #include <source/tracking/serialization/types.hpp>
 #include <cereal/types/vector.hpp>
@@ -22,7 +22,7 @@ InteractiveGrid::InteractiveGrid(cv::Point2i center, double radius_px, double an
 	, _bitsTouched(false)
 	, _isSettable(true)
 {
-	prepare_visualization_data();
+    generate_interaction_points();
 }
 
 InteractiveGrid::~InteractiveGrid() = default;
@@ -182,39 +182,53 @@ void InteractiveGrid::setWorldRadius(const double radius)
 	prepare_visualization_data();
 }
 
+void InteractiveGrid::generate_interaction_points(coordinates2D_t const& result)
+{
+    _interactionPoints.clear();
+
+    for (size_t r = 0; r < _coordinates3D._rings.size(); ++r)
+    {
+        // iterate over all points in ring
+        for (size_t i = 0; i < _coordinates3D._rings[r].size(); ++i)
+        {
+            if (r == MIDDLE_RING) {
+                if ( (i % POINTS_PER_MIDDLE_CELL) == POINTS_PER_MIDDLE_CELL / 2 ) {
+                    _interactionPoints.push_back(0.5*(result._rings[r][i] + result._rings[r - 1][i]));
+                }
+            }
+        }
+    }
+
+    // iterate over points of inner ring
+    for (size_t i = 0; i < POINTS_PER_LINE; ++i)
+    {
+        // if center point reached: save point to interaction-points-list
+        if (i == POINTS_PER_LINE / 2)
+        {
+            _interactionPoints.push_back(result._inner_line[i]);
+        }
+
+    }
+
+    // the last interaction point is P1
+    _interactionPoints.push_back(result._outer_ring[0]);
+}
+
 Grid::coordinates2D_t InteractiveGrid::generate_3D_coordinates_from_parameters_and_project_to_2D()
 {
 	coordinates2D_t result = Grid::generate_3D_coordinates_from_parameters_and_project_to_2D();
 
 	// iterate over all rings
-	for (size_t r = 0; r < _coordinates3D._rings.size(); ++r)
-	{
-		// iterate over all points in ring
-		for (size_t i = 0; i < _coordinates3D._rings[r].size(); ++i)
-		{
-			if (r == MIDDLE_RING) {
-				if ( (i % POINTS_PER_MIDDLE_CELL) == POINTS_PER_MIDDLE_CELL / 2 ) {
-					_interactionPoints.push_back(0.5*(result._rings[r][i] + result._rings[r - 1][i]));
-				}
-			}
-		}
-	}
+    generate_interaction_points(result);
 
-	// iterate over points of inner ring
-	for (size_t i = 0; i < POINTS_PER_LINE; ++i)
-	{
-		// if center point reached: save point to interaction-points-list
-		if (i == POINTS_PER_LINE / 2)
-		{
-			_interactionPoints.push_back(result._inner_line[i]);
-		}
+    return result;
+}
 
-	}
+void InteractiveGrid::generate_interaction_points()
+{
+    coordinates2D_t result = Grid::generate_3D_coordinates_from_parameters_and_project_to_2D();
 
-	// the last interaction point is P1
-	_interactionPoints.push_back(result._outer_ring[0]);
-
-	return result;
+    generate_interaction_points(result);
 }
 
 

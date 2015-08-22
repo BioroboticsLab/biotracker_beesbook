@@ -12,7 +12,9 @@
 #include "source/tracking/TrackingAlgorithm.h"
 #include "InteractiveGrid.h"
 
-#include "ui_BeesBookTagMatcherToolWidget.h"
+namespace Ui {
+class TagMatcherToolWidget;
+}
 
 //Class used to generate ground truth data for BeesBook
 class BeesBookTagMatcher : public TrackingAlgorithm {
@@ -52,7 +54,7 @@ private:
 
 	std::chrono::system_clock::time_point _lastMouseEventTime;
 
-	Ui::TagMatcherToolWidget _UiToolWidget;
+    std::unique_ptr<Ui::TagMatcherToolWidget> _UiToolWidget;
 
 	std::shared_ptr<QWidget> _toolWidget;
 	std::shared_ptr<QWidget> _paramWidget;

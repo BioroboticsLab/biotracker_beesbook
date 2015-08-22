@@ -6,7 +6,7 @@
 #include <opencv2/opencv.hpp>      // cv::Mat, cv::Point3_
 #include <boost/logic/tribool.hpp> // boost::tribool
 
-#include "source/tracking/algorithm/BeesBook/ImgAnalysisTracker/pipeline/common/Grid.h"
+#include "source/tracking/algorithm/BeesBook/pipeline/common/Grid.h"
 #include "source/tracking/serialization/ObjectModel.h"
 
 class InteractiveGrid : public Grid, public ObjectModel
@@ -49,7 +49,10 @@ public:
 	std::vector<cv::Point> const& getOuterRingPoints() const { return _coordinates2D[OUTER_RING]; }
 
 private:
-	virtual coordinates2D_t generate_3D_coordinates_from_parameters_and_project_to_2D() override;
+    virtual coordinates2D_t generate_3D_coordinates_from_parameters_and_project_to_2D() override;
+
+    void generate_interaction_points();
+    void generate_interaction_points(const coordinates2D_t &result);
 
 	void draw(cv::Mat &img, const cv::Point& center, const bool isActive) const;
 

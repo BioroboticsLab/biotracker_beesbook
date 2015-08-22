@@ -7,11 +7,13 @@
 
 #include "Common.h"
 #include "source/tracking/algorithm/algorithms.h"
-#include "utility/CvHelper.h"
+#include "source/tracking/algorithm/BeesBook/pipeline/util/CvHelper.h"
+
+#include "ui_BeesBookTagMatcherToolWidget.h"
 
 namespace {
-auto _ = Algorithms::Registry::getInstance().register_tracker_type<
-    BeesBookTagMatcher>("BeesBook Tag Matcher");
+//auto _ = Algorithms::Registry::getInstance().register_tracker_type<
+//    BeesBookTagMatcher>("BeesBook Tag Matcher");
 
 //static const cv::Scalar COLOR_BLUE   = cv::Scalar(255, 0, 0);
 static const cv::Scalar COLOR_RED    = cv::Scalar(0, 0, 255);
@@ -26,11 +28,13 @@ BeesBookTagMatcher::BeesBookTagMatcher(Settings & settings, QWidget *parent)
 	: TrackingAlgorithm(settings, parent)
 	, _currentState(State::Ready)
 	, _lastMouseEventTime(std::chrono::system_clock::now())
-	, _toolWidget(std::make_shared<QWidget>())
+    , _UiToolWidget(std::make_unique<Ui::TagMatcherToolWidget>())
+    , _toolWidget(std::make_shared<QWidget>())
 	, _paramWidget(std::make_shared<QWidget>())
 	, _visualizeFrames(true)
 {
-	_UiToolWidget.setupUi(_toolWidget.get());
+
+    _UiToolWidget->setupUi(_toolWidget.get());
 	setNumTags();
 }
 
@@ -624,7 +628,7 @@ void BeesBookTagMatcher::setNumTags()
 		}
 	}
 
-	_UiToolWidget.numTags->setText(QString::number(cnt));
+    _UiToolWidget->numTags->setText(QString::number(cnt));
 }
 
 const std::set<Qt::Key> &BeesBookTagMatcher::grabbedKeys() const
