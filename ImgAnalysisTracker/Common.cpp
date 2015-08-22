@@ -3,8 +3,8 @@
 #include <boost/optional.hpp>
 
 #include "LocalizerParamsWidget.h"
-#include "pipeline/Localizer.h"
 #include "source/settings/Settings.h"
+#include "../pipeline/Localizer.h"
 
 namespace {
 template <typename T>

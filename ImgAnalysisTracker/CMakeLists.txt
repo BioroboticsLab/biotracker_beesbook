@@ -1,7 +1,5 @@
 set(lib_name "ImgAnalysisTracker")
 
-add_subdirectory(pipeline)
-
 file(GLOB src_main RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 file(GLOB hdr_main RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h *.hpp)
 file(GLOB ui_main RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.ui)
@@ -17,6 +15,9 @@ include_directories(${biotracker-includes})
 add_library(${lib_name} STATIC
     ${src_main} ${hdr_main} ${src_legacy} ${hdr_legacy} ${UI_HEADERS_LOCAL}
 )
+
+get_target_property(DEEPLOCALIZER_CLASSIFIER_LIBRARY_DIR Pipeline PIPELINE_DEEPLOCALIZER_LIBRARY_DIR)
+
 link_directories(${DEEPLOCALIZER_CLASSIFIER_LIBRARY_DIR})
 
 get_target_property(PIPELINE_INCLUDES Pipeline PIPELINE_INCLUDES)
