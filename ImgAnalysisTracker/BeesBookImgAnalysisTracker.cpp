@@ -23,28 +23,34 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 
+#include <biotracker/Registry.h>
+
 #include "Common.h"
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
 #include "LocalizerParamsWidget.h"
 #include "EllipseFitterParamsWidget.h"
 #include "PreprocessorParamsWidget.h"
-#include "../pipeline/util/CvHelper.h"
-#include "../pipeline/util/Util.h"
-#include "../pipeline/datastructure/Tag.h"
-#include "../pipeline/datastructure/TagCandidate.h"
-#include "../pipeline/datastructure/PipelineGrid.h"
-#include "../pipeline/datastructure/serialization.hpp"
+#include "pipeline/util/CvHelper.h"
+#include "pipeline/util/Util.h"
+#include "pipeline/datastructure/Tag.h"
+#include "pipeline/datastructure/TagCandidate.h"
+#include "pipeline/datastructure/PipelineGrid.h"
+#include "pipeline/datastructure/serialization.hpp"
 #include "legacy/Grid3D.h"
 
-//#include "source/tracking/algorithm/algorithms.h"
+//#include "biotracker/tracking/algorithm/algorithms.h"
 
 #include "ui_ToolWidget.h"
 
-namespace {
-//auto _ = Algorithms::Registry::getInstance().register_tracker_type<
-//        BeesBookImgAnalysisTracker>("BeesBook ImgAnalysis");
+extern "C" {
+    void registerTracker() {
+        BioTracker::Core::Registry::getInstance().registerTrackerType<BeesBookImgAnalysisTracker>(
+                    "BeesBook ImgAnalysis");
+    }
+}
 
+namespace {
 struct CursorOverrideRAII {
 	CursorOverrideRAII(Qt::CursorShape shape) {
 		QApplication::setOverrideCursor(shape);
@@ -100,8 +106,8 @@ private:
 };
 }
 
-BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent) :
-    TrackingAlgorithm(settings, parent),
+BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings) :
+    TrackingAlgorithm(settings),
     _interactionGrid(cv::Point2i( 300, 300), 23, 0.0, 0.0, 0.0),
     _selectedStage( BeesBookCommon::Stage::NoProcessing),
     _paramsWidget(  std::make_shared<ParamsWidget>()),
@@ -150,7 +156,7 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings, QWidg
 
 	// send forceTracking upon button "process"
 	QObject::connect(uiTools.processButton, &QPushButton::pressed,
-	                 [&]() {emit forceTracking();});
+                     [&]() {Q_EMIT forceTracking();});
 
 	//
 	QObject::connect(uiTools.pushButtonLoadGroundTruth, &QPushButton::pressed,
@@ -176,7 +182,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 
     // notify lambda function
 	const auto notify =
-	        [&](std::string const& message) {emit notifyGUI(message, MSGS::NOTIFICATION);};
+            [&](std::string const& message) {Q_EMIT notifyGUI(message, MSGS::NOTIFICATION);};
 
 	// acquire mutex (released when leaving function scope)
 	const std::lock_guard<std::mutex> lock(_tagListLock);
@@ -730,10 +736,9 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
 	return image;
 }
 
-void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAlgorithm::View &view)
+void BeesBookImgAnalysisTracker::paint(cv::Mat &image, View const &view)
 {
-	cv::Mat& image = proxy.getmat();
-
+    cv::ellipse(image, cv::RotatedRect(cv::Point2f(100, 100), cv::Size2f(50, 50), 0), cv::Scalar(255, 0, 0));
 	// TODO: adapt to recent changes
 //	// don't try to visualize results while data processing is running
 //	double similarity = 0;
@@ -843,8 +848,10 @@ void BeesBookImgAnalysisTracker::paint(ProxyPaintObject &proxy, const TrackingAl
 
 }
 
-void BeesBookImgAnalysisTracker::paintOverlay(QPainter *painter)
+void BeesBookImgAnalysisTracker::paintOverlay(QPainter *painter, View const&)
 {
+    painter->setPen(QColor(255, 0, 0));
+    painter->drawEllipse(QRectF(QPointF(100.f, 100.f), QSize(100, 100)));
 	if (_tagListLock.try_lock()) {
 
 		switch (_selectedStage) {
@@ -869,9 +876,6 @@ void BeesBookImgAnalysisTracker::paintOverlay(QPainter *painter)
 	} else {
 		return;
 	}
-}
-
-void BeesBookImgAnalysisTracker::reset() {
 }
 
 void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &) const {
@@ -946,7 +950,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	QString dir = QFileDialog::getExistingDirectory(0, tr("select directory"),
 	                                                "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 	if (dir.isEmpty()) {
-		emit notifyGUI("config export: no directory given", MSGS::FAIL);
+        Q_EMIT notifyGUI("config export: no directory given", MSGS::FAIL);
 		return;
 	}
 	bool ok;
@@ -955,7 +959,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	                                         tr("choose filename (without extension)"), tr("Filename:"),
 	                                         QLineEdit::Normal, "Filename", &ok);
 	if (!ok || filename.isEmpty()) {
-		emit notifyGUI("config export: no filename given", MSGS::FAIL);
+        Q_EMIT notifyGUI("config export: no filename given", MSGS::FAIL);
 		return;
 	}
 
@@ -968,9 +972,9 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	try {
 		boost::property_tree::write_json(
 		            dir.toStdString() + "/" + filename.toStdString() + ".json", pt);
-		emit notifyGUI("config export successfully", MSGS::NOTIFICATION);
+        Q_EMIT notifyGUI("config export successfully", MSGS::NOTIFICATION);
 	} catch (std::exception &e) {
-		emit notifyGUI("config export failed (" + std::string(e.what()) + ")", MSGS::FAIL);
+        Q_EMIT notifyGUI("config export failed (" + std::string(e.what()) + ")", MSGS::FAIL);
 	}
 
 	return;
@@ -995,7 +999,7 @@ void BeesBookImgAnalysisTracker::loadTaglist()
 			_groundTruthEvaluation->evaluateDecoder();
 		}
 
-		emit update();
+        Q_EMIT update();
 	} catch (std::exception const& e) {
 		std::stringstream msg;
 		msg << "Unable to load tracking data." << std::endl << std::endl;
@@ -1017,15 +1021,15 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage st
 		switch (stage) {
 		case BeesBookCommon::Stage::Preprocessor:
 			setParamsWidget<PreprocessorParamsWidget>();
-			emit registerViews( { { "Preprocessor Output" }, { "Opts" }, { "Honeyfilter" }, { "Threshold-Comb" } });
+            Q_EMIT registerViews( { { "Preprocessor Output" }, { "Opts" }, { "Honeyfilter" }, { "Threshold-Comb" } });
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			setParamsWidget<LocalizerParamsWidget>();
-			emit registerViews( { { "Input" }, { "Threshold" }, { "Blobs" } });
+            Q_EMIT registerViews( { { "Input" }, { "Threshold" }, { "Blobs" } });
 			break;
 		case BeesBookCommon::Stage::EllipseFitter:
 			setParamsWidget<EllipseFitterParamsWidget>();
-			emit registerViews( { { "Canny Edge" } });
+            Q_EMIT registerViews( { { "Canny Edge" } });
 			break;
 		case BeesBookCommon::Stage::GridFitter:
 			setParamsWidget<GridFitterParamsWidget>();
@@ -1038,7 +1042,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage st
 			break;
 		}
 
-		emit update();
+        Q_EMIT update();
 	}
 }
 
@@ -1146,8 +1150,8 @@ void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e)
 	} // END: switch (e->key())
 	//} // END: _activeGrid
 
-	// TODO: skip "emit update()" if event doesn't alter image (i.e. ctrl + 0)
-	emit update();
+    // TODO: skip "Q_EMIT update()" if event doesn't alter image (i.e. ctrl + 0)
+    Q_EMIT update();
 }
 
 
@@ -1159,7 +1163,7 @@ void BeesBookImgAnalysisTracker::mousePressEvent(QMouseEvent * e)
 
 	_interactionGrid.setCenter(mousePosition);
 
-	emit update();
+    Q_EMIT update();
 }
 
 // called when mouse pointer MOVES
@@ -1175,7 +1179,7 @@ void BeesBookImgAnalysisTracker::mouseMoveEvent(QMouseEvent * e)
 		{
 			cv::Point mousePosition(e->x(), e->y());
 			_interactionGrid.setCenter(mousePosition);
-			emit update();
+            Q_EMIT update();
 		}
 		_lastMouseEventTime = std::chrono::system_clock::now();
 	}
@@ -1213,6 +1217,6 @@ int BeesBookImgAnalysisTracker::findGridInGroundTruth()
 
 void BeesBookImgAnalysisTracker::resetViews()
 {
-	emit registerViews({});
+    Q_EMIT registerViews({});
 }
 

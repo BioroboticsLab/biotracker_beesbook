@@ -1,5 +1,5 @@
 #include "GridFitterParamsWidget.h"
-#include "source/settings/Settings.h"
+#include "biotracker/settings/Settings.h"
 
 using namespace pipeline::settings::Gridfitter;
 

@@ -4,7 +4,7 @@
 #include <QWidget>
 
 #include "ParamsSubWidgetBase.h"
-#include "source/utility/SpinBoxWithSlider.h"
+#include "biotracker/widgets/SpinBoxWithSlider.h"
 
 class Settings;
 

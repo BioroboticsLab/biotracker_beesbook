@@ -14,32 +14,33 @@
 #include "Common.h"
 #include "GroundTruthEvaluator.h"
 #include "ParamsWidget.h"
-#include "../pipeline/Preprocessor.h"
-#include "../pipeline/Localizer.h"
-#include "../pipeline/EllipseFitter.h"
-#include "../pipeline/GridFitter.h"
-#include "../pipeline/Decoder.h"
-#include "source/settings/Settings.h"
-#include "source/tracking/TrackingAlgorithm.h"
-#include "source/utility/CvHelper.h"
+#include "pipeline/Preprocessor.h"
+#include "pipeline/Localizer.h"
+#include "pipeline/EllipseFitter.h"
+#include "pipeline/GridFitter.h"
+#include "pipeline/Decoder.h"
+#include "biotracker/settings/Settings.h"
+#include "biotracker/TrackingAlgorithm.h"
+#include "biotracker/util/CvHelper.h"
 
-#include "source/tracking/serialization/SerializationData.h"
+#include "biotracker/serialization/SerializationData.h"
 
 class PipelineGrid;
 
 class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
 	Q_OBJECT
 public:
-	BeesBookImgAnalysisTracker(Settings& settings, QWidget* parent);
+    BeesBookImgAnalysisTracker(Settings& settings);
 
 	void track(ulong frameNumber, const cv::Mat& frame) override;
-	void paint(ProxyPaintObject& proxy, View const& view = OriginalView) override;
-    void paintOverlay(QPainter *painter) override;
-	void reset() override;
+    virtual void paint(cv::Mat &image, View const& = OriginalView) override;
+    virtual void paintOverlay(QPainter *painter, View const& = OriginalView) override;
 
+    /*
 	std::shared_ptr<QWidget> getParamsWidget() override {
 		return _paramsWidget;
 	}
+    */
 	std::shared_ptr<QWidget> getToolsWidget() override {
 		return _toolsWidget;
 	}
@@ -155,7 +156,7 @@ private:
 protected:
 	bool event(QEvent* event) override;
 
-private slots:
+private Q_SLOTS:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
 	void settingsChanged(const BeesBookCommon::Stage stage);
 	void loadGroundTruthData();

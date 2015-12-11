@@ -7,8 +7,8 @@
 #include <QSpinBox>
 
 #include "Common.h"
-#include "source/settings/Settings.h"
-#include "source/utility/SpinBoxWithSlider.h"
+#include "biotracker/settings/Settings.h"
+#include "biotracker/widgets/SpinBoxWithSlider.h"
 
 class ParamsSubWidgetBase: public QWidget {
 	Q_OBJECT
@@ -41,7 +41,7 @@ protected:
     void connectSettingsWidget(QLineEdit* lineEdit, const std::string& paramName,
                                const BeesBookCommon::Stage &stage);
 
-signals:
+Q_SIGNALS:
 	void settingsChanged(const BeesBookCommon::Stage stage);
 };
 

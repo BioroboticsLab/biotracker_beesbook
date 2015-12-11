@@ -1,5 +1,5 @@
 #include "PreprocessorParamsWidget.h"
-#include "source/settings/Settings.h"
+#include "biotracker/settings/Settings.h"
 
 #include "ui_PreprocessorParamsWidget.h"
 

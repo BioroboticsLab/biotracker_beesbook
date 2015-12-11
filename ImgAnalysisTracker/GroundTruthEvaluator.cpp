@@ -1,10 +1,10 @@
 #include "GroundTruthEvaluator.h"
 
-#include "../pipeline/util/Util.h"
-#include "../pipeline/datastructure/PipelineGrid.h"
-#include "../pipeline/datastructure/PipelineGrid.impl.h"
-#include "../pipeline/datastructure/Tag.h"
-#include "../pipeline/datastructure/TagCandidate.h"
+#include "pipeline/util/Util.h"
+#include "pipeline/datastructure/PipelineGrid.h"
+#include "pipeline/datastructure/PipelineGrid.impl.h"
+#include "pipeline/datastructure/Tag.h"
+#include "pipeline/datastructure/TagCandidate.h"
 
 #include "legacy/Grid3D.h"
 

@@ -6,7 +6,7 @@ void ParamsSubWidgetBase::connectSlider(SpinBoxWithSlider *slider, const std::st
     QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
         _settings.setParam(paramName,value);
 
-        emit settingsChanged(stage);
+        Q_EMIT settingsChanged(stage);
     });
 }
 
@@ -22,7 +22,7 @@ void ParamsSubWidgetBase::connectSettingsWidget(QCheckBox *check, const std::str
             _settings.setParam(paramName, false);
         }
 
-        emit settingsChanged(stage);
+        Q_EMIT settingsChanged(stage);
 
     });
 }
@@ -35,7 +35,7 @@ void ParamsSubWidgetBase::connectSettingsWidget(QSpinBox *spin, const std::strin
     QObject::connect(spin,
                      static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [ = ](int value) {
         _settings.setParam(paramName, value);
-        emit settingsChanged(stage);
+        Q_EMIT settingsChanged(stage);
 
     });
 }
@@ -47,7 +47,7 @@ void ParamsSubWidgetBase::connectSettingsWidget(QDoubleSpinBox *spin, const std:
     QObject::connect(spin,
                      static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), [ = ](double value) {
         _settings.setParam(paramName, value);
-        emit settingsChanged(stage);
+        Q_EMIT settingsChanged(stage);
 
     });
 }
@@ -60,7 +60,7 @@ void ParamsSubWidgetBase::connectSettingsWidget(QLineEdit *lineEdit, const std::
     QObject::connect(lineEdit,
                      static_cast<void (QLineEdit::*)()>(&QLineEdit::editingFinished), [ = ]() {
         _settings.setParam(paramName, lineEdit->text().toStdString());
-        emit settingsChanged(stage);
+        Q_EMIT settingsChanged(stage);
     });
 
 }

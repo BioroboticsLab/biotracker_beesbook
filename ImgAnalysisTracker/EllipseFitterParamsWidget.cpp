@@ -1,6 +1,6 @@
 #include "EllipseFitterParamsWidget.h"
 
-#include "source/settings/Settings.h"
+#include "biotracker/settings/Settings.h"
 #include "Common.h"
 
 #include "ui_EllipseFitterParamsWidget.h"

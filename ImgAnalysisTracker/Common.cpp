@@ -3,8 +3,8 @@
 #include <boost/optional.hpp>
 
 #include "LocalizerParamsWidget.h"
-#include "source/settings/Settings.h"
-#include "../pipeline/Localizer.h"
+#include "biotracker/settings/Settings.h"
+#include "pipeline/Localizer.h"
 
 namespace {
 template <typename T>
@@ -80,7 +80,6 @@ pipeline::settings::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
 	pipeline::settings::gridfitter_settings_t gridfitterSettings;
 	gridfitterSettings.loadValues(settings,
 	                              pipeline::settings::Gridfitter::Params::BASE);
-	return gridfitterSettings;
 	return gridfitterSettings;
 }
 /**
