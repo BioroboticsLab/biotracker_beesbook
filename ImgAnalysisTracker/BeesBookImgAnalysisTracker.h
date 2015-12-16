@@ -36,13 +36,8 @@ public:
     virtual void paint(cv::Mat &image, View const& = OriginalView) override;
     virtual void paintOverlay(QPainter *painter, View const& = OriginalView) override;
 
-    /*
-	std::shared_ptr<QWidget> getParamsWidget() override {
-		return _paramsWidget;
-	}
-    */
 	std::shared_ptr<QWidget> getToolsWidget() override {
-		return _toolsWidget;
+        return _biotrackerWidget;
 	}
 
 	// return keys that are handled by the tracker
@@ -57,8 +52,11 @@ private:
 
 	BeesBookCommon::Stage _selectedStage;
 
-	const std::shared_ptr<ParamsWidget> _paramsWidget;
-	const std::shared_ptr<QWidget>      _toolsWidget;
+    const std::shared_ptr<QWidget> _biotrackerWidget;
+    const std::unique_ptr<QVBoxLayout> _biotrackerWidgetLayout;
+
+    ParamsWidget _paramsWidget;
+    QWidget      _toolsWidget;
 
 	pipeline::Preprocessor  _preprocessor;
 	pipeline::Localizer     _localizer;
@@ -140,7 +138,7 @@ private:
 		std::unique_ptr<Widget> widget(std::make_unique<Widget>(_settings));
 		QObject::connect(widget.get(), &Widget::settingsChanged,
 		                 this, &BeesBookImgAnalysisTracker::settingsChanged);
-		_paramsWidget->setParamSubWidget(std::move(widget));
+        _paramsWidget.setParamSubWidget(std::move(widget));
 	}
 
 	std::chrono::system_clock::time_point _lastMouseEventTime;
@@ -160,6 +158,8 @@ private Q_SLOTS:
 	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
 	void settingsChanged(const BeesBookCommon::Stage stage);
 	void loadGroundTruthData();
-	void exportConfiguration();
+    void loadConfig();
+    void setPipelineConfig(std::string const& filename);
+    void exportConfiguration();
 	void loadTaglist();
 };

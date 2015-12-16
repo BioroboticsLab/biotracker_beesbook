@@ -99,13 +99,12 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings) :
     TrackingAlgorithm(settings),
     _interactionGrid(cv::Point2i( 300, 300), 23, 0.0, 0.0, 0.0),
     _selectedStage( BeesBookCommon::Stage::NoProcessing),
-    _paramsWidget(  std::make_shared<ParamsWidget>()),
-    _toolsWidget( std::make_shared<QWidget>()),
+    _biotrackerWidget(std::make_shared<QWidget>()),
+    _biotrackerWidgetLayout(std::make_unique<QVBoxLayout>()),
     _lastMouseEventTime(std::chrono::system_clock::now())
-
 {
 	Ui::ToolWidget uiTools;
-	uiTools.setupUi(_toolsWidget.get());
+    uiTools.setupUi(&_toolsWidget);
 
 	// store label pointer in groundtruth object for convenience (I suppose?)
 	_groundTruthWidgets.labelNumFalsePositives = uiTools.labelNumFalsePositives;
@@ -157,11 +156,19 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings) :
 	QObject::connect(uiTools.pushButtonLoadTaglist, &QPushButton::pressed, this,
 	                 &BeesBookImgAnalysisTracker::loadTaglist);
 
+    QObject::connect(uiTools.pushButtonLoadConfig, &QPushButton::pressed,
+                     this, &BeesBookImgAnalysisTracker::loadConfig);
+
 	// load settings from config file
 	_preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
 	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
 	_ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(_settings));
 	_gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(_settings));
+
+
+    _biotrackerWidgetLayout->addWidget(&_paramsWidget);
+    _biotrackerWidgetLayout->addWidget(&_toolsWidget);
+    _biotrackerWidget->setLayout(_biotrackerWidgetLayout.get());
 }
 
 void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& frame)
@@ -932,8 +939,60 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 		_groundTruthEvaluation->evaluateGridFitter();
 		_groundTruthEvaluation->evaluateDecoder();
 	}
-	//TODO: maybe check filehash here
+    //TODO: maybe check filehash here
 }
+
+void BeesBookImgAnalysisTracker::loadConfig()
+{
+    std::vector<boost::filesystem::path> files;
+
+    const QString filename = QFileDialog::getOpenFileName(QApplication::activeWindow(), "Open config", "", "*.json");
+
+    if (!filename.isEmpty()) {
+        setPipelineConfig(filename.toStdString());
+    }
+}
+
+void BeesBookImgAnalysisTracker::setPipelineConfig(const std::string &filename)
+{
+    // TODO! Add GUI widgets
+
+    pipeline::settings::preprocessor_settings_t preprocessor_settings;
+    pipeline::settings::localizer_settings_t localizer_settings;
+    pipeline::settings::ellipsefitter_settings_t ellipsefitter_settings;
+    pipeline::settings::gridfitter_settings_t gridfitter_settings;
+
+    for (pipeline::settings::settings_abs* settings :
+         std::array<pipeline::settings::settings_abs*, 4>({&preprocessor_settings,
+                                                          &localizer_settings,
+                                                          &ellipsefitter_settings,
+                                                          &gridfitter_settings}))
+    {
+        settings->loadFromJson(filename);
+    }
+
+#ifdef USE_DEEPLOCALIZER
+    static const boost::filesystem::path deeplocalizer_model_path(BOOST_PP_STRINGIZE(MODEL_BASE_PATH));
+
+    boost::filesystem::path model_path(localizer_settings.get_deeplocalizer_model_file());
+    model_path = deeplocalizer_model_path / model_path.parent_path().leaf() / model_path.filename();
+
+    boost::filesystem::path param_path(localizer_settings.get_deeplocalizer_param_file());
+    param_path = deeplocalizer_model_path / model_path.parent_path().leaf() / param_path.filename();
+
+    localizer_settings.setValue(pipeline::settings::Localizer::Params::DEEPLOCALIZER_MODEL_FILE,
+                                model_path.string());
+    localizer_settings.setValue(pipeline::settings::Localizer::Params::DEEPLOCALIZER_PARAM_FILE,
+                                param_path.string());
+#endif
+
+    _preprocessor.loadSettings(preprocessor_settings);
+    _localizer.loadSettings(localizer_settings);
+    _ellipsefitter.loadSettings(ellipsefitter_settings);
+    _gridFitter.loadSettings(gridfitter_settings);
+
+}
+
 
 void BeesBookImgAnalysisTracker::exportConfiguration() {
 	QString dir = QFileDialog::getExistingDirectory(0, tr("select directory"),
@@ -1027,7 +1086,7 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled( BeesBookCommon::Stage st
 			setParamsWidget<DecoderParamsWidget>();
 			break;
 		default:
-			_paramsWidget->setParamSubWidget(std::make_unique<QWidget>());
+            _paramsWidget.setParamSubWidget(std::make_unique<QWidget>());
 			break;
 		}
 

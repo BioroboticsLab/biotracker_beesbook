@@ -281,6 +281,13 @@
       <number>3</number>
      </property>
      <item>
+      <widget class="QPushButton" name="pushButtonLoadConfig">
+       <property name="text">
+        <string>load config...</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
