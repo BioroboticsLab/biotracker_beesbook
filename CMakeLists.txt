@@ -35,6 +35,17 @@ else()
         SOURCE_DIR "${CMAKECONFIG_PATH}")
 endif()
 
+if(NOT DEFINED DEEPLOCALIZER_MODELS_PATH)
+    CPM_AddModule("deeplocalizer_models"
+        GIT_REPOSITORY "git@github.com:BioroboticsLab/deeplocalizer_models.git"
+        GIT_TAG "master"
+    )
+else()
+    CPM_AddModule("deeplocalizer_models"
+        SOURCE_DIR "${DEEPLOCALIZER_MODELS_PATH}"
+    )
+endif()
+
 set(BIOTRACKER_CORE_LIB_TYPE SHARED)
 include_biotracker_core("master")
 include_pipeline("master")
