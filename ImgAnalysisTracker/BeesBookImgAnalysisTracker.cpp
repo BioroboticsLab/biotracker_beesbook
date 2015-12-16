@@ -23,8 +23,6 @@
 #include <boost/iostreams/stream.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 
-#include <biotracker/Registry.h>
-
 #include "Common.h"
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
@@ -39,16 +37,7 @@
 #include "pipeline/datastructure/serialization.hpp"
 #include "legacy/Grid3D.h"
 
-//#include "biotracker/tracking/algorithm/algorithms.h"
-
 #include "ui_ToolWidget.h"
-
-extern "C" {
-    void registerTracker() {
-        BioTracker::Core::Registry::getInstance().registerTrackerType<BeesBookImgAnalysisTracker>(
-                    "BeesBook ImgAnalysis");
-    }
-}
 
 namespace {
 struct CursorOverrideRAII {

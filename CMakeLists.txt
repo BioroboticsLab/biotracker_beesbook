@@ -35,6 +35,7 @@ else()
         SOURCE_DIR "${CMAKECONFIG_PATH}")
 endif()
 
+set(BIOTRACKER_CORE_LIB_TYPE SHARED)
 include_biotracker_core("master")
 include_pipeline("master")
 
