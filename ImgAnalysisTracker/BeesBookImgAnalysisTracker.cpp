@@ -237,6 +237,8 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 		// process image, find ROIs with tags
         _taglist = _localizer.process(cv::Mat(frameGray), std::move(_image));
 
+        Q_EMIT notifyGUI(std::to_string(_taglist.size()));
+
 		// set localizer views
 		_visualizationData.localizerInputImage     =  _image.clone();
 		_visualizationData.localizerBlobImage      = _localizer.getBlob().clone();
@@ -732,9 +734,9 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
 	return image;
 }
 
-void BeesBookImgAnalysisTracker::paint(cv::Mat &image, View const &view)
+void BeesBookImgAnalysisTracker::paint(ProxyMat &image, View const &view)
 {
-    cv::ellipse(image, cv::RotatedRect(cv::Point2f(100, 100), cv::Size2f(50, 50), 0), cv::Scalar(255, 0, 0));
+    cv::ellipse(image.getMat(), cv::RotatedRect(cv::Point2f(100, 100), cv::Size2f(50, 50), 0), cv::Scalar(255, 0, 0));
 	// TODO: adapt to recent changes
 //	// don't try to visualize results while data processing is running
 //	double similarity = 0;
@@ -777,61 +779,61 @@ void BeesBookImgAnalysisTracker::paint(cv::Mat &image, View const &view)
 		case BeesBookCommon::Stage::Preprocessor:
 			if ((view.name == "Preprocessor Output")
 			    && (_visualizationData.preprocessorImage)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.preprocessorImage.get(),
-				            image.type());
+                            image.getMat().type()));
 			} else if ((view.name == "Opts")
 			           && (_visualizationData.preprocessorOptImage)) {
-				image = rgbMatFromBwMat(
-				            _visualizationData.preprocessorOptImage.get(),
-				            image.type());
+                image.setMat(rgbMatFromBwMat(
+                            _visualizationData.preprocessorOptImage.get(),
+                            image.getMat().type()));
 
 			} else if ((view.name == "Honeyfilter")
 			           && (_visualizationData.preprocessorHoneyImage)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.preprocessorHoneyImage.get(),
-				            image.type());
+                            image.getMat().type()));
 
 			} else if ((view.name == "Threshold-Comb")
 			           && (_visualizationData.preprocessorThresholdImage)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.preprocessorThresholdImage.get(),
-				            image.type());
+                            image.getMat().type()));
 			}
 			break;
 		case BeesBookCommon::Stage::Localizer:
 			if ((view.name == "Blobs")
 			    && (_visualizationData.localizerBlobImage)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.localizerBlobImage.get(),
-				            image.type());
+                            image.getMat().type()));
 			} else if ((view.name == "Input")
 			           && (_visualizationData.localizerInputImage)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.localizerInputImage.get(),
-				            image.type());
+                            image.getMat().type()));
 
 			} else if ((view.name == "Threshold")
 			           && (_visualizationData.localizerThresholdImage)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.localizerThresholdImage.get(),
-				            image.type());
+                            image.getMat().type()));
 			}
 			break;
 		case BeesBookCommon::Stage::EllipseFitter:
 			if ((view.name == "Canny Edge")
 			    && (_visualizationData.ellipsefitterCannyEdge)) {
-				image = rgbMatFromBwMat(
+                image.setMat(rgbMatFromBwMat(
 				            _visualizationData.ellipsefitterCannyEdge.get(),
-				            image.type());
+                            image.getMat().type()));
 			}
-			visualizeEllipseFitterOutput(image);
+            visualizeEllipseFitterOutput(image.getMat());
 			break;
 		case BeesBookCommon::Stage::GridFitter:
-			visualizeGridFitterOutput(image);
+            visualizeGridFitterOutput(image.getMat());
 			break;
 		case BeesBookCommon::Stage::Decoder:
-			visualizeDecoderOutput(image);
+            visualizeDecoderOutput(image.getMat());
 			break;
 		default:
 			break;

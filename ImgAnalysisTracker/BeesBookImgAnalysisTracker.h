@@ -33,7 +33,7 @@ public:
     BeesBookImgAnalysisTracker(Settings& settings);
 
 	void track(ulong frameNumber, const cv::Mat& frame) override;
-    virtual void paint(cv::Mat &image, View const& = OriginalView) override;
+    virtual void paint(ProxyMat &image, View const& = OriginalView) override;
     virtual void paintOverlay(QPainter *painter, View const& = OriginalView) override;
 
 	std::shared_ptr<QWidget> getToolsWidget() override {
