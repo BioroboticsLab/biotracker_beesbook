@@ -7,7 +7,7 @@
 
 using namespace pipeline::settings::EllipseFitter;
 
-EllipseFitterParamsWidget::EllipseFitterParamsWidget(Settings &settings)
+EllipseFitterParamsWidget::EllipseFitterParamsWidget(BC::Settings &settings)
     : ParamsSubWidgetBase(settings)
 {
 	Ui::EllipseFitterParamsWidget paramsWidget;

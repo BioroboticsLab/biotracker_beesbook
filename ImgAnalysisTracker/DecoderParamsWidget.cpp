@@ -1,6 +1,6 @@
 #include "DecoderParamsWidget.h"
 
-DecoderParamsWidget::DecoderParamsWidget(Settings &settings)
+DecoderParamsWidget::DecoderParamsWidget(BC::Settings &settings)
     : ParamsSubWidgetBase(settings)
 {
 }

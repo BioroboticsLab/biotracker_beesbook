@@ -14,7 +14,7 @@ class ParamsSubWidgetBase: public QWidget {
 	Q_OBJECT
 public:
 	// memory is managed by ParamsWidget, therefore initialize QWidget with nullptr
-	ParamsSubWidgetBase(Settings &settings) :
+    ParamsSubWidgetBase(BC::Settings &settings) :
 	    QWidget(nullptr), _layout(this), _settings(settings) {
 		_layout.setMargin(0);
 		_layout.setSpacing(0);
@@ -25,9 +25,11 @@ protected:
 	QVBoxLayout _layout;
 	QWidget _uiWidget;
 
-	Settings& _settings;
+    BC::Settings& _settings;
 
-    void connectSlider(SpinBoxWithSlider* slider, const std::string& paramName, const BeesBookCommon::Stage &stage);
+    void connectSlider(BioTracker::Widgets::SpinBoxWithSlider* slider,
+                       const std::string& paramName,
+                       const BeesBookCommon::Stage &stage);
 
     void connectSettingsWidget(QCheckBox* check, const std::string& paramName,
                                const BeesBookCommon::Stage &stage);

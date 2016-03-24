@@ -6,7 +6,7 @@ using namespace pipeline::settings::Gridfitter;
 
 #include "ui_GridfitterParamsWidget.h"
 
-GridFitterParamsWidget::GridFitterParamsWidget(Settings &settings)
+GridFitterParamsWidget::GridFitterParamsWidget(BC::Settings &settings)
     : ParamsSubWidgetBase(settings)
 {
 	Ui::GridfitterParamsWidget paramsWidget;

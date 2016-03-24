@@ -8,7 +8,9 @@
 
 #include "legacy/Grid3D.h"
 
-GroundTruthEvaluation::GroundTruthEvaluation(Serialization::Data &&groundTruthData)
+namespace BC = BioTracker::Core;
+
+GroundTruthEvaluation::GroundTruthEvaluation(BioTracker::Core::Serialization::Data &&groundTruthData)
     : _groundTruthData(std::move(groundTruthData))
 {
 }
@@ -19,7 +21,7 @@ void GroundTruthEvaluation::evaluateLocalizer(const int currentFrameNumber, tagl
 
 	// iterate over ground truth data (typed Grid3D), convert them to PipelineGrids
 	// and store them in the std::set taggedGridsOnFrame
-	for (TrackedObject const& object : _groundTruthData.getTrackedObjects())
+    for (BC::TrackedObject const& object : _groundTruthData.getTrackedObjects())
 	{
 		const std::shared_ptr<Grid3D> grid3d = object.maybeGet<Grid3D>(currentFrameNumber);
 		if (!grid3d)
@@ -46,7 +48,7 @@ void GroundTruthEvaluation::evaluateLocalizer(const int currentFrameNumber, tagl
 		for (const pipeline::Tag& tag : taglist)
 		{
 			// ROI of pipeline tag
-			const cv::Rect& tagBox = tag.getBox();
+            const cv::Rect& tagBox = tag.getRoi();
 
 			// target property is complete containment
 			if (tagBox.contains(gridBox.tl())
@@ -70,7 +72,7 @@ void GroundTruthEvaluation::evaluateLocalizer(const int currentFrameNumber, tagl
 	for (const pipeline::Tag& tag : taglist)
 	{
 		// ROI of pipeline tag
-		const cv::Rect& tagBox = tag.getBox();
+        const cv::Rect& tagBox = tag.getRoi();
 
 		bool inGroundTruth = false;
 
@@ -329,7 +331,7 @@ GroundTruthEvaluation::gridcomparison_t GroundTruthEvaluation::compareGrids(cons
 		const pipeline::Ellipse& ellipse = candidate.getEllipse();
 
 		for (cv::Point const& point : outerPoints) {
-			cv::Point rel_point = cv::Point(point.x -detectedTag.getBox().x,point.y -detectedTag.getBox().y);
+            cv::Point rel_point = cv::Point(point.x -detectedTag.getRoi().x,point.y -detectedTag.getRoi().y);
 			sumDeviation += deviation(ellipse.getCen(), ellipse.getAxis(),
 			                          ellipse.getAngle(), rel_point);
 		}

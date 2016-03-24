@@ -1,9 +1,9 @@
 #include "ParamsSubWidgetBase.h"
 
-void ParamsSubWidgetBase::connectSlider(SpinBoxWithSlider *slider, const std::string &paramName, const BeesBookCommon::Stage &stage) {
+void ParamsSubWidgetBase::connectSlider(BioTracker::Widgets::SpinBoxWithSlider *slider, const std::string &paramName, const BeesBookCommon::Stage &stage) {
     int initialValue = _settings.getValueOfParam<int>(paramName);
     slider->setValue(initialValue);
-    QObject::connect(slider, &SpinBoxWithSlider::valueChanged, [ = ](int value) {
+    QObject::connect(slider, &BioTracker::Widgets::SpinBoxWithSlider::valueChanged, [ = ](int value) {
         _settings.setParam(paramName,value);
 
         Q_EMIT settingsChanged(stage);

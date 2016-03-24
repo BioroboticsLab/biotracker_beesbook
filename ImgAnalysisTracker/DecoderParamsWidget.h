@@ -8,5 +8,5 @@ class DecoderParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	DecoderParamsWidget(Settings& settings);
+    DecoderParamsWidget(BC::Settings& settings);
 };

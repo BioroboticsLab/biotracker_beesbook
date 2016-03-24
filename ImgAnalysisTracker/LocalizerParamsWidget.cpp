@@ -5,7 +5,7 @@
 
 using namespace pipeline::settings::Localizer;
 
-LocalizerParamsWidget::LocalizerParamsWidget(Settings &settings) :
+LocalizerParamsWidget::LocalizerParamsWidget(BC::Settings &settings) :
 		ParamsSubWidgetBase(settings)
 {
     Ui::LocalizerParamsWidget paramsWidget;

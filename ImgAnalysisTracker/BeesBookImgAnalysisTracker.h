@@ -25,20 +25,18 @@
 
 #include "biotracker/serialization/SerializationData.h"
 
+namespace BC = BioTracker::Core;
+
 class PipelineGrid;
 
-class BeesBookImgAnalysisTracker : public TrackingAlgorithm {
+class BeesBookImgAnalysisTracker : public BC::TrackingAlgorithm {
 	Q_OBJECT
 public:
-    BeesBookImgAnalysisTracker(Settings& settings);
+    BeesBookImgAnalysisTracker(BC::Settings& settings);
 
 	void track(ulong frameNumber, const cv::Mat& frame) override;
-    virtual void paint(ProxyMat &image, View const& = OriginalView) override;
-    virtual void paintOverlay(QPainter *painter, View const& = OriginalView) override;
-
-	std::shared_ptr<QWidget> getToolsWidget() override {
-        return _biotrackerWidget;
-	}
+    virtual void paint(size_t frameNumber, BC::ProxyMat &image, View const &view = OriginalView) override;
+    virtual void paintOverlay(size_t frameNumber, QPainter *painter, View const &view = OriginalView) override;
 
 	// return keys that are handled by the tracker
 	std::set<Qt::Key> const& grabbedKeys() const override;
@@ -52,8 +50,7 @@ private:
 
 	BeesBookCommon::Stage _selectedStage;
 
-    const std::shared_ptr<QWidget> _biotrackerWidget;
-    const std::unique_ptr<QVBoxLayout> _biotrackerWidgetLayout;
+    QVBoxLayout _biotrackerWidgetLayout;
 
     ParamsWidget _paramsWidget;
     QWidget      _toolsWidget;
@@ -115,7 +112,7 @@ private:
 		QLabel* labelPrecision;
 	} _groundTruthWidgets;
 
-	void visualizePreprocessorOutput(cv::Mat& image) const;
+    void visualizePreprocessorOutput(cv::Mat& image) const;
     void visualizePreprocessorOutputOverlay(QPainter *painter) const;
     void visualizeLocalizerOutputOverlay(QPainter *painter) const;
 	void visualizeEllipseFitterOutput(cv::Mat& image) const;
@@ -135,7 +132,7 @@ private:
 
 	template<typename Widget>
 	void setParamsWidget() {
-		std::unique_ptr<Widget> widget(std::make_unique<Widget>(_settings));
+        std::unique_ptr<Widget> widget(std::make_unique<Widget>(m_settings));
 		QObject::connect(widget.get(), &Widget::settingsChanged,
 		                 this, &BeesBookImgAnalysisTracker::settingsChanged);
         _paramsWidget.setParamSubWidget(std::move(widget));

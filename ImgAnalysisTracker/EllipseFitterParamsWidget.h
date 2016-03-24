@@ -8,5 +8,5 @@ class EllipseFitterParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	EllipseFitterParamsWidget(Settings& settings);
+    EllipseFitterParamsWidget(BC::Settings& settings);
 };

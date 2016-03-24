@@ -3,9 +3,8 @@
 
 #include "ui_PreprocessorParamsWidget.h"
 
-PreprocessorParamsWidget::PreprocessorParamsWidget(Settings &settings) :
+PreprocessorParamsWidget::PreprocessorParamsWidget(BC::Settings &settings) :
     ParamsSubWidgetBase(settings)
-
 {
 	using namespace pipeline::settings::Preprocessor;
 

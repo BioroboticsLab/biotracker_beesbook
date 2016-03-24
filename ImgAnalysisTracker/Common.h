@@ -10,7 +10,9 @@
 #include "pipeline/settings/GridFitterSettings.h"
 #include "pipeline/settings/PreprocessorSettings.h"
 
-class Settings;
+#include <biotracker/settings/Settings.h>
+
+namespace BC = BioTracker::Core;
 
 namespace BeesBookCommon {
 enum class Stage : uint8_t {
@@ -23,8 +25,8 @@ enum class Stage : uint8_t {
 	Decoder
 };
 
-pipeline::settings::localizer_settings_t getLocalizerSettings(Settings& settings);
-pipeline::settings::ellipsefitter_settings_t getEllipseFitterSettings(Settings& settings);
-pipeline::settings::gridfitter_settings_t getGridfitterSettings(Settings& settings);
-pipeline::settings::preprocessor_settings_t getPreprocessorSettings(Settings& settings);
+pipeline::settings::localizer_settings_t getLocalizerSettings(BC::Settings& settings);
+pipeline::settings::ellipsefitter_settings_t getEllipseFitterSettings(BC::Settings& settings);
+pipeline::settings::gridfitter_settings_t getGridfitterSettings(BC::Settings& settings);
+pipeline::settings::preprocessor_settings_t getPreprocessorSettings(BC::Settings& settings);
 }

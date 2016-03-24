@@ -95,12 +95,10 @@ private:
 };
 }
 
-BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings) :
+BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(BC::Settings& settings) :
     TrackingAlgorithm(settings),
     _interactionGrid(cv::Point2i( 300, 300), 23, 0.0, 0.0, 0.0),
     _selectedStage( BeesBookCommon::Stage::NoProcessing),
-    _biotrackerWidget(std::make_shared<QWidget>()),
-    _biotrackerWidgetLayout(std::make_unique<QVBoxLayout>()),
     _lastMouseEventTime(std::chrono::system_clock::now())
 {
 	Ui::ToolWidget uiTools;
@@ -160,15 +158,15 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(Settings& settings) :
                      this, &BeesBookImgAnalysisTracker::loadConfig);
 
 	// load settings from config file
-	_preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(_settings));
-	_localizer.loadSettings(BeesBookCommon::getLocalizerSettings(_settings));
-	_ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(_settings));
-	_gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(_settings));
+    _preprocessor.loadSettings(BeesBookCommon::getPreprocessorSettings(m_settings));
+    _localizer.loadSettings(BeesBookCommon::getLocalizerSettings(m_settings));
+    _ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(m_settings));
+    _gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(m_settings));
 
 
-    _biotrackerWidgetLayout->addWidget(&_paramsWidget);
-    _biotrackerWidgetLayout->addWidget(&_toolsWidget);
-    _biotrackerWidget->setLayout(_biotrackerWidgetLayout.get());
+    _biotrackerWidgetLayout.addWidget(&_paramsWidget);
+    _biotrackerWidgetLayout.addWidget(&_toolsWidget);
+    getToolsWidget()->setLayout(&_biotrackerWidgetLayout);
 }
 
 void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& frame)
@@ -178,7 +176,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 
     // notify lambda function
 	const auto notify =
-            [&](std::string const& message) {Q_EMIT notifyGUI(message, MSGS::NOTIFICATION);};
+            [&](std::string const& message) {Q_EMIT notifyGUI(message, BC::Messages::MessageType::NOTIFICATION);};
 
 	// acquire mutex (released when leaving function scope)
 	const std::lock_guard<std::mutex> lock(_tagListLock);
@@ -210,20 +208,24 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 		return;
 
 	// keep code in extra block for measuring execution time in RAII-fashion
-	cv::Mat image;
-	{
+    pipeline::PreprocessorResult result;
+    {
 		// start the clock
 		MeasureTimeRAII measure("Preprocessor", notify);
 
 		// process current frame and store result frame in _image
 		// as of now this is a sobel filtered image further processed
-        _image = _preprocessor.process(frameGray);
+        result = _preprocessor.process(frameGray);
+        _image = result.originalImage;
 
 		// set preprocessor views
-		_visualizationData.preprocessorImage          = _image.clone();
+        _visualizationData.preprocessorImage          = result.preprocessedImage;
+        // TODO!
+        /*
 		_visualizationData.preprocessorOptImage       = _preprocessor.getOptsImage();
 		_visualizationData.preprocessorHoneyImage     = _preprocessor.getHoneyImage();
 		_visualizationData.preprocessorThresholdImage = _preprocessor.getThresholdImage();
+        */
 	}
 
 	// end of preprocessor stage
@@ -235,7 +237,7 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat& fra
 		MeasureTimeRAII measure("Localizer", notify);
 
 		// process image, find ROIs with tags
-        _taglist = _localizer.process(cv::Mat(frameGray), std::move(_image));
+        _taglist = _localizer.process(std::move(result));
 
         Q_EMIT notifyGUI(std::to_string(_taglist.size()));
 
@@ -323,13 +325,13 @@ void BeesBookImgAnalysisTracker::drawEllipse(const pipeline::Tag& tag, QPen& pen
     cv::RotatedRect ellipseBox(ellipse.getCen(), ellipse.getAxis(), static_cast<float>(ellipse.getAngle()));
 
 	//get ellipse definition
-	QPoint center = CvHelper::toQt(ellipse.getCen());
+    QPoint center = BC::CvHelper::toQt(ellipse.getCen());
 	qreal rx = static_cast<qreal>(ellipse.getAxis().width);
 	qreal ry = static_cast<qreal>(ellipse.getAxis().height);
 
 	//draw ellipse
 	painter->save();
-    painter->translate(tag.getBox().x +center.x() ,tag.getBox().y+center.y());
+    painter->translate(tag.getRoi().x +center.x() ,tag.getRoi().y+center.y());
 	painter->rotate(-ellipse.getAngle());
 	painter->drawEllipse(QPointF(0,0),rx,ry);
 	painter->restore();
@@ -337,15 +339,15 @@ void BeesBookImgAnalysisTracker::drawEllipse(const pipeline::Tag& tag, QPen& pen
 	//draw score
 	painter->setPen(pen);
 	painter->save();
-	painter->translate(tag.getBox().x,tag.getBox().y);
-	painter->drawText(CvHelper::toQt(ellipseBox.boundingRect().tl()) + offset,
+    painter->translate(tag.getRoi().x,tag.getRoi().y);
+    painter->drawText(BC::CvHelper::toQt(ellipseBox.boundingRect().tl()) + offset,
 	                  "Score: " + QString::number(ellipse.getVote()));
 	painter->restore();
 }
 
 void BeesBookImgAnalysisTracker::drawBox(const cv::Rect &box, QPainter* painter, QPen& pen) const
 {
-	const QRect qbox = CvHelper::toQt(box);
+    const QRect qbox = BC::CvHelper::toQt(box);
 	painter->setPen(pen);
 	painter->drawRect(qbox);
 }
@@ -361,7 +363,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *paint
 		for (const pipeline::Tag& tag : _taglist)
 		{
 			pen.setColor(QCOLOR_LIGHT_BLUE);
-			drawBox(tag.getBox(), painter, pen);
+            drawBox(tag.getRoi(), painter, pen);
 		}
 		return;
 	}
@@ -374,14 +376,14 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *paint
 	for (const pipeline::Tag& tag : results.truePositives)
 	{
 		pen.setColor(QCOLOR_GREEN);
-		drawBox(tag.getBox(), painter, pen);
+        drawBox(tag.getRoi(), painter, pen);
 	}
 
 	// false detections
 	for (const pipeline::Tag& tag : results.falsePositives)
 	{
 		pen.setColor(QCOLOR_RED);
-		drawBox(tag.getBox(), painter, pen);
+        drawBox(tag.getRoi(), painter, pen);
 	}
 
 	// missing detections
@@ -644,9 +646,9 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
 					drawBox((grid.getBoundingBox() + cv::Size(20, 20)) - cv::Point(10, 10), painter, pen);
 
 					painter->setPen(pen);
-					painter->drawText(QPoint(tag.getBox().x, tag.getBox().y - distance -5),
+                    painter->drawText(QPoint(tag.getRoi().x, tag.getRoi().y - distance -5),
 					                  QString::number(decoding.to_ulong()));
-					painter->drawText(QPoint(tag.getBox().x, tag.getBox().y-5),
+                    painter->drawText(QPoint(tag.getRoi().x, tag.getRoi().y-5),
 					                  idString);
 				}
 			}
@@ -734,7 +736,7 @@ cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
 	return image;
 }
 
-void BeesBookImgAnalysisTracker::paint(ProxyMat &image, View const &view)
+void BeesBookImgAnalysisTracker::paint(size_t, BC::ProxyMat &image, View const &view)
 {
     cv::ellipse(image.getMat(), cv::RotatedRect(cv::Point2f(100, 100), cv::Size2f(50, 50), 0), cv::Scalar(255, 0, 0));
 	// TODO: adapt to recent changes
@@ -842,11 +844,9 @@ void BeesBookImgAnalysisTracker::paint(ProxyMat &image, View const &view)
 	} else {
 		return;
 	}
-
-
 }
 
-void BeesBookImgAnalysisTracker::paintOverlay(QPainter *painter, View const&)
+void BeesBookImgAnalysisTracker::paintOverlay(size_t, QPainter *painter, View const &)
 {
     painter->setPen(QColor(255, 0, 0));
     painter->drawEllipse(QRectF(QPointF(100.f, 100.f), QSize(100, 100)));
@@ -884,19 +884,19 @@ void BeesBookImgAnalysisTracker::settingsChanged(
 	switch (stage) {
 	case BeesBookCommon::Stage::Preprocessor:
 		_preprocessor.loadSettings(
-		            BeesBookCommon::getPreprocessorSettings(_settings));
+                    BeesBookCommon::getPreprocessorSettings(m_settings));
 		break;
 	case BeesBookCommon::Stage::Localizer:
 		_localizer.loadSettings(
-		            BeesBookCommon::getLocalizerSettings(_settings));
+                    BeesBookCommon::getLocalizerSettings(m_settings));
 		break;
 	case BeesBookCommon::Stage::EllipseFitter:
 		_ellipsefitter.loadSettings(
-		            BeesBookCommon::getEllipseFitterSettings(_settings));
+                    BeesBookCommon::getEllipseFitterSettings(m_settings));
 		break;
 	case BeesBookCommon::Stage::GridFitter:
 		_gridFitter.loadSettings(
-		            BeesBookCommon::getGridfitterSettings(_settings));
+                    BeesBookCommon::getGridfitterSettings(m_settings));
 		break;
 	case BeesBookCommon::Stage::Decoder:
 		// TODO
@@ -918,7 +918,7 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
 	cereal::JSONInputArchive ar(is);
 
 	// load serialized data into member .data
-	Serialization::Data data;
+    BC::Serialization::Data data;
 	ar(data);
 
 	_groundTruthEvaluation.emplace(std::move(data));
@@ -1000,7 +1000,7 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	QString dir = QFileDialog::getExistingDirectory(0, tr("select directory"),
 	                                                "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 	if (dir.isEmpty()) {
-        Q_EMIT notifyGUI("config export: no directory given", MSGS::FAIL);
+        Q_EMIT notifyGUI("config export: no directory given", BC::Messages::MessageType::FAIL);
 		return;
 	}
 	bool ok;
@@ -1009,22 +1009,22 @@ void BeesBookImgAnalysisTracker::exportConfiguration() {
 	                                         tr("choose filename (without extension)"), tr("Filename:"),
 	                                         QLineEdit::Normal, "Filename", &ok);
 	if (!ok || filename.isEmpty()) {
-        Q_EMIT notifyGUI("config export: no filename given", MSGS::FAIL);
+        Q_EMIT notifyGUI("config export: no filename given", BC::Messages::MessageType::FAIL);
 		return;
 	}
 
 	boost::property_tree::ptree pt = BeesBookCommon::getPreprocessorSettings(
-	            _settings).getPTree();
-	BeesBookCommon::getLocalizerSettings(_settings).addToPTree(pt);
-	BeesBookCommon::getEllipseFitterSettings(_settings).addToPTree(pt);
-	BeesBookCommon::getGridfitterSettings(_settings).addToPTree(pt);
+                m_settings).getPTree();
+    BeesBookCommon::getLocalizerSettings(m_settings).addToPTree(pt);
+    BeesBookCommon::getEllipseFitterSettings(m_settings).addToPTree(pt);
+    BeesBookCommon::getGridfitterSettings(m_settings).addToPTree(pt);
 
 	try {
 		boost::property_tree::write_json(
 		            dir.toStdString() + "/" + filename.toStdString() + ".json", pt);
-        Q_EMIT notifyGUI("config export successfully", MSGS::NOTIFICATION);
+        Q_EMIT notifyGUI("config export successfully", BC::Messages::MessageType::NOTIFICATION);
 	} catch (std::exception &e) {
-        Q_EMIT notifyGUI("config export failed (" + std::string(e.what()) + ")", MSGS::FAIL);
+        Q_EMIT notifyGUI("config export failed (" + std::string(e.what()) + ")", BC::Messages::MessageType::FAIL);
 	}
 
 	return;

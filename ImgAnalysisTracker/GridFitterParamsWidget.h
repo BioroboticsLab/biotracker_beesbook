@@ -8,5 +8,5 @@ class GridFitterParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	GridFitterParamsWidget(Settings& settings);
+    GridFitterParamsWidget(BC::Settings& settings);
 };

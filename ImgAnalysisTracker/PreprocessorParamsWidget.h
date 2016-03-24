@@ -8,5 +8,5 @@ class PreprocessorParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	PreprocessorParamsWidget(Settings& settings);
+    PreprocessorParamsWidget(BC::Settings& settings);
 };

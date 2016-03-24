@@ -8,7 +8,7 @@
 
 namespace {
 template <typename T>
-void loadValue(Settings& settings, std::string const& base, pipeline::settings::setting_entry& entry) {
+void loadValue(BC::Settings& settings, std::string const& base, pipeline::settings::setting_entry& entry) {
     const boost::optional<T> param =
             settings.maybeGetValueOfParam<T>(base + entry.setting_name);
 
@@ -28,7 +28,7 @@ void loadValue(Settings& settings, std::string const& base, pipeline::settings::
  * @param settings settings general biotracker-settings
  * @param base string, in which node the settings where located
  */
-void pipeline::settings::settings_abs::loadValues(Settings& settings,
+void pipeline::settings::settings_abs::loadValues(BC::Settings& settings,
                                                   std::string base) {
 
 	typedef std::map<std::string, setting_entry>::iterator it_type;
@@ -51,7 +51,7 @@ void pipeline::settings::settings_abs::loadValues(Settings& settings,
  * @return setting object for pipeline
  */
 pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
-        Settings &settings) {
+        BC::Settings &settings) {
 	pipeline::settings::localizer_settings_t localizerSettings;
 	localizerSettings.loadValues(settings,
 	                             pipeline::settings::Localizer::Params::BASE);
@@ -63,7 +63,7 @@ pipeline::settings::localizer_settings_t BeesBookCommon::getLocalizerSettings(
  * @return setting object for pipeline
  */
 pipeline::settings::ellipsefitter_settings_t BeesBookCommon::getEllipseFitterSettings(
-        Settings &settings) {
+        BC::Settings &settings) {
 	pipeline::settings::ellipsefitter_settings_t ellipsefitterSettings;
 	ellipsefitterSettings.loadValues(settings,
 	                                 pipeline::settings::EllipseFitter::Params::BASE);
@@ -75,7 +75,7 @@ pipeline::settings::ellipsefitter_settings_t BeesBookCommon::getEllipseFitterSet
  * @return setting object for pipeline
  */
 pipeline::settings::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
-        Settings &settings) {
+        BC::Settings &settings) {
 
 	pipeline::settings::gridfitter_settings_t gridfitterSettings;
 	gridfitterSettings.loadValues(settings,
@@ -88,7 +88,7 @@ pipeline::settings::gridfitter_settings_t BeesBookCommon::getGridfitterSettings(
  * @return setting object for pipeline
  */
 pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSettings(
-        Settings &settings) {
+        BC::Settings &settings) {
 	pipeline::settings::preprocessor_settings_t preprocessorSettings;
 
 	preprocessorSettings.loadValues(settings,

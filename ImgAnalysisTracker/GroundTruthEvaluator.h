@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "biotracker/serialization/SerializationData.h"
+#include "biotracker/serialization/TrackedObject.h"
 
 #include "pipeline/common/Grid.h"
 
@@ -83,7 +84,7 @@ struct DecoderEvaluationResults {
 class GroundTruthEvaluation
 {
 public:
-	explicit GroundTruthEvaluation(Serialization::Data&& groundTruthData);
+    explicit GroundTruthEvaluation(BioTracker::Core::Serialization::Data&& groundTruthData);
 
 	void evaluateLocalizer(const int currentFrameNumber, taglist_t const& taglist);
 	void evaluateEllipseFitter(taglist_t const& taglist);
@@ -98,7 +99,7 @@ public:
 	GroundTruth::DecoderEvaluationResults const& getDecoderResults() const { return _decoderResults; }
 
 private:
-	Serialization::Data _groundTruthData;
+    BioTracker::Core::Serialization::Data _groundTruthData;
 
 	GroundTruth::LocalizerEvaluationResults     _localizerResults;
 	GroundTruth::EllipseFitterEvaluationResults _ellipsefitterResults;

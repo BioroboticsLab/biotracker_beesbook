@@ -12,5 +12,5 @@ class LocalizerParamsWidget : public ParamsSubWidgetBase
 {
 	Q_OBJECT
 public:
-	LocalizerParamsWidget(Settings& settings);
+    LocalizerParamsWidget(BC::Settings& settings);
 };
