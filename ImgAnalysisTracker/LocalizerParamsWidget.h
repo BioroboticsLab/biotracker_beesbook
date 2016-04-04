@@ -8,9 +8,8 @@
 
 class Settings;
 
-class LocalizerParamsWidget : public ParamsSubWidgetBase
-{
-	Q_OBJECT
-public:
-    LocalizerParamsWidget(BC::Settings& settings);
+class LocalizerParamsWidget : public ParamsSubWidgetBase {
+    Q_OBJECT
+  public:
+    LocalizerParamsWidget(BC::Settings &settings);
 };

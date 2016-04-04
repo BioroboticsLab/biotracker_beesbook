@@ -29,84 +29,91 @@ typedef std::reference_wrapper<const PipelineGrid> PipelineGridRef;
 }
 
 namespace GroundTruth {
-struct LocalizerEvaluationResults 		{
-	std::set<GroundTruthGridSPtr>                 taggedGridsOnFrame;
-	std::set<PipelineTagRef>                      falsePositives;
-	std::set<PipelineTagRef>                      truePositives;
-	std::set<GroundTruthGridSPtr>                 falseNegatives;
-	std::map<PipelineTagRef, GroundTruthGridSPtr> gridByTag;
+struct LocalizerEvaluationResults       {
+    std::set<GroundTruthGridSPtr>                 taggedGridsOnFrame;
+    std::set<PipelineTagRef>                      falsePositives;
+    std::set<PipelineTagRef>                      truePositives;
+    std::set<GroundTruthGridSPtr>                 falseNegatives;
+    std::map<PipelineTagRef, GroundTruthGridSPtr> gridByTag;
 };
 
-struct EllipseFitterEvaluationResults
-{
-	std::set<GroundTruthGridSPtr> taggedGridsOnFrame;
-	std::set<PipelineTagRef> falsePositives;
+struct EllipseFitterEvaluationResults {
+    std::set<GroundTruthGridSPtr> taggedGridsOnFrame;
+    std::set<PipelineTagRef> falsePositives;
 
-	//mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
-	std::vector<std::pair<PipelineTagRef, PipelineTagCandidateRef>> truePositives;
-	std::set<GroundTruthGridSPtr> falseNegatives;
+    //mapping of pipeline tag to its best ellipse (only if it matches ground truth ellipse)
+    std::vector<std::pair<PipelineTagRef, PipelineTagCandidateRef>> truePositives;
+    std::set<GroundTruthGridSPtr> falseNegatives;
 };
 
-struct GridFitterEvaluationResults
-{
-	std::vector<PipelineGridRef>  truePositives;
-	std::vector<PipelineGridRef>  falsePositives;
-	std::set<GroundTruthGridSPtr> falseNegatives;
+struct GridFitterEvaluationResults {
+    std::vector<PipelineGridRef>  truePositives;
+    std::vector<PipelineGridRef>  falsePositives;
+    std::set<GroundTruthGridSPtr> falseNegatives;
 };
 
 struct DecoderEvaluationResults {
-	struct result_t {
-		cv::Rect            boundingBox;
-		int                 decodedTagId;
-		std::string         decodedTagIdStr;
-		Grid::idarray_t     groundTruthTagId;
-		std::string         groundTruthTagIdStr;
-		int                 hammingDistance;
-		PipelineGridRef     pipelineGrid;
+    struct result_t {
+        cv::Rect            boundingBox;
+        int                 decodedTagId;
+        std::string         decodedTagIdStr;
+        Grid::idarray_t     groundTruthTagId;
+        std::string         groundTruthTagIdStr;
+        int                 hammingDistance;
+        PipelineGridRef     pipelineGrid;
 
-		result_t(const PipelineGridRef grid) : pipelineGrid(grid) {}
-	};
+        result_t(const PipelineGridRef grid) : pipelineGrid(grid) {}
+    };
 
-	boost::optional<double> getAverageHammingDistanceNormalized() const {
-		if (!evaluationResults.empty()) {
-			double sum = 0.;
-			for (const result_t& result : evaluationResults) {
-				sum += (static_cast<double>(result.hammingDistance) / Grid::NUM_MIDDLE_CELLS);
-			}
-			return (sum / evaluationResults.size());
-		} else return boost::optional<double>();
-	}
+    boost::optional<double> getAverageHammingDistanceNormalized() const {
+        if (!evaluationResults.empty()) {
+            double sum = 0.;
+            for (const result_t &result : evaluationResults) {
+                sum += (static_cast<double>(result.hammingDistance) / Grid::NUM_MIDDLE_CELLS);
+            }
+            return (sum / evaluationResults.size());
+        } else {
+            return boost::optional<double>();
+        }
+    }
 
-	std::vector<result_t> evaluationResults;
+    std::vector<result_t> evaluationResults;
 };
 }
 
-class GroundTruthEvaluation
-{
-public:
-    explicit GroundTruthEvaluation(BioTracker::Core::Serialization::Data&& groundTruthData);
+class GroundTruthEvaluation {
+  public:
+    explicit GroundTruthEvaluation(BioTracker::Core::Serialization::Data &&groundTruthData);
 
-	void evaluateLocalizer(const int currentFrameNumber, taglist_t const& taglist);
-	void evaluateEllipseFitter(taglist_t const& taglist);
-	void evaluateGridFitter();
-	void evaluateDecoder();
+    void evaluateLocalizer(const int currentFrameNumber, taglist_t const &taglist);
+    void evaluateEllipseFitter(taglist_t const &taglist);
+    void evaluateGridFitter();
+    void evaluateDecoder();
 
-	void reset();
+    void reset();
 
-	GroundTruth::LocalizerEvaluationResults const& getLocalizerResults() const { return _localizerResults; }
-	GroundTruth::EllipseFitterEvaluationResults const& getEllipsefitterResults() const { return _ellipsefitterResults; }
-	GroundTruth::GridFitterEvaluationResults const& getGridfitterResults() const { return _gridfitterResults; }
-	GroundTruth::DecoderEvaluationResults const& getDecoderResults() const { return _decoderResults; }
+    GroundTruth::LocalizerEvaluationResults const &getLocalizerResults() const {
+        return _localizerResults;
+    }
+    GroundTruth::EllipseFitterEvaluationResults const &getEllipsefitterResults() const {
+        return _ellipsefitterResults;
+    }
+    GroundTruth::GridFitterEvaluationResults const &getGridfitterResults() const {
+        return _gridfitterResults;
+    }
+    GroundTruth::DecoderEvaluationResults const &getDecoderResults() const {
+        return _decoderResults;
+    }
 
-private:
+  private:
     BioTracker::Core::Serialization::Data _groundTruthData;
 
-	GroundTruth::LocalizerEvaluationResults     _localizerResults;
-	GroundTruth::EllipseFitterEvaluationResults _ellipsefitterResults;
-	GroundTruth::GridFitterEvaluationResults    _gridfitterResults;
-	GroundTruth::DecoderEvaluationResults       _decoderResults;
+    GroundTruth::LocalizerEvaluationResults     _localizerResults;
+    GroundTruth::EllipseFitterEvaluationResults _ellipsefitterResults;
+    GroundTruth::GridFitterEvaluationResults    _gridfitterResults;
+    GroundTruth::DecoderEvaluationResults       _decoderResults;
 
-	typedef std::pair<double, PipelineTagCandidateRef> gridcomparison_t;
+    typedef std::pair<double, PipelineTagCandidateRef> gridcomparison_t;
 
-	gridcomparison_t compareGrids(const pipeline::Tag& detectedTag, const GroundTruthGridSPtr& grid) const;
+    gridcomparison_t compareGrids(const pipeline::Tag &detectedTag, const GroundTruthGridSPtr &grid) const;
 };

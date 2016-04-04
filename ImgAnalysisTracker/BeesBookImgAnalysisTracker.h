@@ -30,133 +30,133 @@ namespace BC = BioTracker::Core;
 class PipelineGrid;
 
 class BeesBookImgAnalysisTracker : public BC::TrackingAlgorithm {
-	Q_OBJECT
-public:
-    BeesBookImgAnalysisTracker(BC::Settings& settings);
+    Q_OBJECT
+  public:
+    BeesBookImgAnalysisTracker(BC::Settings &settings);
 
-	void track(ulong frameNumber, const cv::Mat& frame) override;
+    void track(ulong frameNumber, const cv::Mat &frame) override;
     virtual void paint(size_t frameNumber, BC::ProxyMat &image, View const &view = OriginalView) override;
     virtual void paintOverlay(size_t frameNumber, QPainter *painter, View const &view = OriginalView) override;
 
-	// return keys that are handled by the tracker
-	std::set<Qt::Key> const& grabbedKeys() const override;
+    // return keys that are handled by the tracker
+    std::set<Qt::Key> const &grabbedKeys() const override;
 
-	void setGroundTruthStats(const size_t numGroundTruth, const size_t numTruePositives, const size_t numFalsePositives, const size_t numFalseNegatives) const;
+    void setGroundTruthStats(const size_t numGroundTruth, const size_t numTruePositives, const size_t numFalsePositives,
+                             const size_t numFalseNegatives) const;
 
-	QPen getDefaultPen(QPainter *painter) const;
-private:
-	// a grid to interact with
-	PipelineGrid          _interactionGrid;
+    QPen getDefaultPen(QPainter *painter) const;
+  private:
+    // a grid to interact with
+    PipelineGrid          _interactionGrid;
 
-	BeesBookCommon::Stage _selectedStage;
+    BeesBookCommon::Stage _selectedStage;
 
     QVBoxLayout _biotrackerWidgetLayout;
 
     ParamsWidget _paramsWidget;
     QWidget      _toolsWidget;
 
-	pipeline::Preprocessor  _preprocessor;
-	pipeline::Localizer     _localizer;
-	pipeline::EllipseFitter _ellipsefitter;
-	pipeline::GridFitter    _gridFitter;
-	pipeline::Decoder       _decoder;
+    pipeline::Preprocessor  _preprocessor;
+    pipeline::Localizer     _localizer;
+    pipeline::EllipseFitter _ellipsefitter;
+    pipeline::GridFitter    _gridFitter;
+    pipeline::Decoder       _decoder;
 
-	cv::Mat _image;
-	std::mutex _tagListLock;
+    cv::Mat _image;
+    std::mutex _tagListLock;
 
-	typedef std::vector<pipeline::Tag> taglist_t;
-	taglist_t _taglist;
+    typedef std::vector<pipeline::Tag> taglist_t;
+    taglist_t _taglist;
 
-	taglist_t loadSerializedTaglist(std::string const& path);
+    taglist_t loadSerializedTaglist(std::string const &path);
 
-	struct
-	{
-		boost::optional<cv::Mat> preprocessorImage;
-		boost::optional<cv::Mat> preprocessorOptImage;
-		boost::optional<cv::Mat> preprocessorHoneyImage;
-		boost::optional<cv::Mat> preprocessorThresholdImage;
-		boost::optional<cv::Mat> localizerInputImage;
-		boost::optional<cv::Mat> localizerThresholdImage;
-		boost::optional<cv::Mat> localizerSobelImage;
-		boost::optional<cv::Mat> localizerBlobImage;
-		boost::optional<cv::Mat> ellipsefitterCannyEdge;
+    struct {
+        boost::optional<cv::Mat> preprocessorImage;
+        boost::optional<cv::Mat> preprocessorOptImage;
+        boost::optional<cv::Mat> preprocessorHoneyImage;
+        boost::optional<cv::Mat> preprocessorThresholdImage;
+        boost::optional<cv::Mat> localizerInputImage;
+        boost::optional<cv::Mat> localizerThresholdImage;
+        boost::optional<cv::Mat> localizerSobelImage;
+        boost::optional<cv::Mat> localizerBlobImage;
+        boost::optional<cv::Mat> ellipsefitterCannyEdge;
 
-		// these references are just stored for convenience in order to invalidate all
-		// visualizations in a loop
-		typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
-		
-		reference_array_t visualizations = reference_array_t
-		{ preprocessorImage,
-		  preprocessorThresholdImage,
-		  localizerInputImage,
-		  localizerThresholdImage,
-		  localizerSobelImage,
-		  localizerBlobImage,
-		  ellipsefitterCannyEdge };
-	} _visualizationData;
+        // these references are just stored for convenience in order to invalidate all
+        // visualizations in a loop
+        typedef std::array<std::reference_wrapper<boost::optional<cv::Mat>>, 7> reference_array_t;
 
-	boost::optional<GroundTruthEvaluation> _groundTruthEvaluation;
+        reference_array_t visualizations = reference_array_t {
+            preprocessorImage,
+            preprocessorThresholdImage,
+            localizerInputImage,
+            localizerThresholdImage,
+            localizerSobelImage,
+            localizerBlobImage,
+            ellipsefitterCannyEdge };
+    } _visualizationData;
 
-	struct
-	{
-		QLabel* labelNumFalsePositives;
-		QLabel* labelNumFalseNegatives;
-		QLabel* labelNumTruePositives;
-		QLabel* labelNumRecall;
-		QLabel* labelNumPrecision;
+    boost::optional<GroundTruthEvaluation> _groundTruthEvaluation;
 
-		QLabel* labelFalsePositives;
-		QLabel* labelFalseNegatives;
-		QLabel* labelTruePositives;
-		QLabel* labelRecall;
-		QLabel* labelPrecision;
-	} _groundTruthWidgets;
+    struct {
+        QLabel *labelNumFalsePositives;
+        QLabel *labelNumFalseNegatives;
+        QLabel *labelNumTruePositives;
+        QLabel *labelNumRecall;
+        QLabel *labelNumPrecision;
 
-    void visualizePreprocessorOutput(cv::Mat& image) const;
+        QLabel *labelFalsePositives;
+        QLabel *labelFalseNegatives;
+        QLabel *labelTruePositives;
+        QLabel *labelRecall;
+        QLabel *labelPrecision;
+    } _groundTruthWidgets;
+
+    void visualizePreprocessorOutput(cv::Mat &image) const;
     void visualizePreprocessorOutputOverlay(QPainter *painter) const;
     void visualizeLocalizerOutputOverlay(QPainter *painter) const;
-	void visualizeEllipseFitterOutput(cv::Mat& image) const;
+    void visualizeEllipseFitterOutput(cv::Mat &image) const;
     void visualizeEllipseFitterOutputOverlay(QPainter *painter) const;
-	void visualizeGridFitterOutput(cv::Mat& image) const;
+    void visualizeGridFitterOutput(cv::Mat &image) const;
     void visualizeGridFitterOutputOverlay(QPainter *painter) const;
-	void visualizeDecoderOutput(cv::Mat& image) const;
+    void visualizeDecoderOutput(cv::Mat &image) const;
     void visualizeDecoderOutputOverlay(QPainter *painter) const;
 
-	void drawBox(const cv::Rect& box, QPainter *painter, QPen &pen) const;
-	void drawEllipse(const pipeline::Tag& tag, QPen &pen, QPainter *painter, const pipeline::Ellipse& ellipse) const;
+    void drawBox(const cv::Rect &box, QPainter *painter, QPen &pen) const;
+    void drawEllipse(const pipeline::Tag &tag, QPen &pen, QPainter *painter, const pipeline::Ellipse &ellipse) const;
 
-	std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag& detectedTag, std::shared_ptr<PipelineGrid> const& grid) const;
-	int compareDecodings(pipeline::Tag &detectedTag, const std::shared_ptr<PipelineGrid> &grid) const;
+    std::pair<double, std::reference_wrapper<const pipeline::TagCandidate>> compareGrids(const pipeline::Tag &detectedTag,
+            std::shared_ptr<PipelineGrid> const &grid) const;
+    int compareDecodings(pipeline::Tag &detectedTag, const std::shared_ptr<PipelineGrid> &grid) const;
 
-	cv::Mat rgbMatFromBwMat(const cv::Mat& mat, const int type) const;
+    cv::Mat rgbMatFromBwMat(const cv::Mat &mat, const int type) const;
 
-	template<typename Widget>
-	void setParamsWidget() {
+    template<typename Widget>
+    void setParamsWidget() {
         std::unique_ptr<Widget> widget(std::make_unique<Widget>(m_settings));
-		QObject::connect(widget.get(), &Widget::settingsChanged,
-		                 this, &BeesBookImgAnalysisTracker::settingsChanged);
+        QObject::connect(widget.get(), &Widget::settingsChanged,
+                         this, &BeesBookImgAnalysisTracker::settingsChanged);
         _paramsWidget.setParamSubWidget(std::move(widget));
-	}
+    }
 
-	std::chrono::system_clock::time_point _lastMouseEventTime;
+    std::chrono::system_clock::time_point _lastMouseEventTime;
 
-	void keyPressEvent(QKeyEvent *e) override;
-	void mouseMoveEvent    (QMouseEvent * e) override;
-	void mousePressEvent   (QMouseEvent * e) override;
+    void keyPressEvent(QKeyEvent *e) override;
+    void mouseMoveEvent(QMouseEvent *e) override;
+    void mousePressEvent(QMouseEvent *e) override;
 
-	int findGridInGroundTruth();
+    int findGridInGroundTruth();
 
-	void resetViews();
+    void resetViews();
 
-protected:
-	bool event(QEvent* event) override;
+  protected:
+    bool event(QEvent *event) override;
 
-private Q_SLOTS:
-	void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
-	void settingsChanged(const BeesBookCommon::Stage stage);
-	void loadGroundTruthData();
+  private Q_SLOTS:
+    void stageSelectionToogled(BeesBookCommon::Stage stage, bool checked);
+    void settingsChanged(const BeesBookCommon::Stage stage);
+    void loadGroundTruthData();
     void loadConfig();
-    void setPipelineConfig(std::string const& filename);
+    void setPipelineConfig(std::string const &filename);
     void exportConfiguration();
-	void loadTaglist();
+    void loadTaglist();
 };

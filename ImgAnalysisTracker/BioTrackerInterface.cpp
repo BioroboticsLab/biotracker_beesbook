@@ -5,6 +5,6 @@
 extern "C" {
     void registerTracker() {
         BioTracker::Core::Registry::getInstance().registerTrackerType<BeesBookImgAnalysisTracker>(
-                    "BeesBook ImgAnalysis");
+            "BeesBook ImgAnalysis");
     }
 }

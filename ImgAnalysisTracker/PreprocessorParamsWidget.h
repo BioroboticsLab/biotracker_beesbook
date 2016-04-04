@@ -4,9 +4,8 @@
 
 class Settings;
 
-class PreprocessorParamsWidget : public ParamsSubWidgetBase
-{
-	Q_OBJECT
-public:
-    PreprocessorParamsWidget(BC::Settings& settings);
+class PreprocessorParamsWidget : public ParamsSubWidgetBase {
+    Q_OBJECT
+  public:
+    PreprocessorParamsWidget(BC::Settings &settings);
 };

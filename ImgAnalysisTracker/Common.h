@@ -16,17 +16,17 @@ namespace BC = BioTracker::Core;
 
 namespace BeesBookCommon {
 enum class Stage : uint8_t {
-	NoProcessing = 0,
-	Preprocessor,
-	Localizer,
-	EllipseFitter,
-	Transformer,
-	GridFitter,
-	Decoder
+    NoProcessing = 0,
+    Preprocessor,
+    Localizer,
+    EllipseFitter,
+    Transformer,
+    GridFitter,
+    Decoder
 };
 
-pipeline::settings::localizer_settings_t getLocalizerSettings(BC::Settings& settings);
-pipeline::settings::ellipsefitter_settings_t getEllipseFitterSettings(BC::Settings& settings);
-pipeline::settings::gridfitter_settings_t getGridfitterSettings(BC::Settings& settings);
-pipeline::settings::preprocessor_settings_t getPreprocessorSettings(BC::Settings& settings);
+pipeline::settings::localizer_settings_t getLocalizerSettings(BC::Settings &settings);
+pipeline::settings::ellipsefitter_settings_t getEllipseFitterSettings(BC::Settings &settings);
+pipeline::settings::gridfitter_settings_t getGridfitterSettings(BC::Settings &settings);
+pipeline::settings::preprocessor_settings_t getPreprocessorSettings(BC::Settings &settings);
 }
