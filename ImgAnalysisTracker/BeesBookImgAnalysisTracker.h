@@ -72,9 +72,7 @@ class BeesBookImgAnalysisTracker : public BC::TrackingAlgorithm {
 
     struct {
         boost::optional<cv::Mat> preprocessorImage;
-        boost::optional<cv::Mat> preprocessorOptImage;
-        boost::optional<cv::Mat> preprocessorHoneyImage;
-        boost::optional<cv::Mat> preprocessorThresholdImage;
+        boost::optional<cv::Mat> preprocessorClahe;
         boost::optional<cv::Mat> localizerInputImage;
         boost::optional<cv::Mat> localizerThresholdImage;
         boost::optional<cv::Mat> localizerSobelImage;
@@ -87,7 +85,7 @@ class BeesBookImgAnalysisTracker : public BC::TrackingAlgorithm {
 
         reference_array_t visualizations = reference_array_t {
             preprocessorImage,
-            preprocessorThresholdImage,
+            preprocessorClahe,
             localizerInputImage,
             localizerThresholdImage,
             localizerSobelImage,
