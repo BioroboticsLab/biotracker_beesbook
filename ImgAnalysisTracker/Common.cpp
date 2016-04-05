@@ -1,10 +1,19 @@
 #include "Common.h"
 
 #include <boost/optional.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+#include <QPainter>
+
+#include <pipeline/Localizer.h>
+#include <pipeline/datastructure/Tag.h>
+#include <biotracker/util/CvHelper.h>
 
 #include "LocalizerParamsWidget.h"
-#include "biotracker/settings/Settings.h"
-#include "pipeline/Localizer.h"
+
+namespace BC = BioTracker::Core;
 
 namespace {
 template <typename T>
@@ -114,3 +123,19 @@ pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSetti
 
     return preprocessorSettings;
 }
+
+
+
+
+
+BeesBookCommon::taglist_t BeesBookCommon::loadSerializedTaglist(const std::__cxx11::string &path) {
+    taglist_t taglist;
+
+    std::ifstream ifs(path);
+    boost::archive::xml_iarchive ia(ifs);
+    ia &BOOST_SERIALIZATION_NVP(taglist);
+
+    return taglist;
+}
+
+

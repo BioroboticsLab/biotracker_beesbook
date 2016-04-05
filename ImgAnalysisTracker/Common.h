@@ -50,44 +50,7 @@ pipeline::settings::ellipsefitter_settings_t getEllipseFitterSettings(BC::Settin
 pipeline::settings::gridfitter_settings_t getGridfitterSettings(BC::Settings &settings);
 pipeline::settings::preprocessor_settings_t getPreprocessorSettings(BC::Settings &settings);
 
-struct CursorOverrideRAII {
-    CursorOverrideRAII(Qt::CursorShape shape) {
-        QApplication::setOverrideCursor(shape);
-    }
-    ~CursorOverrideRAII() {
-        QApplication::restoreOverrideCursor();
-    }
-};
+typedef std::vector<pipeline::Tag> taglist_t;
 
-
-class MeasureTimeRAII {
-  public:
-    MeasureTimeRAII(std::string const &what, std::function<void(std::string const &)> notify,
-                    boost::optional<size_t> num = boost::optional<size_t>())
-        : _start(std::chrono::steady_clock::now()),
-          _what(what),
-          _notify(notify),
-          _num(num) {
-    }
-
-    ~MeasureTimeRAII() {
-        const auto end = std::chrono::steady_clock::now();
-        const auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(end - _start).count();
-        std::stringstream message;
-        message << _what << " finished in " << dur << "ms.";
-        if (_num) {
-            const auto avg = dur / _num.get();
-            message << " (Average: " << avg << "ms)";
-        }
-        message << std::endl;
-        _notify(message.str());
-        // display message right away
-        QApplication::processEvents();
-    }
-  private:
-    const std::chrono::steady_clock::time_point _start;
-    const std::string _what;
-    const std::function<void(std::string const &)> _notify;
-    const boost::optional<size_t> _num;
-};
+taglist_t loadSerializedTaglist(std::string const &path);
 }

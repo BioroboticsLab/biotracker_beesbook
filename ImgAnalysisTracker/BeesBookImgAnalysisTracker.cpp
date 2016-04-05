@@ -35,16 +35,18 @@
 #include "pipeline/datastructure/PipelineGrid.h"
 #include "pipeline/datastructure/serialization.hpp"
 #include "legacy/Grid3D.h"
+#include "Utils.h"
+#include "Visualization.h"
 
 #include "ui_ToolWidget.h"
 
 using namespace BeesBookCommon;
+using namespace Visualization;
+using namespace Utils;
 
 BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(BC::Settings &settings) :
     TrackingAlgorithm(settings),
-    _interactionGrid(cv::Point2i(300, 300), 23, 0.0, 0.0, 0.0),
-    _selectedStage(BeesBookCommon::Stage::NoProcessing),
-    _lastMouseEventTime(std::chrono::system_clock::now()) {
+    _selectedStage(BeesBookCommon::Stage::NoProcessing) {
     Ui::ToolWidget uiTools;
     uiTools.setupUi(&_toolsWidget);
 
@@ -88,7 +90,6 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(BC::Settings &settings) :
         Q_EMIT forceTracking();
     });
 
-    //
     QObject::connect(uiTools.pushButtonLoadGroundTruth, &QPushButton::pressed,
                      this, &BeesBookImgAnalysisTracker::loadGroundTruthData);
 
@@ -107,9 +108,9 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(BC::Settings &settings) :
     _ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(m_settings));
     _gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(m_settings));
 
-
     _biotrackerWidgetLayout.addWidget(&_paramsWidget);
     _biotrackerWidgetLayout.addWidget(&_toolsWidget);
+
     getToolsWidget()->setLayout(&_biotrackerWidgetLayout);
 }
 
@@ -141,11 +142,13 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat &fra
     if (_groundTruthEvaluation) {
         _groundTruthEvaluation.get().reset();
 
-        for (QLabel* label : {_groundTruthWidgets.labelNumFalsePositives,
-                              _groundTruthWidgets.labelNumTruePositives,
-                              _groundTruthWidgets.labelNumFalseNegatives,
-                              _groundTruthWidgets.labelNumPrecision,
-                              _groundTruthWidgets.labelNumRecall}) {
+        for (QLabel *label : {
+                    _groundTruthWidgets.labelNumFalsePositives,
+                    _groundTruthWidgets.labelNumTruePositives,
+                    _groundTruthWidgets.labelNumFalseNegatives,
+                    _groundTruthWidgets.labelNumPrecision,
+                    _groundTruthWidgets.labelNumRecall
+                }) {
             label->setText("");
         }
     }
@@ -255,53 +258,6 @@ void BeesBookImgAnalysisTracker::track(ulong /*frameNumber*/, const cv::Mat &fra
     }
 }
 
-void BeesBookImgAnalysisTracker::setGroundTruthStats(const size_t numGroundTruth, const size_t numTruePositives,
-        const size_t numFalsePositives, const size_t numFalseNegatives) const {
-    const double recall    = numGroundTruth ?
-                             (static_cast<double>(numTruePositives) / static_cast<double>(numGroundTruth)) * 100. : 0.;
-    const double precision = (numTruePositives + numFalsePositives) ?
-                             (static_cast<double>(numTruePositives) / static_cast<double>(numTruePositives + numFalsePositives)) * 100. : 0.;
-
-    _groundTruthWidgets.labelNumFalseNegatives->setText(QString::number(numFalseNegatives));
-    _groundTruthWidgets.labelNumFalsePositives->setText(QString::number(numFalsePositives));
-    _groundTruthWidgets.labelNumTruePositives->setText(QString::number(numTruePositives));
-    _groundTruthWidgets.labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
-    _groundTruthWidgets.labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
-}
-
-void BeesBookImgAnalysisTracker::drawEllipse(const pipeline::Tag &tag, QPen &pen, QPainter *painter,
-        const pipeline::Ellipse &ellipse) const {
-    static const QPoint offset(20, -20);
-
-    cv::RotatedRect ellipseBox(ellipse.getCen(), ellipse.getAxis(), static_cast<float>(ellipse.getAngle()));
-
-    //get ellipse definition
-    QPoint center = BC::CvHelper::toQt(ellipse.getCen());
-    qreal rx = static_cast<qreal>(ellipse.getAxis().width);
-    qreal ry = static_cast<qreal>(ellipse.getAxis().height);
-
-    //draw ellipse
-    painter->save();
-    painter->translate(tag.getRoi().x +center.x() ,tag.getRoi().y+center.y());
-    painter->rotate(-ellipse.getAngle());
-    painter->drawEllipse(QPointF(0,0),rx,ry);
-    painter->restore();
-
-    //draw score
-    painter->setPen(pen);
-    painter->save();
-    painter->translate(tag.getRoi().x,tag.getRoi().y);
-    painter->drawText(BC::CvHelper::toQt(ellipseBox.boundingRect().tl()) + offset,
-                      "Score: " + QString::number(ellipse.getVote()));
-    painter->restore();
-}
-
-void BeesBookImgAnalysisTracker::drawBox(const cv::Rect &box, QPainter *painter, QPen &pen) const {
-    const QRect qbox = BC::CvHelper::toQt(box);
-    painter->setPen(pen);
-    painter->drawRect(qbox);
-}
-
 void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *painter) const {
     QPen pen = getDefaultPen(painter);
 
@@ -342,7 +298,7 @@ void BeesBookImgAnalysisTracker::visualizeLocalizerOutputOverlay(QPainter *paint
     const size_t numFalsePositives = results.falsePositives.size();
     const size_t numFalseNegatives = results.falseNegatives.size();
 
-    setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
+    _groundTruthWidgets.setResults(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
 
 void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutput(cv::Mat &image) const {
@@ -411,7 +367,7 @@ void BeesBookImgAnalysisTracker::visualizeEllipseFitterOutputOverlay(QPainter *p
     const size_t numFalsePositives = results.falsePositives.size();
     const size_t numFalseNegatives = results.falseNegatives.size();
 
-    setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
+    _groundTruthWidgets.setResults(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat &image) const {
@@ -448,7 +404,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutput(cv::Mat &image) const
     }
 }
 
-QPen BeesBookImgAnalysisTracker::getDefaultPen(QPainter *painter) const {
+QPen BeesBookImgAnalysisTracker::getDefaultPen(QPainter *painter) {
     QFont font(QFontDatabase::systemFont(QFontDatabase::FixedFont));
     font.setPointSize(10);
     painter->setFont(font);
@@ -457,16 +413,6 @@ QPen BeesBookImgAnalysisTracker::getDefaultPen(QPainter *painter) const {
     pen.setCosmetic(true);
 
     return pen;
-}
-
-BeesBookImgAnalysisTracker::taglist_t BeesBookImgAnalysisTracker::loadSerializedTaglist(const std::string &path) {
-    taglist_t taglist;
-
-    std::ifstream ifs(path);
-    boost::archive::xml_iarchive ia(ifs);
-    ia &BOOST_SERIALIZATION_NVP(taglist);
-
-    return taglist;
 }
 
 void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *painter) const {
@@ -517,7 +463,7 @@ void BeesBookImgAnalysisTracker::visualizeGridFitterOutputOverlay(QPainter *pain
     const size_t numFalsePositives = results.falsePositives.size();
     const size_t numFalseNegatives = results.falseNegatives.size();
 
-    setGroundTruthStats(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
+    _groundTruthWidgets.setResults(numGroundTruth, numTruePositives, numFalsePositives, numFalseNegatives);
 }
 
 void BeesBookImgAnalysisTracker::visualizeDecoderOutput(cv::Mat &image) const {
@@ -653,46 +599,8 @@ void BeesBookImgAnalysisTracker::visualizeDecoderOutputOverlay(QPainter *painter
             QString::number(precPartly, 'f', 2) + "%");
 }
 
-
-cv::Mat BeesBookImgAnalysisTracker::rgbMatFromBwMat(const cv::Mat &mat,
-        const int type) const {
-    // TODO: convert B&W to RGB
-    // this could probably be implemented more efficiently
-    cv::Mat image;
-    cv::Mat channels[3] = { mat.clone(), mat.clone(), mat.clone() };
-    cv::merge(channels, 3, image);
-    image.convertTo(image, type);
-    return image;
-}
-
 void BeesBookImgAnalysisTracker::paint(size_t, BC::ProxyMat &image, View const &view) {
     cv::ellipse(image.getMat(), cv::RotatedRect(cv::Point2f(100, 100), cv::Size2f(50, 50), 0), cv::Scalar(255, 0, 0));
-    // TODO: adapt to recent changes
-//  // don't try to visualize results while data processing is running
-//  double similarity = 0;
-
-//  int i = findGridInGroundTruth();
-
-//  if ( i >= 0)
-//  {
-//      TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
-//      // get grid pointer of current object in list
-//      std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
-
-//      // if the pointer is valid
-//      if ( pGrid )
-//      {
-//          // check if grids are sufficiently close to each other
-//          if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
-//          {
-//              PipelineGrid temp(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
-//              similarity = _interactionGrid.compare(temp);
-//          }
-//      }
-//  }
-
-//  _interactionGrid.drawContours(image, 0.5, cv::Vec3b(static_cast<uint8_t>((1 - similarity) * 255), static_cast<uint8_t>(similarity*255.0), 0));
-//  _groundTruth.labelNumTruePositives->setText( QString::number(similarity, 'f', 2));
 
     if (_tagListLock.try_lock()) {
         // restore original ground truth labels after they have possibly been
@@ -791,9 +699,6 @@ void BeesBookImgAnalysisTracker::paintOverlay(size_t, QPainter *painter, View co
     }
 }
 
-void BeesBookImgAnalysisTracker::visualizePreprocessorOutput(cv::Mat &) const {
-}
-
 void BeesBookImgAnalysisTracker::settingsChanged(
     const BeesBookCommon::Stage stage) {
     switch (stage) {
@@ -879,11 +784,12 @@ void BeesBookImgAnalysisTracker::setPipelineConfig(const std::string &filename) 
     pipeline::settings::gridfitter_settings_t gridfitter_settings;
 
     for (pipeline::settings::settings_abs *settings :
-            std::array<pipeline::settings::settings_abs *, 4>(
-                {&preprocessor_settings,
-                 &localizer_settings,
-                 &ellipsefitter_settings,
-                 &gridfitter_settings})) {
+    std::array<pipeline::settings::settings_abs *, 4>( {
+    &preprocessor_settings,
+    &localizer_settings,
+    &ellipsefitter_settings,
+    &gridfitter_settings
+})) {
         settings->loadFromJson(filename);
     }
 
@@ -1009,161 +915,20 @@ void BeesBookImgAnalysisTracker::stageSelectionToogled(BeesBookCommon::Stage sta
     }
 }
 
-
-bool BeesBookImgAnalysisTracker::event(QEvent *event) {
-    const QEvent::Type etype = event->type();
-    switch (etype) {
-    case QEvent::KeyPress:
-        keyPressEvent(static_cast<QKeyEvent *>(event));
-        return true;
-    case QEvent::MouseButtonPress:
-        mousePressEvent(static_cast<QMouseEvent *>(event));
-        return true;
-    case QEvent::MouseButtonRelease:
-        mouseReleaseEvent(static_cast<QMouseEvent *>(event));
-        return true;
-    case QEvent::MouseMove:
-        mouseMoveEvent(static_cast<QMouseEvent *>(event));
-        return true;
-    default:
-        event->ignore();
-        return false;
-    }
-}
-
-
-const std::set<Qt::Key> &BeesBookImgAnalysisTracker::grabbedKeys() const {
-    static const std::set<Qt::Key> keys {
-        Qt::Key_W, Qt::Key_A,
-        Qt::Key_S, Qt::Key_D,
-        Qt::Key_Q, Qt::Key_E,
-        Qt::Key_R,
-    };
-    return keys;
-}
-
-
-void BeesBookImgAnalysisTracker::keyPressEvent(QKeyEvent *e) {
-    static const double rotateIncrement = 0.05;
-
-    switch (e->key()) {
-    // rotate
-    case Qt::Key_W: {
-        _interactionGrid.setXRotation(_interactionGrid.getXRotation() + rotateIncrement);
-        break;
-
-    }
-    case Qt::Key_S: {
-        _interactionGrid.setXRotation(_interactionGrid.getXRotation() - rotateIncrement);
-        break;
-    }
-    case Qt::Key_A: {
-        _interactionGrid.setYRotation(_interactionGrid.getYRotation() + rotateIncrement);
-        break;
-
-    }
-    case Qt::Key_D: {
-        _interactionGrid.setYRotation(_interactionGrid.getYRotation() - rotateIncrement);
-        break;
-    }
-    case Qt::Key_Q: {
-        _interactionGrid.setZRotation(_interactionGrid.getZRotation() + rotateIncrement);
-        break;
-
-    }
-    case Qt::Key_E: {
-        _interactionGrid.setZRotation(_interactionGrid.getZRotation() - rotateIncrement);
-        break;
-    }
-    // TODO: adapt to recent changes
-//  case Qt::Key_R:
-//  {
-//      int i = findGridInGroundTruth();
-
-//      if ( i >= 0)
-//      {
-//          TrackedObject trObj = _groundTruth.data.getTrackedObjects().at(i);
-//          // get grid pointer of current object in list
-//          std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(getCurrentFrameNumber());
-
-//          // if the pointer is valid
-//          if ( pGrid )
-//          {
-//              // check if grids are sufficiently close to each other
-//              if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
-//              {
-//                  _interactionGrid = PipelineGrid(pGrid->getCenter(), pGrid->getPixelRadius(), pGrid->getZRotation(), pGrid->getYRotation(), pGrid->getXRotation());
-//              }
-//          }
-//      }
-//      break;
-//  }
-    default:
-        break;
-    } // END: switch (e->key())
-    //} // END: _activeGrid
-
-    // TODO: skip "Q_EMIT update()" if event doesn't alter image (i.e. ctrl + 0)
-    Q_EMIT update();
-}
-
-
-// called when MOUSE BUTTON IS CLICKED
-void BeesBookImgAnalysisTracker::mousePressEvent(QMouseEvent *e) {
-    // position of mouse cursor
-    cv::Point mousePosition(e->x(), e->y());
-
-    _interactionGrid.setCenter(mousePosition);
-
-    Q_EMIT update();
-}
-
-// called when mouse pointer MOVES
-void BeesBookImgAnalysisTracker::mouseMoveEvent(QMouseEvent *e) {
-    // get current time
-    const auto elapsed = std::chrono::system_clock::now() - _lastMouseEventTime;
-
-    // slow down update rate to 1000 Hz max
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() > 10) {
-        if (e->buttons() & Qt::LeftButton) {
-            cv::Point mousePosition(e->x(), e->y());
-            _interactionGrid.setCenter(mousePosition);
-            Q_EMIT update();
-        }
-        _lastMouseEventTime = std::chrono::system_clock::now();
-    }
-}
-
-int BeesBookImgAnalysisTracker::findGridInGroundTruth() {
-    // TODO: adapt to recent changes
-//  if(_groundTruth.available)
-//  {
-//      int framenum = getCurrentFrameNumber();
-//      std::vector<TrackedObject> GTObjects = _groundTruth.data.getTrackedObjects();
-
-//      //iterate over all ground truth objects
-//      //        for (const TrackedObject trObj : GTObjects)
-//      for (unsigned int i = 0; i < GTObjects.size(); i++)
-//      {
-//          TrackedObject trObj = GTObjects.at(i);
-//          // get grid pointer of current object in list
-//          std::shared_ptr<Grid3D> pGrid = trObj.maybeGet<Grid3D>(framenum);
-
-//          // if the pointer is valid
-//          if ( pGrid )
-//          {
-//              // check if grids are sufficiently close to each other
-//              if ( cv::norm( (pGrid->getCenter() - _interactionGrid.getCenter()) ) < 10.0 )
-//              {
-//                  return i;
-//              }
-//          }
-//      }
-//  }
-    return -1;
-}
-
 void BeesBookImgAnalysisTracker::resetViews() {
     Q_EMIT registerViews({});
 }
 
+void GroundTruthWidgets::setResults(const size_t numGroundTruth, const size_t numTruePositives,
+                                    const size_t numFalsePositives, const size_t numFalseNegatives) const {
+    const double recall    = numGroundTruth ?
+                             (static_cast<double>(numTruePositives) / static_cast<double>(numGroundTruth)) * 100. : 0.;
+    const double precision = (numTruePositives + numFalsePositives) ?
+                             (static_cast<double>(numTruePositives) / static_cast<double>(numTruePositives + numFalsePositives)) * 100. : 0.;
+
+    labelNumFalseNegatives->setText(QString::number(numFalseNegatives));
+    labelNumFalsePositives->setText(QString::number(numFalsePositives));
+    labelNumTruePositives->setText(QString::number(numTruePositives));
+    labelNumRecall->setText(QString::number(recall, 'f', 2) + "%");
+    labelNumPrecision->setText(QString::number(precision, 'f', 2) + "%");
+}
