@@ -20,7 +20,6 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/stream.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 
 #include "Common.h"
@@ -880,15 +879,14 @@ void BeesBookImgAnalysisTracker::setPipelineConfig(const std::string &filename) 
     pipeline::settings::gridfitter_settings_t gridfitter_settings;
 
     for (pipeline::settings::settings_abs *settings :
-            std::array<pipeline::settings::settings_abs *, 4>({&preprocessor_settings,
-                    &localizer_settings,
-                    &ellipsefitter_settings,
-                    &gridfitter_settings
-                                                              })) {
+            std::array<pipeline::settings::settings_abs *, 4>(
+                {&preprocessor_settings,
+                 &localizer_settings,
+                 &ellipsefitter_settings,
+                 &gridfitter_settings})) {
         settings->loadFromJson(filename);
     }
 
-#ifdef USE_DEEPLOCALIZER
     static const boost::filesystem::path deeplocalizer_model_path(BOOST_PP_STRINGIZE(MODEL_BASE_PATH));
 
     boost::filesystem::path model_path(localizer_settings.get_deeplocalizer_model_file());
@@ -901,13 +899,15 @@ void BeesBookImgAnalysisTracker::setPipelineConfig(const std::string &filename) 
                                 model_path.string());
     localizer_settings.setValue(pipeline::settings::Localizer::Params::DEEPLOCALIZER_PARAM_FILE,
                                 param_path.string());
-#endif
 
-    _preprocessor.loadSettings(preprocessor_settings);
-    _localizer.loadSettings(localizer_settings);
-    _ellipsefitter.loadSettings(ellipsefitter_settings);
-    _gridFitter.loadSettings(gridfitter_settings);
-
+    try {
+        _preprocessor.loadSettings(preprocessor_settings);
+        _localizer.loadSettings(localizer_settings);
+        _ellipsefitter.loadSettings(ellipsefitter_settings);
+        _gridFitter.loadSettings(gridfitter_settings);
+    } catch (std::runtime_error err) {
+        Q_EMIT notifyGUI(std::string("Unable to load settings: ") + err.what(), BC::Messages::MessageType::FAIL);
+    }
 }
 
 

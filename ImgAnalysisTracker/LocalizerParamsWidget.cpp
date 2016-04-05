@@ -36,7 +36,6 @@ LocalizerParamsWidget::LocalizerParamsWidget(BC::Settings &settings) :
                           Params::BASE + Params::MAX_NUM_PIXELS,
                           BeesBookCommon::Stage::Localizer);
 
-#if USE_DEEPLOCALIZER
     connectSettingsWidget(paramsWidget.use_deeplocalizer_filter,
                           Params::BASE + Params::DEEPLOCALIZER_FILTER,
                           BeesBookCommon::Stage::Localizer);
@@ -49,5 +48,4 @@ LocalizerParamsWidget::LocalizerParamsWidget(BC::Settings &settings) :
     connectSettingsWidget(paramsWidget.probability_threshold,
                           Params::BASE + Params::DEEPLOCALIZER_PROBABILITY_THRESHOLD,
                           BeesBookCommon::Stage::Localizer);
-#endif
 }
