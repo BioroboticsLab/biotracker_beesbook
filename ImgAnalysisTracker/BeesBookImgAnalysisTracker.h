@@ -11,19 +11,20 @@
 
 #include <boost/optional.hpp>
 
-#include "Common.h"
-#include "GroundTruthEvaluator.h"
-#include "ParamsWidget.h"
-#include "pipeline/Preprocessor.h"
-#include "pipeline/Localizer.h"
-#include "pipeline/EllipseFitter.h"
-#include "pipeline/GridFitter.h"
-#include "pipeline/Decoder.h"
-#include "biotracker/settings/Settings.h"
-#include "biotracker/TrackingAlgorithm.h"
-#include "biotracker/util/CvHelper.h"
+#include <pipeline/Preprocessor.h>
+#include <pipeline/Localizer.h>
+#include <pipeline/EllipseFitter.h>
+#include <pipeline/GridFitter.h>
+#include <pipeline/Decoder.h>
+#include <pipeline/util/GroundTruthEvaluator.h>
 
-#include "biotracker/serialization/SerializationData.h"
+#include <biotracker/settings/Settings.h>
+#include <biotracker/TrackingAlgorithm.h>
+#include <biotracker/util/CvHelper.h>
+#include <biotracker/serialization/SerializationData.h>
+
+#include "Common.h"
+#include "ParamsWidget.h"
 
 namespace BC = BioTracker::Core;
 

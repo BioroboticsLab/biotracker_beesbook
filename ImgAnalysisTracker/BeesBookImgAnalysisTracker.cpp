@@ -22,22 +22,23 @@
 #include <boost/iostreams/device/file.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 
+#include <pipeline/util/CvHelper.h>
+#include <pipeline/util/Util.h>
+#include <pipeline/datastructure/Tag.h>
+#include <pipeline/datastructure/TagCandidate.h>
+#include <pipeline/datastructure/PipelineGrid.h>
+#include <pipeline/datastructure/serialization.hpp>
+
+#include <groundtruth/converter.h>
+
 #include "Common.h"
 #include "DecoderParamsWidget.h"
 #include "GridFitterParamsWidget.h"
 #include "LocalizerParamsWidget.h"
 #include "EllipseFitterParamsWidget.h"
 #include "PreprocessorParamsWidget.h"
-#include "pipeline/util/CvHelper.h"
-#include "pipeline/util/Util.h"
-#include "pipeline/datastructure/Tag.h"
-#include "pipeline/datastructure/TagCandidate.h"
-#include "pipeline/datastructure/PipelineGrid.h"
-#include "pipeline/datastructure/serialization.hpp"
-#include "legacy/Grid3D.h"
 #include "Utils.h"
 #include "Visualization.h"
-
 #include "ui_ToolWidget.h"
 
 using namespace BeesBookCommon;
@@ -742,7 +743,7 @@ void BeesBookImgAnalysisTracker::loadGroundTruthData() {
     BC::Serialization::Data data;
     ar(data);
 
-    _groundTruthEvaluation.emplace(std::move(data));
+    _groundTruthEvaluation.emplace(gtConverter::ResultsFromSerializationData(data));
 
     const std::array<QLabel *, 10> labels { _groundTruthWidgets.labelFalsePositives,
               _groundTruthWidgets.labelFalseNegatives, _groundTruthWidgets.labelTruePositives,

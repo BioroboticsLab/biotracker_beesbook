@@ -3,8 +3,6 @@ set(lib_name "ImgAnalysisTracker")
 file(GLOB src_main RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 file(GLOB hdr_main RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h *.hpp)
 file(GLOB ui_main RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.ui)
-file(GLOB src_legacy RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} legacy/*.cpp)
-file(GLOB hdr_legacy RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} legacy/*.h *.hpp)
 
 list(REMOVE_ITEM src_main ${CMAKE_CURRENT_SOURCE_DIR}/BioTrackerInterface.cpp)
 
