@@ -109,6 +109,9 @@ BeesBookImgAnalysisTracker::BeesBookImgAnalysisTracker(BC::Settings &settings) :
     _ellipsefitter.loadSettings(BeesBookCommon::getEllipseFitterSettings(m_settings));
     _gridFitter.loadSettings(BeesBookCommon::getGridfitterSettings(m_settings));
 
+    _biotrackerWidgetLayout.setContentsMargins(0, 0, 0, 0);
+    _biotrackerWidgetLayout.setSpacing(0);
+
     _biotrackerWidgetLayout.addWidget(&_paramsWidget);
     _biotrackerWidgetLayout.addWidget(&_toolsWidget);
 

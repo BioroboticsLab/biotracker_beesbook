@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>268</width>
-    <height>297</height>
+    <height>315</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -27,19 +27,19 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <property name="spacing">
-    <number>3</number>
+    <number>0</number>
    </property>
    <property name="leftMargin">
-    <number>3</number>
+    <number>0</number>
    </property>
    <property name="topMargin">
-    <number>3</number>
+    <number>0</number>
    </property>
    <property name="rightMargin">
-    <number>3</number>
+    <number>0</number>
    </property>
    <property name="bottomMargin">
-    <number>3</number>
+    <number>0</number>
    </property>
    <item>
     <widget class="QTabWidget" name="tabWidget">
@@ -53,7 +53,7 @@
       </sizepolicy>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <property name="usesScrollButtons">
       <bool>true</bool>
