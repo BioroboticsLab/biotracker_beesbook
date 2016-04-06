@@ -48,7 +48,7 @@ endif()
 
 set(BIOTRACKER_CORE_LIB_TYPE SHARED)
 include_biotracker_core("master")
-include_pipeline("use-mxnet")
+include_pipeline("master")
 include_beesbook_groundtruth("master")
 
 CPM_Finish()
