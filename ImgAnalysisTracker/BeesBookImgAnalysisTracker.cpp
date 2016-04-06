@@ -784,12 +784,12 @@ void BeesBookImgAnalysisTracker::setPipelineConfig(const std::string &filename) 
     pipeline::settings::gridfitter_settings_t gridfitter_settings;
 
     for (pipeline::settings::settings_abs *settings :
-    std::array<pipeline::settings::settings_abs *, 4>( {
-    &preprocessor_settings,
-    &localizer_settings,
-    &ellipsefitter_settings,
-    &gridfitter_settings
-})) {
+        std::array<pipeline::settings::settings_abs *, 4>( {
+        &preprocessor_settings,
+        &localizer_settings,
+        &ellipsefitter_settings,
+        &gridfitter_settings
+    })) {
         settings->loadFromJson(filename);
     }
 
@@ -813,7 +813,42 @@ void BeesBookImgAnalysisTracker::setPipelineConfig(const std::string &filename) 
         _gridFitter.loadSettings(gridfitter_settings);
     } catch (std::runtime_error err) {
         Q_EMIT notifyGUI(std::string("Unable to load settings: ") + err.what(), BC::Messages::MessageType::FAIL);
+        return;
     }
+
+    namespace S = pipeline::settings::Preprocessor;
+    #define addToBioTracker(param) { \
+    {                                \
+        const auto paramBioTracker = S::Params::BASE + S::Params::param; \
+        const auto paramPipeline = S::Params::param; \
+        m_settings.setParam(paramBioTracker, \
+                            preprocessor_settings.getValue<decltype(S::Defaults::param)>(paramPipeline)); \
+    } \
+    }
+
+    addToBioTracker(COMB_DIFF_SIZE)
+    addToBioTracker(OPT_USE_CONTRAST_STRETCHING)
+    addToBioTracker(OPT_USE_EQUALIZE_HISTOGRAM)
+    addToBioTracker(OPT_FRAME_SIZE)
+    addToBioTracker(OPT_AVERAGE_CONTRAST_VALUE)
+            /*
+static const unsigned int OPT_FRAME_SIZE = 200;
+static const double OPT_AVERAGE_CONTRAST_VALUE = 120;
+
+static const bool COMB_ENABLED = true;
+static const unsigned int COMB_MIN_SIZE = 65;
+static const unsigned int COMB_MAX_SIZE = 80;
+static const double COMB_THRESHOLD = 27;
+static const unsigned int COMB_DIFF_SIZE = 15;
+static const unsigned int COMB_LINE_WIDTH = 9;
+static const unsigned int COMB_LINE_COLOR = 0;
+
+static const bool HONEY_ENABLED = true;
+static const double HONEY_STD_DEV = 0;
+static const unsigned int HONEY_FRAME_SIZE = 30;
+static const double HONEY_AVERAGE_VALUE = 80;
+        */
+    stageSelectionToogled(_selectedStage, true);
 }
 
 
