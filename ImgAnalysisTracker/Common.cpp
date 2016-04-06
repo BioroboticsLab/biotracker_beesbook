@@ -124,10 +124,6 @@ pipeline::settings::preprocessor_settings_t BeesBookCommon::getPreprocessorSetti
     return preprocessorSettings;
 }
 
-
-
-
-
 BeesBookCommon::taglist_t BeesBookCommon::loadSerializedTaglist(const std::__cxx11::string &path) {
     taglist_t taglist;
 
@@ -138,4 +134,90 @@ BeesBookCommon::taglist_t BeesBookCommon::loadSerializedTaglist(const std::__cxx
     return taglist;
 }
 
+#define addToBioTracker(param) { \
+{                                \
+    const auto paramBioTracker = S::Params::BASE + S::Params::param; \
+    const auto paramPipeline = S::Params::param; \
+    bioTrackerSettings.setParam(paramBioTracker, \
+                        settings.getValue<decltype(S::Defaults::param)>(paramPipeline)); \
+} \
+}
 
+void BeesBookCommon::setPreprocessorSettings(BioTracker::Core::Settings &bioTrackerSettings,
+                                             pipeline::settings::preprocessor_settings_t &settings)
+{
+    namespace S = pipeline::settings::Preprocessor;
+    addToBioTracker(COMB_DIFF_SIZE)
+    addToBioTracker(OPT_USE_CONTRAST_STRETCHING)
+    addToBioTracker(OPT_USE_EQUALIZE_HISTOGRAM)
+    addToBioTracker(OPT_FRAME_SIZE)
+    addToBioTracker(OPT_AVERAGE_CONTRAST_VALUE)
+    addToBioTracker(COMB_ENABLED)
+    addToBioTracker(COMB_MIN_SIZE)
+    addToBioTracker(COMB_MAX_SIZE)
+    addToBioTracker(COMB_THRESHOLD)
+    addToBioTracker(COMB_DIFF_SIZE)
+    addToBioTracker(COMB_LINE_WIDTH)
+    addToBioTracker(COMB_LINE_COLOR)
+    addToBioTracker(HONEY_ENABLED)
+    addToBioTracker(HONEY_STD_DEV)
+    addToBioTracker(HONEY_FRAME_SIZE)
+    addToBioTracker(HONEY_AVERAGE_VALUE)
+}
+
+void BeesBookCommon::setLocalizerSettings(BioTracker::Core::Settings &bioTrackerSettings,
+                                          pipeline::settings::localizer_settings_t &settings)
+{
+    namespace S = pipeline::settings::Localizer;
+    addToBioTracker(BINARY_THRESHOLD)
+    addToBioTracker(FIRST_DILATION_NUM_ITERATIONS)
+    addToBioTracker(FIRST_DILATION_SIZE)
+    addToBioTracker(EROSION_SIZE)
+    addToBioTracker(SECOND_DILATION_SIZE)
+    addToBioTracker(MIN_NUM_PIXELS)
+    addToBioTracker(MAX_NUM_PIXELS)
+    addToBioTracker(TAG_SIZE)
+    addToBioTracker(DEEPLOCALIZER_FILTER)
+    addToBioTracker(DEEPLOCALIZER_MODEL_FILE)
+    addToBioTracker(DEEPLOCALIZER_PARAM_FILE)
+    addToBioTracker(DEEPLOCALIZER_PROBABILITY_THRESHOLD)
+}
+
+void BeesBookCommon::setEllipseFitterSettings(BioTracker::Core::Settings &bioTrackerSettings, pipeline::settings::ellipsefitter_settings_t &settings)
+{
+    namespace S = pipeline::settings::EllipseFitter;
+    addToBioTracker(CANNY_INITIAL_HIGH)
+    addToBioTracker(CANNY_VALUES_DISTANCE)
+    addToBioTracker(CANNY_MEAN_MIN)
+    addToBioTracker(CANNY_MEAN_MAX)
+    addToBioTracker(MIN_MAJOR_AXIS)
+    addToBioTracker(MAX_MAJOR_AXIS)
+    addToBioTracker(MIN_MINOR_AXIS)
+    addToBioTracker(MAX_MINOR_AXIS)
+    addToBioTracker(ELLIPSE_REGULARISATION)
+    addToBioTracker(THRESHOLD_EDGE_PIXELS)
+    addToBioTracker(THRESHOLD_VOTE)
+    addToBioTracker(THRESHOLD_BEST_VOTE)
+    addToBioTracker(USE_XIE_AS_FALLBACK)
+}
+
+void BeesBookCommon::setGridFitterSettings(BioTracker::Core::Settings &bioTrackerSettings, pipeline::settings::gridfitter_settings_t &settings)
+{
+    namespace S = pipeline::settings::Gridfitter;
+    addToBioTracker(ERR_FUNC_ALPHA_INNER)
+    addToBioTracker(ERR_FUNC_ALPHA_OUTER)
+    addToBioTracker(ERR_FUNC_ALPHA_VARIANCE)
+    addToBioTracker(ERR_FUNC_ALPHA_OUTER_EDGE)
+    addToBioTracker(ERR_FUNC_ALPHA_INNER_EDGE)
+    addToBioTracker(SOBEL_THRESHOLD)
+    addToBioTracker(ADAPTIVE_BLOCK_SIZE)
+    addToBioTracker(ADAPTIVE_C)
+    addToBioTracker(GRADIENT_NUM_INITIAL)
+    addToBioTracker(GRADIENT_NUM_RESULTS)
+    addToBioTracker(GRADIENT_ERROR_THRESHOLD)
+    addToBioTracker(GRADIENT_MAX_ITERATIONS)
+    addToBioTracker(EPS_ANGLE)
+    addToBioTracker(EPS_POS)
+    addToBioTracker(EPS_SCALE)
+    addToBioTracker(ALPHA)
+}

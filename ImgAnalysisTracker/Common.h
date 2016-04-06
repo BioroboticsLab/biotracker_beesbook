@@ -53,4 +53,13 @@ pipeline::settings::preprocessor_settings_t getPreprocessorSettings(BC::Settings
 typedef std::vector<pipeline::Tag> taglist_t;
 
 taglist_t loadSerializedTaglist(std::string const &path);
+
+void setPreprocessorSettings(BC::Settings &bioTrackerSettings,
+                             pipeline::settings::preprocessor_settings_t &settings);
+void setLocalizerSettings(BC::Settings &bioTrackerSettings,
+                          pipeline::settings::localizer_settings_t &settings);
+void setEllipseFitterSettings(BC::Settings &bioTrackerSettings,
+                              pipeline::settings::ellipsefitter_settings_t &settings);
+void setGridFitterSettings(BC::Settings &bioTrackerSettings,
+                           pipeline::settings::gridfitter_settings_t &settings);
 }
